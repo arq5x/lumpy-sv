@@ -1,0 +1,78 @@
+/*****************************************************************************
+ * SV_SplitReadReader.h
+ * (c) 2012 - Ryan M. Layer
+ * Hall Laboratory
+ * Quinlan Laboratory
+ * Department of Computer Science
+ * Department of Biochemistry and Molecular Genetics
+ * Department of Public Health Sciences and Center for Public Health Genomics,
+ * University of Virginia
+ * rl6sf@virginia.edu
+ *
+ * Licenced under the GNU General Public License 2.0 license.
+ * ***************************************************************************/
+
+#ifndef __SV_SPLITREADREADER_H__
+#define __SV_SPLITREADREADER_H__
+
+#include <string>
+#include <map>
+using namespace std;
+
+#include "SV_Breakpoint.h"
+#include "SV_EvidenceReader.h"
+#include "api/BamReader.h"
+#include "api/BamAux.h"
+
+#include "ucsc_bins.hpp"
+
+using namespace BamTools;
+
+//{{{ struct split_read_parameters {
+struct split_read_parameters {
+	string bam_file;
+	unsigned int min_non_overlap,
+				 back_distance,
+				 min_mapping_threshold;
+	int weight;
+	int id;
+};
+//}}}
+
+class SV_SplitReadReader : public SV_EvidenceReader
+{
+	private:
+		string bam_file;
+		unsigned int min_non_overlap,
+					 back_distance,
+					 min_mapping_threshold;
+		int weight;
+		int id;
+		bool is_open,
+			 have_next_alignment;
+
+	public:
+		BamAlignment bam;
+		BamReader reader;
+		map<string, BamAlignment> mapped_splits;
+		string header;
+		RefVector refs;
+		bool inited;
+
+		SV_SplitReadReader();
+		bool add_param(char *param, char *val);
+		string check_params();
+		void initialize();
+		void set_statics();
+		void process_input(UCSCBins<SV_BreakPoint*> &l_bin,
+						   UCSCBins<SV_BreakPoint*> &r_bin);
+		void process_input_chr(string chr,
+							   UCSCBins<SV_BreakPoint*> &l_bin,
+							   UCSCBins<SV_BreakPoint*> &r_bin);
+		void terminate();
+		string get_curr_chr();
+		bool has_next();
+};
+
+
+#endif

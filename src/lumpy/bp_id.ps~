@@ -1,0 +1,2750 @@
+%!PS-Adobe-3.0
+%%Title: bp_id.cpp
+%%For: Ryan Layer
+%%Creator: a2ps version 4.14
+%%CreationDate: Fri Jul 27 09:40:31 2012
+%%BoundingBox: 24 24 588 768
+%%DocumentData: Clean7Bit
+%%Orientation: Landscape
+%%Pages: 7
+%%PageOrder: Ascend
+%%DocumentMedia: Letter 612 792 0 () ()
+%%DocumentNeededResources: font Courier
+%%+ font Courier-Bold
+%%+ font Courier-BoldOblique
+%%+ font Courier-Oblique
+%%+ font Helvetica
+%%+ font Helvetica-Bold
+%%+ font Symbol
+%%+ font Times-Bold
+%%+ font Times-Roman
+%%DocumentProcessColors: Black 
+%%DocumentSuppliedResources: procset a2ps-a2ps-hdr
+%%+ procset a2ps-black+white-Prolog
+%%+ encoding ISO-8859-1Encoding
+%%EndComments
+/a2psdict 200 dict def
+a2psdict begin
+%%BeginProlog
+%%Copyright: (c) 1988, 89, 90, 91, 92, 93 Miguel Santana
+%%Copyright: (c) 1995, 96, 97, 98 Akim Demaille, Miguel Santana
+% Check PostScript language level.
+/languagelevel where {
+  pop /gs_languagelevel languagelevel def
+} {
+  /gs_languagelevel 1 def
+} ifelse
+
+% EPSF import as in the Red Book
+/BeginInclude {
+  /b4_Inc_state save def    		% Save state for cleanup
+  /dict_count countdictstack def	% Count objects on dict stack
+  /op_count count 1 sub def		% Count objects on operand stack 
+  userdict begin
+    0 setgray 0 setlinecap
+    1 setlinewidth 0 setlinejoin
+    10 setmiterlimit [ ] 0 setdash newpath
+    gs_languagelevel 1 ne {
+      false setstrokeadjust false setoverprint 
+    } if
+} bind def
+
+/EndInclude {
+  count op_count sub { pos } repeat	% Clean up stacks
+  countdictstack dict_count sub { end } repeat
+  b4_Inc_state restore
+} bind def
+
+/BeginEPSF {
+  BeginInclude
+  /showpage { } def
+} bind def
+
+/EndEPSF {
+  EndInclude
+} bind def
+
+% Page prefeed
+/page_prefeed {         % bool -> -
+  statusdict /prefeed known {
+    statusdict exch /prefeed exch put
+  } {
+    pop
+  } ifelse
+} bind def
+
+/deffont {
+  findfont exch scalefont def
+} bind def
+
+/reencode_font {
+  findfont reencode 2 copy definefont pop def
+} bind def
+
+% Function c-show (str => -)
+% centers text only according to x axis.
+/c-show { 
+  dup stringwidth pop
+  2 div neg 0 rmoveto
+  show
+} bind def
+
+% Function l-show (str => -)
+% prints texts so that it ends at currentpoint
+/l-show {
+  dup stringwidth pop neg 
+  0 
+  rmoveto show
+} bind def
+
+% center-fit show (str w => -)
+% show centered, and scale currentfont so that the width is less than w
+/cfshow {
+  exch dup stringwidth pop
+  % If the title is too big, try to make it smaller
+  3 2 roll 2 copy
+  gt
+  { % if, i.e. too big
+    exch div
+    currentfont exch scalefont setfont
+  } { % ifelse
+    pop pop 
+  }
+  ifelse
+  c-show			% center title
+} bind def
+
+% Return the y size of the current font
+% - => fontsize
+/currentfontsize {
+  currentfont /FontMatrix get 3 get 1000 mul
+} bind def
+
+% reencode the font
+% <encoding-vector> <fontdict> -> <newfontdict>
+/reencode { %def
+  dup length 5 add dict begin
+    { %forall
+      % <vector> <key> <val>
+      1 index /FID ne 
+      { def }{ pop pop } ifelse
+    } forall
+    /Encoding exch def % -
+
+    % Use the font's bounding box to determine the ascent, descent,
+    % and overall height; don't forget that these values have to be
+    % transformed using the font's matrix.
+    % We use `load' because sometimes BBox is executable, sometimes not.
+    % Since we need 4 numbers an not an array avoid BBox from being executed
+    /FontBBox load aload pop
+    FontMatrix transform /Ascent exch def pop
+    FontMatrix transform /Descent exch def pop
+    /FontHeight Ascent Descent sub def
+
+    % Get the underline position and thickness if they're defined.
+    % Use 1 if they are not defined.
+    currentdict /FontInfo 2 copy known
+    { get
+      /UnderlinePosition 2 copy % <FontInfo> /UP <FontInfo> /UP
+      2 copy known
+      { get }{ pop pop 1 } ifelse
+      0 exch FontMatrix transform exch pop
+      def % <FontInfo>
+
+      /UnderlineThickness 2 copy % <FontInfo> /UT <FontInfo> /UT
+      2 copy known
+      { get }{ pop pop 1 } ifelse
+      0 exch FontMatrix transform exch pop
+      def % <FontInfo>
+      pop % -
+    }{ pop pop
+    } ifelse
+
+    currentdict
+  end 
+} bind def
+
+% Function print line number (<string> # -)
+/# {
+  gsave
+    sx cw mul neg 2 div 0 rmoveto
+    f# setfont
+    c-show
+  grestore
+} bind def
+
+% -------- Some routines to enlight plain b/w printings ---------
+
+% Underline
+% width --
+/dounderline {
+  currentpoint
+  gsave
+    moveto
+    0 currentfont /Descent get currentfontsize mul rmoveto
+    0 rlineto
+    stroke
+  grestore
+} bind def
+
+% Underline a string
+% string --
+/dounderlinestring {
+  stringwidth pop
+  dounderline
+} bind def
+
+/UL {
+  /ul exch store
+} bind def
+
+% Draw a box of WIDTH wrt current font
+% width --
+/dobox {
+  currentpoint
+  gsave
+    newpath
+    moveto
+    0 currentfont /Descent get currentfontsize mul rmoveto
+    dup 0 rlineto
+    0 currentfont /FontHeight get currentfontsize mul rlineto
+    neg 0 rlineto
+    closepath
+    stroke
+  grestore
+} bind def
+
+/BX {
+  /bx exch store
+} bind def
+
+% Box a string
+% string --
+/doboxstring {
+  stringwidth pop
+  dobox
+} bind def
+
+%
+% ------------- Color routines ---------------
+%
+/FG /setrgbcolor load def
+
+% Draw the background
+% width --
+/dobackground {
+  currentpoint
+  gsave
+    newpath
+    moveto
+    0 currentfont /Descent get currentfontsize mul rmoveto
+    dup 0 rlineto
+    0 currentfont /FontHeight get currentfontsize mul rlineto
+    neg 0 rlineto
+    closepath
+    bgcolor aload pop setrgbcolor
+    fill
+  grestore
+} bind def
+
+% Draw bg for a string
+% string --
+/dobackgroundstring {
+  stringwidth pop
+  dobackground
+} bind def
+
+
+/BG {
+  dup /bg exch store
+  { mark 4 1 roll ] /bgcolor exch store } if
+} bind def
+
+
+/Show {
+  bg { dup dobackgroundstring } if
+  ul { dup dounderlinestring } if
+  bx { dup doboxstring } if
+  show
+} bind def
+
+% Function T(ab), jumps to the n-th tabulation in the current line
+/T {
+  cw mul x0 add
+  bg { dup currentpoint pop sub dobackground } if
+  ul { dup currentpoint pop sub dounderline } if
+  bx { dup currentpoint pop sub dobox } if
+  y0 moveto
+} bind def
+
+% Function n: move to the next line
+/n {
+  /y0 y0 bfs sub store
+  x0 y0 moveto
+} bind def
+
+% Function N: show and move to the next line
+/N {
+  Show
+  /y0 y0 bfs sub store
+  x0 y0 moveto
+} bind def
+
+/S {
+  Show
+} bind def
+
+%%BeginResource: procset a2ps-a2ps-hdr 2.0 2
+%%Copyright: (c) 1988, 89, 90, 91, 92, 93 Miguel Santana
+%%Copyright: (c) 1995, 96, 97, 98 Akim Demaille, Miguel Santana
+% Function title: prints page header.
+% <ct> <rt> <lt> are passed as argument
+/title { 
+  % 1. Draw the background
+  x v get y v get moveto
+  gsave
+    0 th 2 div neg rmoveto 
+    th setlinewidth
+    0.95 setgray
+    pw 0 rlineto stroke
+  grestore
+  % 2. Border it
+  gsave
+    0.7 setlinewidth
+    pw 0 rlineto
+    0 th neg rlineto
+    pw neg 0 rlineto
+    closepath stroke
+  grestore
+  % stk: ct rt lt
+  x v get y v get th sub 1 add moveto
+%%IncludeResource: font Helvetica
+  fHelvetica fnfs 0.8 mul scalefont setfont
+  % 3. The left title
+  gsave
+    dup stringwidth pop fnfs 0.8 mul add exch % leave space took on stack
+    fnfs 0.8 mul hm rmoveto
+    show			% left title
+  grestore
+  exch
+  % stk: ct ltw rt
+  % 4. the right title
+  gsave
+    dup stringwidth pop fnfs 0.8 mul add exch % leave space took on stack
+    dup
+    pw exch stringwidth pop fnfs 0.8 mul add sub
+    hm
+    rmoveto
+    show			% right title
+  grestore
+  % stk: ct ltw rtw
+  % 5. the center title
+  gsave
+    pw 3 1 roll
+    % stk: ct pw ltw rtw
+    3 copy 
+    % Move to the center of the left room
+    sub add 2 div hm rmoveto
+    % What is the available space in here?
+    add sub fnfs 0.8 mul sub fnfs 0.8 mul sub
+    % stk: ct space_left
+%%IncludeResource: font Helvetica-Bold
+  fHelvetica-Bold fnfs scalefont setfont
+    cfshow
+  grestore
+} bind def
+
+% Function border: prints virtual page border
+/border { %def
+  gsave				% print four sides
+    0 setgray
+    x v get y v get moveto
+    0.7 setlinewidth		% of the square
+    pw 0 rlineto
+    0 ph neg rlineto
+    pw neg 0 rlineto
+    closepath stroke
+  grestore
+} bind def
+
+% Function water: prints a water mark in background
+/water { %def
+  gsave
+    scx scy moveto rotate
+%%IncludeResource: font Times-Bold
+  fTimes-Bold 100 scalefont setfont
+    .97 setgray
+    dup stringwidth pop 2 div neg -50 rmoveto
+    show
+  grestore
+} bind def
+
+% Function rhead: prints the right header
+/rhead {  %def
+  lx ly moveto
+  fHelvetica fnfs 0.8 mul scalefont setfont
+  l-show
+} bind def
+
+% Function footer (cf rf lf -> -)
+/footer {
+  fHelvetica fnfs 0.8 mul scalefont setfont
+  dx dy moveto
+  show
+
+  snx sny moveto
+  l-show
+  
+  fnx fny moveto
+  c-show
+} bind def
+%%EndResource
+%%BeginResource: procset a2ps-black+white-Prolog 2.0 1
+
+% Function T(ab), jumps to the n-th tabulation in the current line
+/T { 
+  cw mul x0 add y0 moveto
+} bind def
+
+% Function n: move to the next line
+/n { %def
+  /y0 y0 bfs sub store
+  x0 y0 moveto
+} bind def
+
+% Function N: show and move to the next line
+/N {
+  Show
+  /y0 y0 bfs sub store
+  x0 y0 moveto
+}  bind def
+
+/S {
+  Show
+} bind def
+
+/p {
+  false UL
+  false BX
+  fCourier bfs scalefont setfont
+  Show
+} bind def
+
+/sy {
+  false UL
+  false BX
+  fSymbol bfs scalefont setfont
+  Show
+} bind def
+
+/k {
+  false UL
+  false BX
+  fCourier-Oblique bfs scalefont setfont
+  Show
+} bind def
+
+/K {
+  false UL
+  false BX
+  fCourier-Bold bfs scalefont setfont
+  Show
+} bind def
+
+/c {
+  false UL
+  false BX
+  fCourier-Oblique bfs scalefont setfont
+  Show
+} bind def
+
+/C {
+  false UL
+  false BX
+  fCourier-BoldOblique bfs scalefont setfont
+  Show 
+} bind def
+
+/l {
+  false UL
+  false BX
+  fHelvetica bfs scalefont setfont
+  Show
+} bind def
+
+/L {
+  false UL
+  false BX
+  fHelvetica-Bold bfs scalefont setfont
+  Show 
+} bind def
+
+/str{
+  false UL
+  false BX
+  fTimes-Roman bfs scalefont setfont
+  Show
+} bind def
+
+/e{
+  false UL
+  true BX
+  fHelvetica-Bold bfs scalefont setfont
+  Show
+} bind def
+
+%%EndResource
+%%EndProlog
+%%BeginSetup
+%%IncludeResource: font Courier
+%%IncludeResource: font Courier-Oblique
+%%IncludeResource: font Courier-Bold
+%%IncludeResource: font Times-Roman
+%%IncludeResource: font Symbol
+%%IncludeResource: font Courier-BoldOblique
+%%BeginResource: encoding ISO-8859-1Encoding
+/ISO-8859-1Encoding [
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quoteright 
+/parenleft /parenright /asterisk /plus /comma /minus /period /slash 
+/zero /one /two /three /four /five /six /seven 
+/eight /nine /colon /semicolon /less /equal /greater /question 
+/at /A /B /C /D /E /F /G 
+/H /I /J /K /L /M /N /O 
+/P /Q /R /S /T /U /V /W 
+/X /Y /Z /bracketleft /backslash /bracketright /asciicircum /underscore 
+/quoteleft /a /b /c /d /e /f /g 
+/h /i /j /k /l /m /n /o 
+/p /q /r /s /t /u /v /w 
+/x /y /z /braceleft /bar /braceright /asciitilde /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/space /exclamdown /cent /sterling /currency /yen /brokenbar /section 
+/dieresis /copyright /ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron 
+/degree /plusminus /twosuperior /threesuperior /acute /mu /paragraph /bullet 
+/cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf /threequarters /questiondown 
+/Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla 
+/Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis 
+/Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply 
+/Oslash /Ugrave /Uacute /Ucircumflex /Udieresis /Yacute /Thorn /germandbls 
+/agrave /aacute /acircumflex /atilde /adieresis /aring /ae /ccedilla 
+/egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis 
+/eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide 
+/oslash /ugrave /uacute /ucircumflex /udieresis /yacute /thorn /ydieresis 
+] def
+%%EndResource
+% Initialize page description variables.
+/sh 612 def
+/sw 792 def
+/llx 24 def
+/urx 768 def
+/ury 588 def
+/lly 24 def
+/#copies 1 def
+/th 15.000000 def
+/fnfs 11 def
+/bfs 7.493857 def
+/cw 4.496314 def
+
+% Dictionary for ISO-8859-1 support
+/iso1dict 8 dict begin
+  /fCourier ISO-8859-1Encoding /Courier reencode_font
+  /fCourier-Bold ISO-8859-1Encoding /Courier-Bold reencode_font
+  /fCourier-BoldOblique ISO-8859-1Encoding /Courier-BoldOblique reencode_font
+  /fCourier-Oblique ISO-8859-1Encoding /Courier-Oblique reencode_font
+  /fHelvetica ISO-8859-1Encoding /Helvetica reencode_font
+  /fHelvetica-Bold ISO-8859-1Encoding /Helvetica-Bold reencode_font
+  /fTimes-Bold ISO-8859-1Encoding /Times-Bold reencode_font
+  /fTimes-Roman ISO-8859-1Encoding /Times-Roman reencode_font
+currentdict end def
+/bgcolor [ 0 0 0 ] def
+/bg false def
+/ul false def
+/bx false def
+% The font for line numbering
+/f# /Helvetica findfont bfs .6 mul scalefont def
+/fSymbol /Symbol findfont def
+/hm fnfs 0.25 mul def
+/pw
+   cw 81.400000 mul
+def
+/ph
+   522.321860 th add
+def
+/pmw urx llx sub pw 2 mul sub 1 div def
+/pmh 0 def
+/v 0 def
+/x [
+  0
+  dup pmw add pw add
+] def
+/y [
+  pmh ph add 0 mul ph add
+  dup
+] def
+/scx sw 2 div def
+/scy sh 2 div def
+/snx urx def
+/sny lly 2 add def
+/dx llx def
+/dy sny def
+/fnx scx def
+/fny dy def
+/lx snx def
+/ly ury fnfs 0.8 mul sub def
+/sx 0 def
+/tab 8 def
+/x0 0 def
+/y0 0 def
+%%EndSetup
+
+%%Page: (1-2) 1
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(/*****************************************************************************) c n
+(  bamToBed.cpp) N
+() N
+(  \(c\) 2009 - Aaron Quinlan) N
+(  Hall Laboratory) N
+(  Department of Biochemistry and Molecular Genetics) N
+(  University of Virginia) N
+(  aaronquinlan@gmail.com) N
+() N
+(  Licenced under the GNU General Public License 2.0 license.) N
+(******************************************************************************/) N
+() p n
+(//{{{ includes) c n
+(#include) K
+( ") p
+(version.h) str
+(") p n
+(#include) K
+( ") p
+(api/BamReader.h) str
+(") p n
+(#include) K
+( ") p
+(api/BamAux.h) str
+(") p n
+(#include) K
+( ") p
+(BamAncillary.h) str
+(") p n
+(#include) K
+( ") p
+(bedFile.h) str
+(") p n
+(#include) K
+( ") p
+(bedFilePE.h) str
+(") p n
+(#include) K
+( ") p
+(sequenceUtils.h) str
+(") p n
+(#include) K
+( ") p
+(SV_Evidence.h) str
+(") p n
+(#include) K
+( ") p
+(SV_Pair.h) str
+(") p n
+(#include) K
+( ") p
+(SV_BreakPoint.h) str
+(") p n
+(#include) K
+( ") p
+(SV_Bedpe.h) str
+(") p n
+(#include) K
+( ") p
+(SV_SplitRead.h) str
+(") p n
+() N
+(#include) K
+( ") p
+(ucsc_bins.hpp) str
+(") p n
+(#include) K
+( ") p
+(log_space.h) str
+(") p n
+() N
+(using) K
+( ) p
+(namespace) K
+( BamTools;) p n
+() N
+(#include) K
+( <vector>) p n
+(#include) K
+( <map>) p n
+(#include) K
+( <algorithm>    ) p
+(// for swap\(\)) c n
+(#include) K
+( <iostream>) p n
+(#include) K
+( <fstream>) p n
+(#include) K
+( <stdlib.h>) p n
+(#include) K
+( <string>) p n
+(#include) K
+( <limits.h>) p n
+(#include) K
+( <math.h>) p n
+() N
+(#include) K
+( <gsl_statistics_int.h>) p n
+() N
+() N
+(using) K
+( ) p
+(namespace) K
+( std;) p n
+() N
+() N
+(// define our program name) c n
+(#define) K
+( PROGRAM_NAME ") p
+(**********) str
+(") p n
+() N
+(// define our parameter checking macro) c n
+(#define) K
+( PARAMETER_CHECK\(param, paramLen, actualLen\) \(strncmp\(argv[i], param, min) p n
+(\(actualLen, paramLen\)\)== 0\) && \(actualLen == paramLen\)) N
+(//}}}) c n
+() p n
+(//{{{ forward declarations) c n
+(void) k
+( ShowHelp\() p
+(void) k
+(\);) p n
+() N
+(void) k
+( mapped_pair\() p
+(const) K
+( BamAlignment &curr,) p n
+() S 8 T () S 16 T (  ) S
+(const) K
+( RefVector refs,) p n
+() S 8 T () S 16 T (  map<string, BamAlignment> &mapped_pairs,) N
+() S 8 T () S 16 T (  UCSCBins<SV_BreakPoint*> &l_bin,) N
+() S 8 T () S 16 T (  UCSCBins<SV_BreakPoint*> &r_bin,) N
+() S 8 T () S 16 T (  ) S
+(int) k
+( weight,) p n
+() S 8 T () S 16 T (  ) S
+(int) k
+( id\);) p n
+() N
+(int) k
+( read_histo_file\(string file_name,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T ( ) S
+(double) k
+( **distro,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T ( ) S
+(unsigned) k
+( ) p
+(int) k
+( *start,) p n
+(bp_id.cpp) (Page 1/14) (Jul 27, 12 9:25) title
+border
+/v 1 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T ( ) S
+(unsigned) k
+( ) p
+(int) k
+( *end\);) p n
+() N
+(int) k
+( read_distro_file\(string file_name,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T ( ) S
+(double) k
+( **distro,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (     ) S
+(int) k
+( *start,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (     ) S
+(int) k
+( *end\);) p n
+() N
+(static) K
+( ) p
+(inline) K
+( ) p
+(int) k
+( strnum_cmp\() p
+(const) K
+( ) p
+(char) k
+( *a, ) p
+(const) K
+( ) p
+(char) k
+( *b\);) p n
+(//}}}) c n
+() p n
+(//{{{ void ShowHelp\(void\)) c n
+(void) k
+( ShowHelp\() p
+(void) k
+(\)) p n
+({) N
+(    cerr << endl << ") S
+(Program: ) str
+(" << PROGRAM_NAME << ") p
+( \(v) str
+(" << ") p
+(\)) str
+(" <<) p n
+() S 8 T () S 16 T () S 24 T (endl <<) N
+() S 8 T () S 16 T (") S
+(Author:  Aaron Quinlan \(aaronquinlan@gmail.com\)) str
+(" << endl <<) p n
+() S 8 T () S 16 T (") S
+(Summary: Converts BAM alignments to BED6 or BEDPE format.) str
+(" << endl <<) p n
+() S 8 T () S 16 T () S 24 T (endl <<) N
+() S 8 T () S 16 T (") S
+(Usage:   ) str
+(" << PROGRAM_NAME << ") p
+( [OPTIONS] -i <bam> ) str
+(" << endl << endl <) p n
+(<) N
+() S 8 T () S 16 T (") S
+(Options: ) str
+(" << endl <<) p n
+() S 8 T () S 16 T (") S
+(\\t-sr) str
+(") p 24 T () S 32 T (") S
+(\\tbam_file:<bam_file>,) str
+(" << endl <<) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (") S
+(\\t\\tback_distance:<back_distance>) str
+(" << endl << ) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (endl <<) N
+() S 8 T () S 16 T (") S
+(\\t-pe) str
+(") p 24 T () S 32 T (") S
+(\\tbam_file:<bam_file>,) str
+(" << endl <<) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (") S
+(\\t\\thisto_file:<histo_file>,) str
+(" << endl <<) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (") S
+(\\t\\tmean:<insert_mean>,) str
+(" << endl << ) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (") S
+(\\t\\tstdev:<insert_stdev>,) str
+(" << endl <<) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (") S
+(\\t\\tread_length:<read_length>,) str
+(" << endl <<) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (") S
+(\\t\\tmin_non_overlap:<min_non_overlap>,) str
+(" << endl ) p n
+(<<) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (") S
+(\\t\\tdiscordant_z:<discordant z>,) str
+(" << endl << ) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (") S
+(\\t\\tback_distance:<back distance>) str
+(" << endl <<) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (endl << ) N
+() S 8 T () S 16 T (") S
+(\\t-pe) str
+(") p 24 T () S 32 T (") S
+(\\tbedpe_file:<bedpe file>,) str
+(" << endl <<) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (") S
+(\\t\\tdistro_file:<distro_file>,) str
+(" << endl <<) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (") S
+(\\t\\tback_distance:<back distance>) str
+(" << endl <<) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (endl;) N
+(    ) S
+(// end the program here) c n
+(    exit\(1\);) p n
+(}) N
+(//}}}) c n
+() p n
+(//{{{ static inline int strnum_cmp\(const char *a, const char *b\)) c n
+(//read name str cmp) N
+(static) K
+( ) p
+(inline) K
+( ) p
+(int) k
+( strnum_cmp\() p
+(const) K
+( ) p
+(char) k
+( *a, ) p
+(const) K
+( ) p
+(char) k
+( *b\)) p n
+({) N
+() S 8 T () S
+(char) k
+( *pa, *pb;) p n
+() S 8 T (pa = \() S
+(char) k
+(*\)a; pb = \() p
+(char) k
+(*\)b;) p n
+() S 8 T () S
+(while) K
+( \(*pa && *pb\) {) p n
+() S 8 T () S 16 T () S
+(if) K
+( \(isdigit\(*pa\) && isdigit\(*pb\)\) {) p n
+() S 8 T () S 16 T () S 24 T () S
+(long) k
+( ai, bi;) p n
+() S 8 T () S 16 T () S 24 T (ai = strtol\(pa, &pa, 10\);) N
+() S 8 T () S 16 T () S 24 T (bi = strtol\(pb, &pb, 10\);) N
+() S 8 T () S 16 T () S 24 T () S
+(if) K
+( \(ai != bi\) ) p
+(return) K
+( ai<bi? -1 : ai>bi? 1 : 0;) p n
+() S 8 T () S 16 T (} ) S
+(else) K
+( {) p n
+() S 8 T () S 16 T () S 24 T () S
+(if) K
+( \(*pa != *pb\) ) p
+(break) K
+(;) p n
+() S 8 T () S 16 T () S 24 T (++pa; ++pb;) N
+() S 8 T () S 16 T (}) N
+() S 8 T (}) N
+() S 8 T () S
+(if) K
+( \(*pa == *pb\)) p n
+() S 8 T () S 16 T () S
+(return) K
+( \(pa-a\) < \(pb-b\)? -1 : \(pa-a\) > \(pb-b\)? 1 : 0;) p n
+() S 8 T () S
+(return) K
+( *pa<*pb? -1 : *pa>*pb? 1 : 0;) p n
+(}) N
+(//}}}) c n
+() p n
+(//{{{ void mapped_pair\(const BamAlignment &curr,) c n
+(void) k
+( mapped_pair\() p
+(const) K
+( BamAlignment &curr,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T ( ) S
+(const) K
+( RefVector refs,) p n
+(bp_id.cpp) (Page 2/14) (Jul 27, 12 9:25) title
+border
+grestore
+(Printed by Ryan Layer) rhead
+(bp_id.cpp) (1/7) (Friday July 27, 2012) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (3-4) 2
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+() p 8 T () S 16 T () S 24 T () S 32 T ( map<string, BamAlignment> &mapped_pairs,) N
+() S 8 T () S 16 T () S 24 T () S 32 T ( UCSCBins<SV_BreakPoint*> &l_bin,) N
+() S 8 T () S 16 T () S 24 T () S 32 T ( UCSCBins<SV_BreakPoint*> &r_bin,) N
+() S 8 T () S 16 T () S 24 T () S 32 T ( ) S
+(int) k
+( weight,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T ( ) S
+(int) k
+( id\)) p n
+({) N
+() S 8 T () S
+(if) K
+( \(mapped_pairs.find\(curr.Name\) == mapped_pairs.end\(\)\)) p n
+() S 8 T () S 16 T (mapped_pairs[curr.Name] = curr;) N
+() S 8 T () S
+(else) K
+( {) p n
+() S 8 T () S 16 T (SV_Pair *new_pair = ) S
+(new) K
+( SV_Pair\(mapped_pairs[curr.Name],) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+(curr,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+(refs,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+(weight,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+(id\);) N
+() S 8 T () S 16 T () S
+(if) K
+( \( new_pair->is_sane\(\) &&  new_pair->is_aberrant\(\) \) {) p n
+() S 8 T () S 16 T () S 24 T (SV_BreakPoint *new_bp = new_pair->get_bp\(\);) N
+(#ifdef) K
+( TRACE) p n
+() S 8 T () S 16 T () S 24 T (cerr << ") S
+(PE\\t) str
+(" << *new_bp << endl;) p n
+(#endif) K n
+() p 8 T () S 16 T () S 24 T (new_bp->cluster\(l_bin, r_bin\);) N
+() S 8 T () S 16 T (} ) S
+(else) K
+( {) p n
+() S 8 T () S 16 T () S 24 T (free\(new_pair\);) N
+() S 8 T () S 16 T (}) N
+() N
+() S 8 T () S 16 T (mapped_pairs.erase\(curr.Name\);) N
+() S 8 T (}) N
+(}) N
+(//}}}) c n
+() p n
+(//{{{ void split_read\(const BamAlignment &curr,) c n
+(void) k
+( split_read\(vector< BamAlignment > block,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S
+(const) K
+( RefVector refs,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (UCSCBins<SV_BreakPoint*> &l_bin,) N
+() S 8 T () S 16 T () S 24 T () S 32 T (UCSCBins<SV_BreakPoint*> &r_bin,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S
+(int) k
+( weight,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S
+(int) k
+( id\)) p n
+({) N
+() S 8 T () S
+(if) K
+( \(block.size\(\) != 2\)) p n
+() S 8 T () S 16 T () S
+(return) K
+(;) p n
+() N
+() S 8 T (SV_SplitRead *new_split_read = ) S
+(new) K
+( SV_SplitRead\(block,refs,weight,id\);) p n
+() N
+() S 8 T (SV_BreakPoint *new_bp = ) S
+(NULL) K
+(;) p n
+() S 8 T () S
+(if) K
+( \(new_split_read->is_sane\(\)\) {) p n
+() S 8 T () S 16 T (new_bp = new_split_read->get_bp\(\);) N
+() N
+(    vector<SV_Evidence*>::iterator it;) N
+() N
+(#ifdef) K
+( TRACE) p n
+() S 8 T () S 16 T () S 24 T (cerr << ") S
+(PE\\t) str
+(" << *new_bp << endl;) p n
+(#endif) K n
+() p 8 T () S 16 T (new_bp->cluster\(l_bin, r_bin\);) N
+() S 8 T (}) N
+() N
+() S 8 T (free\(new_split_read\);) N
+(}) N
+(//}}}) c n
+() p n
+(//{{{int read_histo_file\(string file_name,) c n
+(/*) N
+( * the histo file contains the histogram \(frequency\) of insert sizes) N
+( * in the format) N
+( * i) S 8 T (freq_i) N
+( * i+1) S 8 T (freq_i+1) N
+( * ...) N
+(bp_id.cpp) (Page 3/14) (Jul 27, 12 9:25) title
+border
+/v 1 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+( * n) c 8 T (freq_n) N
+( *) N
+( * start will be set to i ) N
+( * and will be set to n) N
+( *) N
+( * i..n is assumed to be continuous \(no gaps\)) N
+( */) N
+(int) k
+( read_histo_file\(string file_name,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T ( ) S
+(double) k
+( **histo,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T ( ) S
+(unsigned) k
+( ) p
+(int) k
+( *start,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T ( ) S
+(unsigned) k
+( ) p
+(int) k
+( *end\)) p n
+({) N
+() S 8 T () S
+(int) k
+( file_len = 0;) p n
+() S 8 T () S
+(char) k
+( line[LINE_MAX];) p n
+() S 8 T () S
+(FILE) k
+( *file = fopen\(file_name.c_str\(\), ") p
+(r) str
+("\);) p n
+() N
+() S 8 T () S
+(if) K
+( \(file == ) p
+(NULL) K
+(\) {) p n
+() S 8 T () S 16 T (fprintf\(stderr, ") S
+(Could not open %s\\n) str
+(", file_name.c_str\(\)\);) p n
+() S 8 T (}) N
+() N
+() S 8 T () S
+(while) K
+( \( fgets\(line, LINE_MAX, file\) \)) p n
+() S 8 T () S 16 T (++file_len;) N
+() N
+() S 8 T (fclose\(file\);) N
+() N
+() S 8 T (*histo = \() S
+(double) k
+( *\) malloc\(file_len * ) p
+(sizeof) K
+(\() p
+(double) k
+(\)\);) p n
+() S 8 T (file = fopen\(file_name.c_str\(\), ") S
+(r) str
+("\);) p n
+() S 8 T () S
+(int) k
+( i = 0;) p n
+() S 8 T () S
+(bool) k
+( first = ) p
+(true) k
+(;) p n
+() S 8 T () S
+(while) K
+( \( fgets\(line, LINE_MAX, file\) \) {) p n
+() S 8 T () S 16 T () S
+(// we only need to read start, and from that value we can infer ) c n
+(the) N
+() p 8 T () S 16 T () S
+(// value of end) c n
+() p 8 T () S 16 T () S
+(unsigned) k
+( ) p
+(int) k
+( tmp = atoi\(strtok\(line, ") p
+(\\t) str
+("\)\);) p n
+() S 8 T () S 16 T () S
+(if) K
+( \(first == ) p
+(true) k
+(\) {) p n
+() S 8 T () S 16 T () S 24 T (*start = tmp;) N
+() S 8 T () S 16 T () S 24 T (first = ) S
+(false) k
+(;) p n
+() S 8 T () S 16 T (}) N
+() S 8 T () S 16 T (\(*histo\)[i]= atof\(strtok\() S
+(NULL) K
+(, ") p
+(\\t) str
+("\)\);) p n
+() S 8 T () S 16 T (++i;) N
+() S 8 T (}) N
+() N
+() S 8 T (*end = *start + file_len;) N
+() N
+() S 8 T (fclose\(file\);) N
+() N
+() S 8 T () S
+(return) K
+( file_len;) p n
+(}) N
+(//}}}) c n
+() p n
+(//{{{ int read_distro_file\(string file_name,) c n
+(int) k
+( read_distro_file\(string file_name,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T ( ) S
+(double) k
+( **distro,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (     ) S
+(int) k
+( *start,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (     ) S
+(int) k
+( *end\)) p n
+({) N
+() S 8 T () S
+(int) k
+( file_len = 0;) p n
+() S 8 T () S
+(char) k
+( line[LINE_MAX];) p n
+() S 8 T () S
+(FILE) k
+( *file = fopen\(file_name.c_str\(\), ") p
+(r) str
+("\);) p n
+() N
+() S 8 T () S
+(if) K
+( \(file == ) p
+(NULL) K
+(\) {) p n
+() S 8 T () S 16 T (fprintf\(stderr, ") S
+(Could not open %s\\n) str
+(", file_name.c_str\(\)\);) p n
+() S 8 T (}) N
+() N
+() S 8 T () S
+(while) K
+( \( fgets\(line, LINE_MAX, file\) \)) p n
+() S 8 T () S 16 T (++file_len;) N
+() N
+() S 8 T (fclose\(file\);) N
+() N
+(bp_id.cpp) (Page 4/14) (Jul 27, 12 9:25) title
+border
+grestore
+(Printed by Ryan Layer) rhead
+(bp_id.cpp) (2/7) (Friday July 27, 2012) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (5-6) 3
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+() p 8 T (*distro = \() S
+(double) k
+(*\) malloc\(file_len * ) p
+(sizeof) K
+(\() p
+(double) k
+(\)\);) p n
+() N
+() S 8 T (file = fopen\(file_name.c_str\(\), ") S
+(r) str
+("\);) p n
+() S 8 T () S
+(int) k
+( i = 0;) p n
+() S 8 T () S
+(bool) k
+( first = ) p
+(true) k
+(;) p n
+() S 8 T () S
+(int) k
+( last;) p n
+() S 8 T () S
+(while) K
+( \( fgets\(line, LINE_MAX, file\) \) {) p n
+() S 8 T () S 16 T () S
+(int) k
+( v = atof\(strtok\(line, ") p
+(\\t) str
+("\)\);) p n
+() S 8 T () S 16 T () S
+(if) K
+( \(first == ) p
+(true) k
+(\) {) p n
+() S 8 T () S 16 T () S 24 T (*start = v;) N
+() S 8 T () S 16 T () S 24 T (first = ) S
+(false) k
+(;) p n
+() S 8 T () S 16 T (}) N
+() S 8 T () S 16 T (last = v;) N
+() S 8 T () S 16 T (\(*distro\)[i]= atof\(strtok\() S
+(NULL) K
+(, ") p
+(\\t) str
+("\)\);) p n
+() S 8 T () S 16 T (++i;) N
+() S 8 T (}) N
+() N
+() S 8 T (*end = last;) N
+() N
+() S 8 T (fclose\(file\);) N
+() N
+() S 8 T () S
+(return) K
+( file_len;) p n
+(}) N
+(//}}}) c n
+() p n
+(//{{{ comand line param structs and checks) c n
+(//{{{struct pair_end_parameters {) N
+(struct) k
+( pair_end_parameters {) p n
+() S 8 T (string bam_file,) N
+() S 8 T () S 16 T (   histo_file;) N
+() S 8 T () S
+(double) k
+( mean, stdev;) p n
+() S 8 T () S
+(unsigned) k
+( ) p
+(int) k
+( read_length,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T ( min_non_overlap,) N
+() S 8 T () S 16 T () S 24 T () S 32 T ( discordant_z,) N
+() S 8 T () S 16 T () S 24 T () S 32 T ( back_distance;) N
+() S 8 T () S
+(int) k
+( weight;) p n
+() S 8 T () S
+(int) k
+( id;) p n
+(};) N
+(//}}}) c n
+() p n
+(//{{{void set_pair_end_parameter_defaults\(struct pair_end_parameters) c n
+(void) k
+( set_pair_end_parameter_defaults\() p
+(struct) k
+( pair_end_parameters *pair_end_param\)) p n
+({) N
+() S 8 T (pair_end_param->bam_file = "";) N
+() S 8 T (pair_end_param->histo_file = "";) N
+() S 8 T (pair_end_param->mean = 0;) N
+() S 8 T (pair_end_param->stdev = 0;) N
+() S 8 T (pair_end_param->read_length = 0;) N
+() S 8 T (pair_end_param->min_non_overlap = 0;) N
+() S 8 T (pair_end_param->discordant_z = 0;) N
+() S 8 T (pair_end_param->back_distance = 0;) N
+() S 8 T (pair_end_param->weight = 0;) N
+() S 8 T (pair_end_param->id = -1;) N
+(}) N
+(//}}}) c n
+() p n
+(//{{{bool check_pair_end_parameters\(struct pair_end_parameters *pair_end_param\)) c n
+(bool) k
+( check_pair_end_parameters\() p
+(struct) k
+( pair_end_parameters *pair_end_param\)) p n
+({) N
+() S 8 T (string msg = "";) N
+() N
+() S 8 T () S
+(if) K
+( \(pair_end_param->bam_file.compare\(""\) == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(bam_file ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(pair_end_param->histo_file.compare\(""\) == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(histo_file ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(pair_end_param->mean == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(mean ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(pair_end_param->stdev == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(stdev ) str
+("\);) p n
+(bp_id.cpp) (Page 5/14) (Jul 27, 12 9:25) title
+border
+/v 1 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+() p 8 T () S
+(if) K
+( \(pair_end_param->read_length == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(read_length ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(pair_end_param->min_non_overlap == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(min_non_overlap ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(pair_end_param->discordant_z == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(discordant_z ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(pair_end_param->back_distance == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(back_distance ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(pair_end_param->weight == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(weight ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(pair_end_param->id == -1\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(id ) str
+("\);) p n
+() N
+() S 8 T () S
+(if) K
+( \( msg.compare\(""\) \) {) p n
+() S 8 T () S 16 T (cerr << ") S
+(missing pair end parameters:) str
+(" << msg << endl;) p n
+() S 8 T () S 16 T () S
+(return) K
+( ) p
+(false) k
+(;) p n
+() S 8 T (}  ) S
+(else) K n
+() p 8 T () S 16 T () S
+(return) K
+( ) p
+(true) k
+(;) p n
+() N
+(}) N
+(//}}}) c n
+() p n
+(//{{{struct bedpe_parameters {) c n
+(struct) k
+( bedpe_parameters {) p n
+() S 8 T (string bedpe_file,) N
+() S 8 T () S 16 T (   distro_file;) N
+() S 8 T () S
+(unsigned) k
+( ) p
+(int) k
+( back_distance;) p n
+() S 8 T () S
+(int) k
+( weight;) p n
+() S 8 T () S
+(int) k
+( id;) p n
+(};) N
+(//}}}) c n
+() p n
+(//{{{void set_bedpe_parameter_defaults\(struct bedpe_parameters *bedpe_params\)) c n
+(void) k
+( set_bedpe_parameter_defaults\() p
+(struct) k
+( bedpe_parameters *bedpe_params\)) p n
+({) N
+() S 8 T (bedpe_params->bedpe_file = "";) N
+() S 8 T (bedpe_params->distro_file = "";) N
+() S 8 T (bedpe_params->back_distance = 0;) N
+() S 8 T (bedpe_params->weight = 0;) N
+() S 8 T (bedpe_params->id = -1;) N
+(}) N
+(//}}}) c n
+() p n
+(//{{{bool check_bedpe_parameters\(struct bedpe_parameters *bedpe_params\)) c n
+(bool) k
+( check_bedpe_parameters\() p
+(struct) k
+( bedpe_parameters *bedpe_params\)) p n
+({) N
+() S 8 T (string msg = "";) N
+() N
+() S 8 T () S
+(if) K
+( \(bedpe_params->bedpe_file.compare\(""\) == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(bedpe_file ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(bedpe_params->distro_file.compare\(""\) == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(distro_file ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(bedpe_params->back_distance == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(back_distance ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(bedpe_params->weight == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(weight ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(bedpe_params->id == -1\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(id ) str
+("\);) p n
+() N
+() S 8 T () S
+(if) K
+( \( msg.compare\(""\) \) {) p n
+() S 8 T () S 16 T (cerr << ") S
+(missing bedpe parameters:) str
+(" << msg << endl;) p n
+() S 8 T () S 16 T () S
+(return) K
+( ) p
+(false) k
+(;) p n
+() S 8 T (}  ) S
+(else) K n
+() p 8 T () S 16 T () S
+(return) K
+( ) p
+(true) k
+(;) p n
+() N
+(}) N
+(//}}}) c n
+() p n
+(//{{{ struct split_read_parameters {) c n
+(bp_id.cpp) (Page 6/14) (Jul 27, 12 9:25) title
+border
+grestore
+(Printed by Ryan Layer) rhead
+(bp_id.cpp) (3/7) (Friday July 27, 2012) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (7-8) 4
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(struct) k
+( split_read_parameters {) p n
+() S 8 T (string bam_file;) N
+() S 8 T () S
+(unsigned) k
+( ) p
+(int) k
+( min_non_overlap,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T ( back_distance;) N
+() S 8 T () S
+(int) k
+( weight;) p n
+() S 8 T () S
+(int) k
+( id;) p n
+(};) N
+(//}}}) c n
+() p n
+(//{{{ void set_split_read_parameter_defaults\() c n
+(void) k
+( set_split_read_parameter_defaults\() p n
+() S 8 T () S 16 T () S
+(struct) k
+( split_read_parameters *split_read_param\)) p n
+({) N
+() S 8 T (split_read_param->bam_file = "";) N
+() S 8 T (split_read_param->back_distance = 0;) N
+() S 8 T (split_read_param->min_non_overlap = 25;) N
+() S 8 T (split_read_param->weight = 0;) N
+() S 8 T (split_read_param->weight = -1;) N
+(}) N
+(//}}}) c n
+() p n
+(//{{{ bool check_split_read_parameters\() c n
+(bool) k
+( check_split_read_parameters\() p n
+() S 8 T () S 16 T () S
+(struct) k
+( split_read_parameters *split_read_param\)) p n
+({) N
+() S 8 T (string msg = "";) N
+() N
+() S 8 T () S
+(if) K
+( \(split_read_param->bam_file.compare\(""\) == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(bam_file ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(split_read_param->back_distance == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(back_distance ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(split_read_param->weight == 0\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(weight ) str
+("\);) p n
+() S 8 T () S
+(if) K
+( \(split_read_param->id == -1\)) p n
+() S 8 T () S 16 T (msg.append\(") S
+(id ) str
+("\);) p n
+() N
+() S 8 T () S
+(if) K
+( \( msg.compare\(""\) \) {) p n
+() S 8 T () S 16 T (cerr << ") S
+(missing split_read parameters:) str
+(" << msg << endl;) p n
+() S 8 T () S 16 T () S
+(return) K
+( ) p
+(false) k
+(;) p n
+() S 8 T (}  ) S
+(else) K n
+() p 8 T () S 16 T () S
+(return) K
+( ) p
+(true) k
+(;) p n
+() N
+(}) N
+(//}}}) c n
+(//}}}) N
+() p n
+(//{{{ int main\(int argc, char* argv[]\) {) c n
+(int) k
+( main\() p
+(int) k
+( argc, ) p
+(char) k
+(* argv[]\)) p n
+({) N
+() N
+() S 8 T () S
+(//{{{ setup) c n
+() p 8 T () S
+(double) k
+( trim_threshold = 1e-10;) p n
+() S 8 T () S
+(double) k
+( merge_threshold = 1e-10;) p n
+() S 8 T () S
+(int) k
+( min_evidence = 2;) p n
+() S 8 T () S
+(int) k
+( bp_evidence_count_Z = 10;) p n
+() S 8 T () S
+(//}}}) c n
+() p n
+(    ) S
+(//{{{ check to see if we should print out some help) c n
+() p 8 T () S
+(if) K
+( \(argc == 1\) ) p n
+() S 8 T () S 16 T (ShowHelp\(\);) N
+() N
+(    ) S
+(for) K
+(\() p
+(int) k
+( i = 1; i < argc; i++\) {) p n
+(        ) S
+(int) k
+( parameterLength = \() p
+(int) k
+(\)strlen\(argv[i]\);) p n
+() N
+(        ) S
+(if) K
+(\(\(PARAMETER_CHECK\(") p
+(-h) str
+(", 2, parameterLength\)\) ||) p n
+(           \(PARAMETER_CHECK\(") S
+(--help) str
+(", 6, parameterLength\)\)\) {) p n
+() S 8 T () S 16 T () S 24 T (ShowHelp\(\);) N
+(        }) N
+(    }) N
+(bp_id.cpp) (Page 7/14) (Jul 27, 12 9:25) title
+border
+/v 1 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+() p 8 T () S
+(//}}}) c n
+() p n
+() S 8 T (vector<) S
+(struct) k
+( pair_end_parameters> pair_end_params;) p n
+() S 8 T (vector<) S
+(struct) k
+( bedpe_parameters> bedpe_params;) p n
+() S 8 T (vector<) S
+(struct) k
+( split_read_parameters> split_read_params;) p n
+() N
+() S 8 T () S
+(//{{{ do some parsing \(all of these parameters require 2 strings\)) c n
+(    ) p
+(for) K
+(\() p
+(int) k
+( i = 1; i < argc; i++\) {) p n
+(        ) S
+(int) k
+( parameterLength = \() p
+(int) k
+(\)strlen\(argv[i]\);) p n
+() N
+() S 8 T () S 16 T () S
+(if) K
+(\(PARAMETER_CHECK\(") p
+(-pe) str
+(", 3, parameterLength\)\) {) p n
+() S 8 T () S 16 T () S 24 T () S
+(//{{{) c n
+() p 8 T () S 16 T () S 24 T () S
+(struct) k
+( pair_end_parameters pair_end_param;) p n
+() S 8 T () S 16 T () S 24 T (set_pair_end_parameter_defaults\(&pair_end_param\);) N
+() N
+() S 8 T () S 16 T () S 24 T () S
+(if) K
+( \(\(i+1\) < argc\) {) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S
+(char) k
+( *params = argv[i + 1];) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S
+(char) k
+( *param_val, *param, *val, *brka, *brkb;) p n
+() N
+() S 8 T () S 16 T () S 24 T () S 32 T () S
+(for) K
+( \() p 40 T (param_val = strtok_r\(params, ") S
+(,) str
+(", &brka\)) p n
+(;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (param_val;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (param_val = strtok_r\() S
+(NULL) K
+(, ") p
+(,) str
+(", ) p n
+(&brka\)\) {   ) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(char) k
+( *param = strtok_r\(param_val, ") p
+(:) str
+(", &) p n
+(brkb\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(char) k
+( *val = strtok_r\() p
+(NULL) K
+(, ") p
+(:) str
+(", &brkb\);) p n
+() N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( \(val == ) p
+(NULL) K
+(\) {) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (cerr << ") S
+(Parameter requied for ) str
+(" << par) p n
+(am << endl;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (ShowHelp\(\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (}) N
+() N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( \( strcmp\(") p
+(bam_file) str
+(", param\) == 0 \)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (pair_end_param.bam_file = val;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(histo_file) str
+(", param\) == 0 ) p n
+(\)) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (pair_end_param.histo_file = val;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(mean) str
+(", param\) == 0 \)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (pair_end_param.mean = atof\(val\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(stdev) str
+(", param\) == 0 \)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (pair_end_param.stdev = atof\(val\)) N
+(;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(read_length) str
+(", param\) == 0) p n
+( \)) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (pair_end_param.read_length = ato) N
+(i\(val\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(min_non_overlap) str
+(", param\) ) p n
+(== 0 \)) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (pair_end_param.min_non_overlap =) N
+( atoi\(val\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(discordant_z) str
+(", param\) == ) p n
+(0 \)) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (pair_end_param.discordant_z = at) N
+(oi\(val\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(back_distance) str
+(", param\) ==) p n
+( 0 \)) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (pair_end_param.back_distance = a) N
+(toi\(val\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(weight) str
+(", param\) == 0 \)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (pair_end_param.weight = atoi\(val) N
+(\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(id) str
+(", param\) == 0 \)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (pair_end_param.id = atoi\(val\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( {) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (cerr << ") S
+(Unknown pair end parameter:) str
+(" <) p n
+(< param << endl;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (ShowHelp\(\);) N
+(bp_id.cpp) (Page 8/14) (Jul 27, 12 9:25) title
+border
+grestore
+(Printed by Ryan Layer) rhead
+(bp_id.cpp) (4/7) (Friday July 27, 2012) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (9-10) 5
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+() p 8 T () S 16 T () S 24 T () S 32 T () S 40 T (}) N
+() S 8 T () S 16 T () S 24 T () S 32 T (}) N
+() S 8 T () S 16 T () S 24 T (}) N
+() S 8 T () S 16 T () S 24 T () S
+(if) K
+( \(check_pair_end_parameters\(&pair_end_param\) == ) p
+(false) k
+(\)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (ShowHelp\(\);) N
+() S 8 T () S 16 T () S 24 T () S
+(else) K n
+() p 8 T () S 16 T () S 24 T () S 32 T (pair_end_params.push_back\(pair_end_param\);) N
+() N
+() S 8 T () S 16 T () S 24 T (i++;) N
+() S 8 T () S 16 T () S 24 T () S
+(//}}}) c n
+() p 8 T () S 16 T (}) N
+() N
+() S 8 T () S 16 T () S
+(else) K
+( ) p
+(if) K
+(\(PARAMETER_CHECK\(") p
+(-bedpe) str
+(", 6, parameterLength\)\) {) p n
+() S 8 T () S 16 T () S 24 T () S
+(//{{{) c n
+() p 8 T () S 16 T () S 24 T () S
+(struct) k
+( bedpe_parameters bedpe_param;) p n
+() S 8 T () S 16 T () S 24 T (set_bedpe_parameter_defaults\(&bedpe_param\);) N
+() N
+() S 8 T () S 16 T () S 24 T () S
+(if) K
+( \(\(i+1\) < argc\) {) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S
+(char) k
+( *params = argv[i + 1];) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S
+(char) k
+( *param_val, *param, *val, *brka, *brkb;) p n
+() N
+() S 8 T () S 16 T () S 24 T () S 32 T () S
+(for) K
+( \() p 40 T (param_val = strtok_r\(params, ") S
+(,) str
+(", &brka\)) p n
+(;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (param_val;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (param_val = strtok_r\() S
+(NULL) K
+(, ") p
+(,) str
+(", ) p n
+(&brka\)\) {   ) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(char) k
+( *param = strtok_r\(param_val, ") p
+(:) str
+(", &) p n
+(brkb\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(char) k
+( *val = strtok_r\() p
+(NULL) K
+(, ") p
+(:) str
+(", &brkb\);) p n
+() N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( \(val == ) p
+(NULL) K
+(\) {) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (cerr << ") S
+(Parameter requied for ) str
+(" << par) p n
+(am << endl;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (ShowHelp\(\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (}) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () N
+() N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( \( strcmp\(") p
+(bedpe_file) str
+(", param\) == 0 \)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (bedpe_param.bedpe_file = val;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(distro_file) str
+(", param\) == 0 ) p n
+(\)) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (bedpe_param.distro_file = val;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(back_distance) str
+(", param\) ==) p n
+( 0 \)) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (bedpe_param.back_distance = atoi) N
+(\(val\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(weight) str
+(", param\) == 0 \)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (bedpe_param.weight = atoi\(val\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(id) str
+(", param\) == 0 \)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (bedpe_param.id = atoi\(val\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( {) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (cerr << ") S
+(Unknown bedpe parameter:) str
+(" <<) p n
+( param << endl;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (ShowHelp\(\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (}) N
+() S 8 T () S 16 T () S 24 T () S 32 T (}) N
+() S 8 T () S 16 T () S 24 T (}) N
+() S 8 T () S 16 T () S 24 T () S
+(if) K
+( \(check_bedpe_parameters\(&bedpe_param\) == ) p
+(false) k
+(\)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (ShowHelp\(\);) N
+() S 8 T () S 16 T () S 24 T () S
+(else) K n
+() p 8 T () S 16 T () S 24 T () S 32 T (bedpe_params.push_back\(bedpe_param\);) N
+() N
+() S 8 T () S 16 T () S 24 T (i++;) N
+() S 8 T () S 16 T () S 24 T () S
+(//}}}) c n
+() p 8 T () S 16 T (}) N
+() N
+() S 8 T () S 16 T () S
+(else) K
+( ) p
+(if) K
+(\(PARAMETER_CHECK\(") p
+(-sr) str
+(", 3, parameterLength\)\) {) p n
+() S 8 T () S 16 T () S 24 T () S
+(//{{{) c n
+() p 8 T () S 16 T () S 24 T () S
+(struct) k
+( split_read_parameters split_read_param;) p n
+(bp_id.cpp) (Page 9/14) (Jul 27, 12 9:25) title
+border
+/v 1 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+() p 8 T () S 16 T () S 24 T (set_split_read_parameter_defaults\(&split_read_param\);) N
+() N
+() S 8 T () S 16 T () S 24 T () S
+(if) K
+( \(\(i+1\) < argc\) {) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S
+(char) k
+( *params = argv[i + 1];) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S
+(char) k
+( *param_val, *param, *val, *brka, *brkb;) p n
+() N
+() S 8 T () S 16 T () S 24 T () S 32 T () S
+(for) K
+( \() p 40 T (param_val = strtok_r\(params, ") S
+(,) str
+(", &brka\)) p n
+(;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (param_val;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (param_val = strtok_r\() S
+(NULL) K
+(, ") p
+(,) str
+(", ) p n
+(&brka\)\) {   ) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(char) k
+( *param = strtok_r\(param_val, ") p
+(:) str
+(", &) p n
+(brkb\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(char) k
+( *val = strtok_r\() p
+(NULL) K
+(, ") p
+(:) str
+(", &brkb\);) p n
+() N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( \(val == ) p
+(NULL) K
+(\) {) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (cerr << ") S
+(Parameter requied for ) str
+(" << par) p n
+(am << endl;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (ShowHelp\(\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (}) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () N
+() N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(if) K
+( \( strcmp\(") p
+(bam_file) str
+(", param\) == 0 \)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (split_read_param.bam_file = val;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(back_distance) str
+(", param\) ==) p n
+( 0 \)) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (split_read_param.back_distance =) N
+( atoi\(val\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(min_non_overlap) str
+(", param\) ) p n
+(== 0 \)) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (split_read_param.min_non_overlap) N
+( = atoi\(val\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(weight) str
+(", param\) == 0 \)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (split_read_param.weight = atoi\(v) N
+(al\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( ) p
+(if) K
+( \( strcmp\(") p
+(id) str
+(", param\) == 0 \)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (split_read_param.id = atoi\(val\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S
+(else) K
+( {) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (cerr << ") S
+(Unknown split read parameter:) str
+(" ) p n
+(<< param << ) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T (endl;) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (ShowHelp\(\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (}) N
+() S 8 T () S 16 T () S 24 T () S 32 T (}) N
+() S 8 T () S 16 T () S 24 T (}) N
+() S 8 T () S 16 T () S 24 T () S
+(if) K
+( \(check_split_read_parameters\(&split_read_param\) == ) p
+(fa) k n
+(lse) S
+(\)) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (ShowHelp\(\);) N
+() S 8 T () S 16 T () S 24 T () S
+(else) K n
+() p 8 T () S 16 T () S 24 T () S 32 T (split_read_params.push_back\(split_read_param\);) N
+() N
+() S 8 T () S 16 T () S 24 T (i++;) N
+() S 8 T () S 16 T () S 24 T () S
+(//}}}) c n
+() p 8 T () S 16 T (}) N
+(        ) S
+(else) K
+( ) p
+(if) K
+(\(PARAMETER_CHECK\(") p
+(-tt) str
+(", 3, parameterLength\)\) {) p n
+(            ) S
+(if) K
+( \(\(i+1\) < argc\) {) p n
+(                trim_threshold = atof\(argv[i + 1]\);) N
+(                i++;) N
+() S 8 T () S 16 T () S 24 T (}) N
+() S 8 T () S 16 T (}) N
+(        ) S
+(else) K
+( {) p n
+(            cerr << endl << ") S
+(*****ERROR: Unrecognized parameter: ) str
+(" <<) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (argv[i] << ") S
+( *****) str
+(" << endl << endl;) p n
+() S 8 T () S 16 T () S 24 T (ShowHelp\(\);) N
+(        }) N
+() S 8 T (}) N
+() S 8 T () S
+(//}}}) c n
+() p n
+() S 8 T (UCSCBins<SV_BreakPoint*> l_bin, r_bin;) N
+(bp_id.cpp) (Page 10/14) (Jul 27, 12 9:25) title
+border
+grestore
+(Printed by Ryan Layer) rhead
+(bp_id.cpp) (5/7) (Friday July 27, 2012) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (11-12) 6
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+() p n
+() S 8 T (SV_BreakPoint::p_trim_threshold = trim_threshold;) N
+() S 8 T (SV_BreakPoint::p_merge_threshold = merge_threshold;) N
+() N
+() S 8 T () S
+(//{{{ Loop thorught pair end bams) c n
+() p 8 T (vector<) S
+(struct) k
+( pair_end_parameters>::iterator i_pe;) p n
+() N
+() S 8 T () S
+(for) K
+( \() p 16 T (i_pe = pair_end_params.begin\(\);) N
+() S 8 T () S 16 T () S 24 T (i_pe != pair_end_params.end\(\);) N
+() S 8 T () S 16 T () S 24 T (++i_pe\) {) N
+() N
+() S 8 T () S 16 T (SV_Pair::min_non_overlap = i_pe->min_non_overlap;) N
+() S 8 T () S 16 T (SV_Pair::insert_mean = i_pe->mean;) N
+() S 8 T () S 16 T (SV_Pair::insert_stdev = i_pe->stdev;) N
+() S 8 T () S 16 T (SV_Pair::insert_Z = i_pe->discordant_z;) N
+() S 8 T () S 16 T (SV_Pair::back_distance = i_pe->back_distance;) N
+() S 8 T () S 16 T (SV_Pair::read_length = i_pe->read_length;) N
+() S 8 T () S 16 T () S
+(//SV_Pair::weight = i_pe->weight;) c n
+() p 8 T () S 16 T () S
+(//SV_Pair::id = i_pe->id;) c n
+() p n
+() S 8 T () S 16 T () S
+(int) k
+( distro_size;) p n
+() S 8 T () S 16 T () S
+(unsigned) k
+( ) p
+(int) k
+( start, end;) p n
+() N
+() S 8 T () S 16 T (SV_Pair::histo_size = read_histo_file\(i_pe->histo_file, ) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+() S 0 T (   &\(SV_Pair::histo\),) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+() S 0 T (   &start,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+() S 0 T (   &end\);) N
+() N
+() S 8 T () S 16 T (SV_Pair::histo_start = start;) N
+() S 8 T () S 16 T (SV_Pair::histo_end = end;) N
+() N
+() S 8 T () S 16 T (SV_Pair::set_distro_from_histo\(\);) N
+() N
+() S 8 T () S 16 T () S
+(// open the BAM file) c n
+() p 8 T () S 16 T (BamReader reader;) N
+() S 8 T () S 16 T (reader.Open\(i_pe->bam_file\);) N
+() N
+() S 8 T () S 16 T () S
+(// get header & reference information) c n
+() p 8 T () S 16 T (string header = reader.GetHeaderText\(\);) N
+() S 8 T () S 16 T (RefVector refs = reader.GetReferenceData\(\);) N
+() N
+() S 8 T () S 16 T () S
+(// make map for matching pairs) c n
+() p 8 T () S 16 T (map<string, BamAlignment> mapped_pairs;) N
+() S 8 T () S 16 T () N
+() S 8 T () S 16 T (cerr << ") S
+(Readin Pair End BAM file ) str
+(" << i_pe->bam_file << ") p
+(...) str
+(" << endl;) p n
+() S 8 T () S 16 T () S
+(// rip through the BAM file and convert each mapped entry to BED) c n
+() p 8 T () S 16 T (BamAlignment bam;) N
+() S 8 T () S 16 T () S
+(while) K
+( \(reader.GetNextAlignment\(bam\)\) {) p n
+() S 8 T () S 16 T () S 24 T () S
+(if) K
+( \(bam.IsMapped\(\) && bam.IsMateMapped\(\)\) { ) p
+(//Paired rea) c n
+(d) N
+() p 8 T () S 16 T () S 24 T () S 32 T (mapped_pair\(bam,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (refs,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (mapped_pairs,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (l_bin,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (r_bin,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (i_pe->weight,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T (i_pe->id\);) N
+() S 8 T () S 16 T () S 24 T (}) N
+() S 8 T () S 16 T () S 24 T () S
+(// split reads) c n
+() p 8 T () S 16 T () S 24 T () S
+(// orphan pairs) c n
+() p 8 T () S 16 T (}) N
+() S 8 T () S 16 T (cerr << ") S
+(Done.) str
+(" << endl;) p n
+() S 8 T () S 16 T (reader.Close\(\);) N
+() S 8 T (}) N
+() S 8 T () S
+(//}}}) c n
+() p 8 T () N
+(bp_id.cpp) (Page 11/14) (Jul 27, 12 9:25) title
+border
+/v 1 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+() p 8 T () S
+(//{{{ Loop thorught split read bams) c n
+() p 8 T (vector<) S
+(struct) k
+( split_read_parameters>::iterator i_sr;) p n
+() S 8 T () S
+(for) K
+( \() p 16 T (i_sr = split_read_params.begin\(\);) N
+() S 8 T () S 16 T () S 24 T (i_sr != split_read_params.end\(\);) N
+() S 8 T () S 16 T () S 24 T (++i_sr\) {) N
+() N
+() S 8 T () S 16 T (SV_SplitRead::back_distance = i_sr->back_distance;) N
+() S 8 T () S 16 T (SV_SplitRead::min_non_overlap = i_sr->min_non_overlap;) N
+() S 8 T () S 16 T () S
+(//SV_SplitRead::weight = i_sr->weight;) c n
+() p 8 T () S 16 T () S
+(//SV_SplitRead::id = i_sr->id;) c n
+() p n
+() S 8 T () S 16 T () S
+(// open the BAM file) c n
+() p 8 T () S 16 T (BamReader reader;) N
+() S 8 T () S 16 T (reader.Open\(i_sr->bam_file\);) N
+() N
+() S 8 T () S 16 T () S
+(// get header & reference information) c n
+() p 8 T () S 16 T (string header = reader.GetHeaderText\(\);) N
+() S 8 T () S 16 T () S
+(const) K
+( RefVector refs = reader.GetReferenceData\(\);) p n
+() S 8 T () S 16 T (BamAlignment currBam;) N
+() S 8 T () S 16 T (BamAlignment prevBam;) N
+() S 8 T () S 16 T (vector< BamAlignment > block;) N
+() S 8 T () S 16 T () S
+(bool) k
+( initial = ) p
+(true) k
+(;) p n
+() N
+() S 8 T () S 16 T (cerr << ") S
+(Readin Split Read BAM file ) str
+(" << ) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (i_sr->bam_file << ") S
+(...) str
+(" << endl;) p n
+() S 8 T () S 16 T () S
+(// rip through the BAM file and convert each mapped entry to BED) c n
+() p 8 T () S 16 T () S
+(while) K
+( \(reader.GetNextAlignment\(currBam\)\) {) p n
+() N
+() S 8 T () S 16 T () S 24 T () S
+(//skip the first line of the bam and put curr to prev) c n
+() p 8 T () S 16 T () S 24 T () S
+(if) K
+( \(initial\) {) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (initial = ) S
+(false) k
+(;) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (prevBam = currBam;) N
+() S 8 T () S 16 T () S 24 T (}) N
+() N
+() S 8 T () S 16 T () S 24 T () S
+(//Throw if bam is not in read name order        ) c n
+() p 8 T () S 16 T () S 24 T () S
+(if) K
+( \(strnum_cmp\(prevBam.Name.c_str\(\), currBam.Name.c_str\() p n
+(\)\) > 0\) {) N
+() S 8 T () S 16 T () S 24 T () S 32 T (cerr << endl << ") S
+(*****) str
+(" << endl <<) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (") S
+(*****ERROR: Bam is not sorted in read nam) str n
+(e order ) S
+(" <<) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (endl << ") S
+(*****) str
+(" << endl;) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (exit\(1\);) N
+() S 8 T () S 16 T () S 24 T (}) N
+() N
+() S 8 T () S 16 T () S 24 T () S
+(//A new block has begun) c n
+() p 8 T () S 16 T () S 24 T () S
+(if) K
+( \(strnum_cmp\(prevBam.Name.c_str\(\), currBam.Name.c_str\() p n
+(\)\) != 0\) {) N
+() N
+() S 8 T () S 16 T () S 24 T () S 32 T (split_read\(block,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (   refs,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (   l_bin,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (   r_bin,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (   i_sr->weight,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T (   i_sr->id\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T (block.clear\(\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T (block.push_back\(currBam\);) N
+() S 8 T () S 16 T () S 24 T () S 32 T (prevBam = currBam;) N
+() S 8 T () S 16 T () S 24 T (} ) S
+(else) K
+( {) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (block.push_back\(currBam\);) N
+() S 8 T () S 16 T () S 24 T (}) N
+() S 8 T () S 16 T (}) N
+() N
+() S 8 T () S 16 T (split_read\(block,) N
+() S 8 T () S 16 T () S 24 T () S 32 T (   refs,) N
+() S 8 T () S 16 T () S 24 T () S 32 T (   l_bin,) N
+() S 8 T () S 16 T () S 24 T () S 32 T (   r_bin,) N
+() S 8 T () S 16 T () S 24 T () S 32 T (   i_sr->weight,) N
+() S 8 T () S 16 T () S 24 T () S 32 T (   i_sr->id\);) N
+() S 8 T () S 16 T (reader.Close\(\);) S 32 T () S 40 T () S 48 T () N
+(bp_id.cpp) (Page 12/14) (Jul 27, 12 9:25) title
+border
+grestore
+(Printed by Ryan Layer) rhead
+(bp_id.cpp) (6/7) (Friday July 27, 2012) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (13-14) 7
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+() p 8 T (}) N
+() S 8 T () S
+(//}}}) c n
+() p n
+() S 8 T () S
+(//{{{ Loop thorught bedpes) c n
+() p 8 T (vector<) S
+(struct) k
+( bedpe_parameters>::iterator i_bedpe;) p n
+() N
+() S 8 T () S
+(for) K
+( \() p 16 T (i_bedpe = bedpe_params.begin\(\);) N
+() S 8 T () S 16 T () S 24 T (i_bedpe != bedpe_params.end\(\);) N
+() S 8 T () S 16 T () S 24 T (++i_bedpe\) {) N
+() N
+() S 8 T () S 16 T (SV_Bedpe::distro_size = read_distro_file\(i_bedpe->distro_file,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+() S 0 T () S 8 T ( &\(SV_Bedpe::distro\),) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+() S 0 T () S 8 T ( &\(SV_Bedpe::distro_start\),) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+() S 0 T () S 8 T ( &\(SV_Bedpe::distro_start\)\);) N
+() N
+() S 8 T () S 16 T (SV_Bedpe::back_distance = i_bedpe->back_distance;) N
+() S 8 T () S 16 T () S
+(//SV_Bedpe::weight = i_bedpe->weight;) c n
+() p 8 T () S 16 T () S
+(//SV_Bedpe::id = i_bedpe->id;) c n
+() p n
+() N
+() S 8 T () S 16 T (BedFilePE *bedpe= ) S
+(new) K
+( BedFilePE\(i_bedpe->bedpe_file\);) p n
+() S 8 T () S 16 T (BEDPE bedpeEntry, nullBedpe;) N
+() S 8 T () S 16 T () S
+(int) k
+( lineNum = 0;) p n
+() S 8 T () S 16 T (BedLineStatus bedpeStatus;) N
+() S 8 T () S 16 T (bedpe->Open\(\);) N
+() S 8 T () S 16 T (cerr << ") S
+(Readin BEDPE file ) str
+(" << i_bedpe->bedpe_file << ") p
+(...) str
+(" << endl;) p n
+() S 8 T () S 16 T () S
+(while) K
+( \() p 24 T (\(bedpeStatus = bedpe->GetNextBedPE\(bedpeEntry, lineNum\)\)) N
+( != ) N
+() S 8 T () S 16 T () S 24 T () S 32 T (BED_INVALID\) {  ) N
+() S 8 T () S 16 T () S 24 T () S
+(if) K
+( \(bedpeStatus == BED_VALID\) {) p n
+() N
+() S 8 T () S 16 T () S 24 T () S 32 T (SV_Bedpe *new_bedpe = ) S
+(new) K
+( SV_Bedpe\(&bedpeEntry,) p n
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+() S 0 T () S 8 T (   i_bedpe->weight,) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T () S 48 T () S 56 T () S 64 T () S 72 T () S 80 T () N
+() S 0 T () S 8 T (   i_bedpe->id\);) N
+() N
+() S 8 T () S 16 T () S 24 T () S 32 T (SV_BreakPoint *new_bp = new_bedpe->get_bp\(\);) N
+(#ifdef) K
+( TRACE) p n
+() S 8 T () S 16 T () S 24 T (cerr << ") S
+(BEDPE\\t) str
+(" << *new_bp << endl;) p n
+(#endif) K n
+() p 8 T () S 16 T () S 24 T () S 32 T (new_bp->cluster\(l_bin, r_bin\);) N
+() N
+() S 8 T () S 16 T () S 24 T () S 32 T (bedpeEntry = nullBedpe;) N
+() S 8 T () S 16 T () S 24 T (}) N
+() S 8 T () S 16 T (}) N
+() S 8 T () S 16 T (bedpe->Close\(\);) N
+() S 8 T (}) N
+() S 8 T () S
+(//}}}) c n
+() p n
+() S 8 T () S
+(//{{{ Call break points) c n
+() p 8 T (vector< UCSCElement<SV_BreakPoint*> > values = r_bin.values\(\);) N
+() S 8 T (vector< UCSCElement<SV_BreakPoint*> >::iterator it;) N
+() N
+() S 8 T () S
+(/*) c n
+() S 8 T (cerr << "Sorting..." << endl;) N
+() S 8 T (sort\(values.begin\(\), values.end\(\),) N
+() S 8 T () S 16 T () S 24 T (UCSCElement<SV_BreakPoint*>::sort_ucscelement_by_value\);) N
+() S 8 T (cerr << "Done." << endl;) N
+() N
+() S 8 T (cerr << "Unique..." << endl;) N
+() S 8 T (it = unique\(values.begin\(\),) N
+() S 8 T () S 16 T () S 24 T () S 32 T (values.end\(\),) N
+() S 8 T () S 16 T () S 24 T () S 32 T (UCSCElement<SV_BreakPoint*>::compare_ucscelement) N
+(_by_value\);) N
+() S 8 T (cerr << "Done." << endl;) N
+(bp_id.cpp) (Page 13/14) (Jul 27, 12 9:25) title
+border
+/v 1 store
+/x0 x v get 3.147420 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+() c n
+() S 8 T (values.resize\( it - values.begin\(\) \);) N
+() S 8 T (*/) N
+() p n
+() S 8 T (cerr << ") S
+(Sorting...) str
+(" << endl;) p n
+() S 8 T (sort\(values.begin\(\), values.end\(\),) N
+() S 8 T () S 16 T () S 24 T (UCSCElement<SV_BreakPoint*>::sort_ucscelement_by_start\);) N
+() S 8 T (cerr << ") S
+(Done.) str
+(" << endl;) p n
+() N
+() S 8 T () S
+(unsigned) k
+( ) p
+(int) k
+( id = 0;) p n
+() N
+() S 8 T () S
+(int) k
+( *sizes = \() p
+(int) k
+( *\) malloc \(values.size\(\) * ) p
+(sizeof) K
+(\() p
+(int) k
+(\)\);) p n
+() S 8 T () S
+(int) k
+( i = 0;) p n
+() N
+() S 8 T (cerr << ") S
+(Finding size distro...) str
+(" << endl;) p n
+() S 8 T () S
+(for) K
+( \(it = values.begin\(\); it < values.end\(\); ++it\) {) p n
+() S 8 T () S 16 T (SV_BreakPoint *bp = it->value;) N
+() S 8 T () S 16 T () S
+(if) K
+( \( bp->evidence.size\(\) > min_evidence\) {) p n
+() S 8 T () S 16 T () S 24 T (sizes[i] = bp->evidence.size\(\);) N
+() S 8 T () S 16 T () S 24 T (++i;) N
+() S 8 T () S 16 T (}) N
+() S 8 T (}) N
+() N
+() S 8 T () S
+(double) k
+( bp_evidence_count_mean = gsl_stats_int_mean\(sizes, 1, i\);) p n
+() S 8 T () S
+(double) k
+( bp_evidence_count_stdev = gsl_stats_int_sd_m\(sizes, 1, i, ) p n
+() S 8 T () S 16 T () S 24 T (bp_evidence_count_mean\);) N
+() S 8 T (cerr << ") S
+(Done.) str
+(" << endl;) p n
+() N
+() S 8 T () S
+(//cerr << "mean:" << bp_evidence_count_mean << "\\t" ) c n
+() p 8 T () S 16 T () S
+(//<< "stdev:" << bp_evidence_count_stdev << endl;) c n
+() p n
+() S 8 T () S
+(for) K
+( \(it = values.begin\(\); it < values.end\(\); ++it\) {) p n
+() S 8 T () S 16 T (SV_BreakPoint *bp = it->value;) N
+() S 8 T () S 16 T () S
+(//cerr << bp->evidence.size\(\) << endl;) c n
+() p 8 T () S 16 T () S
+(if) K
+( \( \(bp->evidence.size\(\) >= min_evidence\) &&) p n
+() S 8 T () S 16 T () S 24 T ( \(bp->evidence.size\(\) <= \() N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (bp_evidence_count_mean + ) N
+() S 8 T () S 16 T () S 24 T () S 32 T () S 40 T (bp_evidence_count_stdev*bp_evidence_coun) N
+(t_Z\) \) \) {) N
+() S 8 T () S 16 T () S 24 T ( ) N
+() S 8 T () S 16 T () S 24 T () S
+(//bp->trim_intervals\(\);) c n
+() p 8 T () S 16 T () S 24 T () S
+(//bp->print_bedpe\(0\);) c n
+() p 8 T () S 16 T () S 24 T () S
+(//cout << *bp << endl;) c n
+() p n
+() S 8 T () S 16 T () S 24 T () S
+(//SV_Evidence *tmp = bp->evidence[0];) c n
+() p 8 T () S 16 T () S 24 T () S
+(//tmp->print_evidence\(\);) c 56 T () N
+() p 8 T () S 16 T () S 24 T () S
+(//tmp = bp->evidence[1];) c n
+() p 8 T () S 16 T () S 24 T () S
+(//tmp->print_evidence\(\);) c 56 T () N
+() p n
+(#if) K
+( 0) p n
+() S 8 T () S 16 T () S 24 T (vector<SV_Evidence*>::iterator it;) N
+() S 8 T () S 16 T () S 24 T () S
+(for) K
+( \(it = bp->evidence.begin\(\); it < bp->evidence.end\(\);) p n
+( ++it\) {) N
+() S 8 T () S 16 T () S 24 T () S 32 T (SV_Evidence *sv_e = *it;) N
+() S 8 T () S 16 T () S 24 T () S 32 T (cout << ") S
+(\\t) str
+(";) p n
+() S 8 T () S 16 T () S 24 T () S 32 T (sv_e->print_evidence\(\);) N
+() S 8 T () S 16 T () S 24 T (}) N
+(#endif) K n
+() p 8 T () S 16 T (}) N
+() S 8 T (}) N
+() S 8 T () S
+(//}}}) c n
+() p n
+() S 8 T () S
+(return) K
+( 1;) p n
+(}) N
+(//}}}) c n
+(bp_id.cpp) (Page 14/14) (Jul 27, 12 9:25) title
+border
+grestore
+(Printed by Ryan Layer) rhead
+(bp_id.cpp) (7/7) (Friday July 27, 2012) footer
+end % of iso1dict
+pagesave restore
+showpage
+
+%%Trailer
+end
+%%EOF

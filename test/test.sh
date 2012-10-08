@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo "Testing lumpy paired-end"
+./bp_pe.sh 1 20 1e-3 150 \
+	../data/pe.pos_sorted.bam \
+	../data/sim.bedpe
+
+echo "Testing lumpy split-read"
+./bp_sr.sh 1 20 1e-3 150 \
+	../data/sr.pos_sorted.bam \
+	../data/sim.bedpe
+
+echo "Testing lumpy paired-end and split-read"
+./bp_pesr.sh 1 20 1e-3 150 \
+	../data/pe.pos_sorted.bam \
+	../data/sr.pos_sorted.bam \
+	../data/sim.bedpe
