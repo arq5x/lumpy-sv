@@ -1,0 +1,3 @@
+GSL_INCLUDE=-I/home/rl6sf/src/gsl/gsl
+#GSL_LINK=-L/sw/lib/
+GSL_LINK=-L/home/rl6sf/src/gsl

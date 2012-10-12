@@ -19,7 +19,7 @@
 #include <map>
 using namespace std;
 
-#include "SV_Breakpoint.h"
+#include "SV_BreakPoint.h"
 #include "SV_EvidenceReader.h"
 #include "api/BamReader.h"
 #include "api/BamAux.h"

@@ -1,10 +1,7 @@
+include ../../defs.local
 UTILITIES_DIR = ../utils/
 OBJ_DIR = ../../obj/
 BIN_DIR = ../../bin/
-
-GSL_INCLUDE=-I/sw/include/ \
-			-I/sw/include/gsl
-GSL_LINK=-L/sw/lib/
 
 # -------------------
 # define our includes
@@ -54,7 +51,7 @@ $(PROGRAM): $(BUILT_OBJECTS) $(EXT_OBJECTS)
 	@$(CXX) $(LDFLAGS) $(CXXFLAGS) -o $(BIN_DIR)/$@ $^ \
 		$(GSL_LINK) -L$(UTILITIES_DIR)/BamTools/lib/ -lbamtools \
 		$(LIBS) \
-		-lz -lgsl  -lm
+		-lz -lgsl  -lm -lgslcblas
 
 $(OBJ_DIR)/%.o: %.cpp
 	@echo "  * compiling" $<
