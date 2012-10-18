@@ -101,7 +101,7 @@ set_statics()
 	SV_Bedpe::distro_size = read_distro_file(distro_file,
 											 &(SV_Bedpe::distro),
 											 &(SV_Bedpe::distro_start),
-											 &(SV_Bedpe::distro_start));
+											 &(SV_Bedpe::distro_end));
 
 	SV_Bedpe::back_distance = back_distance;
 }
