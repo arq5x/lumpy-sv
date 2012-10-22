@@ -25,11 +25,10 @@ OUTF=$2
 CZ=$3
 RL=$4
 
-DIR=`dirname $0`
-
+SCRIPT_DIR=`dirname $0`
 
 OUT=`samtools view $INF\
-	| $DIR/pairend_distro.pl \
+	| $SCRIPT_DIR/pairend_distro.pl \
 	-rl 150 \
 	-X $CZ \
 	-N 100000 \
