@@ -15,6 +15,10 @@
 #include "SV_Tools.h"
 
 #include <string>
+#include <string.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 using namespace std;
 
