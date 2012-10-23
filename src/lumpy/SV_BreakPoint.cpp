@@ -29,7 +29,7 @@ const int SV_BreakPoint::INVERSION;
 SV_BreakPoint::
 SV_BreakPoint(SV_Evidence *e)
 {
-	//evidence.push_back(e);
+	evidence.push_back(e);
 
 	ids[e->id] = 1;
 }
@@ -125,17 +125,17 @@ merge(SV_BreakPoint *p)
 	// overlaps the current a interval and bt_overlap_intr overlaps the
 	// current b interval
 	// if this->a overalps p->a then ll will be true, otherise false
-	bool ll = true;
+	//bool ll = true;
 	struct breakpoint_interval *a_overlap_intr, *b_overlap_intr;
 
 	if ( does_intersect(&interval_l, &(p->interval_l), false) &&
 		 does_intersect(&interval_r, &(p->interval_r), false) ) {
-		ll = true;
+		//ll = true;
 		a_overlap_intr = &(p->interval_l);
 		b_overlap_intr = &(p->interval_r);
 	} else if ( does_intersect(&interval_r, &(p->interval_l), false) &&
 				does_intersect(&interval_l, &(p->interval_r), false) ) {
-		ll = false;
+		//ll = false;
 		a_overlap_intr = &(p->interval_r);
 		b_overlap_intr = &(p->interval_l);
 	} else {
@@ -305,11 +305,11 @@ test_interval_merge(struct breakpoint_interval *curr_intr,
 	// new:    ...--------|
 	// n_clip          ||||
 	CHR_POS curr_clip_end = 0;
-	CHR_POS new_clip_end = 0;
+	//CHR_POS new_clip_end = 0;
 	if (curr_intr->i.end > new_intr->i.end) // Case 1
 		curr_clip_end = curr_intr->i.end - new_intr->i.end;
-	else if (curr_intr->i.end < new_intr->i.end) // Case 2
-		new_clip_end = new_intr->i.end - curr_intr->i.end;
+	//else if (curr_intr->i.end < new_intr->i.end) // Case 2
+		//new_clip_end = new_intr->i.end - curr_intr->i.end;
 
 
 	// Length of the new break point interval
@@ -517,7 +517,7 @@ SV_BreakPoint:: trim_interval(struct breakpoint_interval *curr_interval,
 		curr_interval->i.start = curr_interval->i.start + v_first;
 		curr_interval->i.end = curr_interval->i.start + (v_last - v_first);
 
-		int v_size = curr_interval->i.end - curr_interval->i.start + 1;
+		unsigned int v_size = curr_interval->i.end - curr_interval->i.start + 1;
 
 		free(curr_interval->p);
 		curr_interval->p = (log_space *) malloc(v_size * sizeof(log_space));
@@ -717,9 +717,10 @@ cluster(UCSCBins<SV_BreakPoint*> &l_bin,
 					if (r_it->value == bp)
 						break;
 
-				int v = l_bin.remove(*l_it, false, false, true);
-
-				v = r_bin.remove(*r_it, false, false, true);
+				//int v = l_bin.remove(*l_it, false, false, true);
+				//v = r_bin.remove(*r_it, false, false, true);
+				l_bin.remove(*l_it, false, false, true);
+				r_bin.remove(*r_it, false, false, true);
 
 				delete this;
 
