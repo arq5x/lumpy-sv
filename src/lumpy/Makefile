@@ -53,7 +53,7 @@ $(PROGRAM): $(BUILT_OBJECTS) $(EXT_OBJECTS)
 	@$(CXX) $(LDFLAGS) $(CXXFLAGS) -o $(BIN_DIR)/$@ $^ \
 		$(GSL_LINK) -L$(UTILITIES_DIR)/BamTools/lib/ -lbamtools \
 		$(LIBS) \
-		-lz -lgsl  -lm -lgslcblas
+		-lz -lgsl  -lm -lgslcblas -ldl -lpthread
 
 $(OBJ_DIR)/%.o: %.cpp
 	@echo "  * compiling" $<
