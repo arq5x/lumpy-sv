@@ -14,8 +14,9 @@ INCLUDES = -I$(UTILITIES_DIR)/bedFile/ \
            -I$(UTILITIES_DIR)/fileType/ \
            -I$(UTILITIES_DIR)/BamTools/include \
 		   -I$(UTILITIES_DIR)/BamTools-Ancillary \
-           -I$(UTILITIES_DIR)/sequenceUtilities/ \
+           -I$(UTILITIES_DIR)/sequenceUtilities \
            -I$(UTILITIES_DIR)/UCSCBins \
+           -I$(UTILITIES_DIR)/sqlite3 \
            $(GSL_INCLUDE)
 
 # ----------------------------------
@@ -38,7 +39,8 @@ _EXT_OBJECTS=BamAncillary.o \
 			 sequenceUtils.o \
 			 gzstream.o \
 			 bedFilePE.o \
-			 fileType.o 
+			 fileType.o \
+			 sqlite3.o 
 EXT_OBJECTS=$(patsubst %,$(OBJ_DIR)/%,$(_EXT_OBJECTS))
 BUILT_OBJECTS= $(patsubst %,$(OBJ_DIR)/%,$(OBJECTS))
 PROGRAM=lumpy
@@ -59,14 +61,16 @@ $(OBJ_DIR)/%.o: %.cpp
 
 $(EXT_OBJECTS):
 	@$(MAKE) --no-print-directory -C $(UTILITIES_DIR)/BamTools-Ancillary/
+	@$(MAKE) --no-print-directory -C $(UTILITIES_DIR)/BamTools/
 	@$(MAKE) --no-print-directory -C $(UTILITIES_DIR)/bedFilePE/
 	@$(MAKE) --no-print-directory -C $(UTILITIES_DIR)/sequenceUtilities/
 	@$(MAKE) --no-print-directory -C $(UTILITIES_DIR)/lineFileUtilities/
 	@$(MAKE) --no-print-directory -C $(UTILITIES_DIR)/gzstream/
 	@$(MAKE) --no-print-directory -C $(UTILITIES_DIR)/fileType/ 
+	@$(MAKE) --no-print-directory -C $(UTILITIES_DIR)/sqlite3/ 
 	
 clean:
 	@echo "Cleaning up."
-	rm -f $(BUILT_OBJECTS) $(EXT_OBJECTS)
+	rm -f $(BUILT_OBJECTS)
 
 .PHONY: clean

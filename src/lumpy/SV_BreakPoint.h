@@ -22,6 +22,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <iostream>
 
 using namespace std;
@@ -67,6 +68,7 @@ class SV_BreakPoint
 		int weight;
 
 		vector<SV_Evidence*> evidence;
+		map<int, int> ids;
 
 		SV_BreakPoint(SV_Evidence *e);
 
@@ -75,8 +77,6 @@ class SV_BreakPoint
 		~SV_BreakPoint();
 
 		void free_evidence();
-
-		void add_evidence(SV_Evidence *e);
 
 		static bool does_intersect(struct breakpoint_interval *a,
 								   struct breakpoint_interval *b,

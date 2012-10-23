@@ -354,6 +354,16 @@ int main(int argc, char* argv[])
 			show_evidence = true;
 		}
 
+		/*
+        else if(PARAMETER_CHECK("-s", 2, parameterLength)) {
+            if ((i+1) < argc) {
+				store_evidence = true;
+                evidence_db = argv[i + 1];
+				i++;
+			}
+		}
+		*/
+
         else {
             cerr << endl << "*****ERROR: Unrecognized parameter: " <<
 					argv[i] << " *****" << endl << endl;

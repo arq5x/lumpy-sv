@@ -29,7 +29,9 @@ const int SV_BreakPoint::INVERSION;
 SV_BreakPoint::
 SV_BreakPoint(SV_Evidence *e)
 {
-	evidence.push_back(e);
+	//evidence.push_back(e);
+
+	ids[e->id] = 1;
 }
 //}}}
 
@@ -37,7 +39,6 @@ SV_BreakPoint(SV_Evidence *e)
 SV_BreakPoint::
 ~SV_BreakPoint()
 {
-
 	free(interval_l.p);
 	free(interval_r.p);
 }
@@ -92,15 +93,6 @@ ostream& operator<< (ostream& out, const SV_BreakPoint& b)
 		b.evidence.size();
 
 	return out;
-}
-//}}}
-
-//{{{ void SV_BreakPoint:: add_evidence(SV_Evidence *e)
-void
-SV_BreakPoint::
-add_evidence(SV_Evidence *e)
-{
-	evidence.push_back(e);
 }
 //}}}
 
@@ -250,6 +242,15 @@ merge(SV_BreakPoint *p)
 		for (ev_it = p->evidence.begin(); ev_it < p->evidence.end(); ++ev_it)
 			evidence.push_back(*ev_it);
 
+		map<int, int>::iterator id_it;
+
+		for (id_it = p->ids.begin(); id_it != p->ids.end(); ++id_it) {
+			if ( ids.find( id_it->first ) == ids.end() )
+				ids[id_it->first] = 0;
+
+			ids[id_it->first] += id_it->second;
+		}
+
 		this->weight += p->weight;
 
 		return true;
@@ -326,10 +327,11 @@ test_interval_merge(struct breakpoint_interval *curr_intr,
 	*merged_prob = (log_space *) malloc(new_len * sizeof(log_space));
 
 	log_space ls_max = -INFINITY;
-	
-	for (i = 0; i < new_len; ++i) 
+
+	for (i = 0; i < new_len; ++i) {
 		(*merged_prob)[i] = ls_multiply(curr_intr->p[i + curr_clip_start],
 										new_intr->p[i + new_clip_start]);
+	}
 
 
 	for (i = 0; i < new_len; ++i)
@@ -338,19 +340,9 @@ test_interval_merge(struct breakpoint_interval *curr_intr,
 
 	if (ls_max < ls_threshold )
 		return false;
-	else {
-		// Normalize
-/*
-		log_space ls_sum = -INFINITY;
-
-		for (i = 0; i < new_len; ++i)
-			ls_sum = ls_add(ls_sum, (*merged_prob)[i]);
-
-		for (i = 0; i < new_len; ++i)
-			(*merged_prob)[i] = ls_divide( (*merged_prob)[i], ls_sum );
-*/
+	else 
 		return true;
-	}
+	
 }
 //}}}
 
@@ -590,6 +582,7 @@ print_bedpe(int score)
 		//ascii_interval_prob(&interval_l) << "\t" <<
 		//ascii_interval_prob(&interval_r) <<
 
+	/*
 	vector <int> ids = get_evidence_ids();
 	vector <int>::iterator i;
 	cout << "ids:";
@@ -597,6 +590,23 @@ print_bedpe(int score)
 		if (i != ids.begin())
 			cout << ",";
 		cout << *i;
+	}
+	*/
+
+	map<int, int>::iterator ids_it;
+	vector<int> _ids;
+	for ( ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
+		_ids.push_back(ids_it->first);
+
+	sort(_ids.begin(), _ids.end());
+
+	vector<int>::iterator _ids_it;
+
+	cout << "ids:";
+	for ( _ids_it = _ids.begin(); _ids_it != _ids.end(); ++_ids_it) {
+		if (_ids_it != _ids.begin())
+			cout << ";";
+		cout << *_ids_it << "," << ids[*_ids_it];
 	}
 		
 	cout << endl;

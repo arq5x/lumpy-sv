@@ -143,10 +143,10 @@ set_bp_interval_start_end(struct breakpoint_interval *i,
 	i->i.strand = target_interval->strand;
 	if ( i->i.strand == '+' ) {
 		i->i.start = target_interval->end - back_distance;
-		i->i.end = i->i.start + distro_size;
+		i->i.end = i->i.start + distro_size - 1;
 	} else {
 		i->i.end = target_interval->start + back_distance;
-		i->i.start = i->i.end - distro_size;
+		i->i.start = i->i.end - distro_size + 1;
 	}
 }
 //}}}
