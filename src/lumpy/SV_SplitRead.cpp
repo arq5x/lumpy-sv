@@ -95,8 +95,10 @@ SV_SplitRead::
 SV_SplitRead(vector< BamAlignment > &block,
 			 const RefVector &refs,
 			 int _weight,
-			 int _id)
+			 int _id,
+			 int _sample_id)
 {
+	sample_id = _sample_id;
 
 	if ( block.at(0).MapQuality < block.at(1).MapQuality )
 		min_mapping_quality = block.at(0).MapQuality;
@@ -203,8 +205,10 @@ SV_SplitRead(const BamAlignment &bam_a,
 			 const BamAlignment &bam_b,
 			 const RefVector &refs,
 			 int _weight,
-			 int _id)
+			 int _id,
+			 int _sample_id)
 {
+	sample_id = _sample_id;
 
 	if ( bam_a.MapQuality < bam_b.MapQuality )
 		min_mapping_quality = bam_a.MapQuality;
@@ -350,27 +354,25 @@ get_bp()
 	}  else {
 		abort();
 	}
-	set_bp_interval_probability(&(new_bp->interval_l));
-	set_bp_interval_probability(&(new_bp->interval_r));
+	//set_bp_interval_probability(&(new_bp->interval_l));
+	//set_bp_interval_probability(&(new_bp->interval_r));
+	new_bp->interval_r.p = NULL;
+	new_bp->interval_l.p = NULL;
 
-	//cerr << *new_bp << endl;
-	//cerr << 
-		//*new_bp << "\t" << 
-		//(new_bp->interval_l.i.end - new_bp->interval_r.i.start) << endl;
 	new_bp->weight = weight;
 
 	return new_bp;
 }
 //}}}
 
-//{{{ void SV_Bedpe:: set_interval_probability()
-void
+//{{{ log_space* SV_SplitRead:: get_bp_interval_probability(char strand)
+log_space*
 SV_SplitRead::
-set_bp_interval_probability(struct breakpoint_interval *i)
+get_bp_interval_probability(char strand)
 {
     double lambda = log(0.0001)/(-1 * back_distance);
 
-	unsigned int distro_size = i->i.end - i->i.start;
+	unsigned int distro_size = 2*back_distance;
 	log_space *tmp_p = (log_space *) malloc( distro_size * sizeof(log_space));
 	int j;
 	for (j = 0; j < back_distance; ++j)
@@ -380,8 +382,7 @@ set_bp_interval_probability(struct breakpoint_interval *i)
 			tmp_p[j] = get_ls(
 					exp(-1*lambda*(back_distance - (distro_size - j - 1))));
 
-	i->p = tmp_p;
-
+	return tmp_p;
 }
 //}}}
 
@@ -473,7 +474,8 @@ process_split(const BamAlignment &curr,
 			  UCSCBins<SV_BreakPoint*> &l_bin,
 			  UCSCBins<SV_BreakPoint*> &r_bin,
 			  int weight,
-			  int id)
+			  int id,
+			  int sample_id)
 {
 
 	if (mapped_splits.find(curr.Name) == mapped_splits.end())
@@ -484,7 +486,8 @@ process_split(const BamAlignment &curr,
 															curr,
 															refs,
 															weight,
-															id);
+															id,
+															sample_id);
 			SV_BreakPoint *new_bp = NULL;
 			if (new_split_read->is_sane()) {
 				new_bp = new_split_read->get_bp();

@@ -16,19 +16,30 @@
 #define __SV_Evidence_H__
 
 #include <iostream>
+#include <map>
+#include <utility>
 
 using namespace std;
 
 #include "log_space.h"
+#include <map>
 
 class SV_Evidence
 {
 
 	public:
-		virtual void print_evidence();
+		static map<int, pair<log_space*,log_space*> > distros;
+
 		int weight;
 		int id;
+		int sample_id;
 		int type;
+
+		virtual void set_bp_interval_probability(struct breakpoint_interval *i);
+
+		virtual void print_evidence();
 		virtual ~SV_Evidence();
+		//virtual log_space* get_bp_interval_probability(char strand);
+
 };
 #endif

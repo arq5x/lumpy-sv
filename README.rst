@@ -275,7 +275,7 @@ length is 150::
 	    > sample.pe.bam
 
 	samtools view sample.pe.bam \
-	    | scripts split_unmapped_to_fasta.pl -b 20 \
+	    | scripts/split_unmapped_to_fasta.pl -b 20 \
 	    > sample.um.fq
 
 	# using yaha (index first)

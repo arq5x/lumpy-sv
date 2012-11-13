@@ -16,6 +16,8 @@
 
 using namespace std;
 
+int  SV_EvidenceReader:: counter = 0;
+
 //{{{ SV_EvidenceReader:: ~SV_EvidenceReader()
 //SV_EvidenceReader::
 //~SV_EvidenceReader()

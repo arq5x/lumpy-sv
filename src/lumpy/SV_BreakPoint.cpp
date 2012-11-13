@@ -23,6 +23,7 @@ double SV_BreakPoint::p_merge_threshold = 0;
 const int SV_BreakPoint::DELETION;
 const int SV_BreakPoint::DUPLICATION;
 const int SV_BreakPoint::INVERSION;
+const int SV_BreakPoint::TRANSLOCATION;
 
 
 //{{{ SV_BreakPoint:: SV_BreakPoint(SV_Evidence *e)
@@ -115,11 +116,35 @@ does_intersect(struct breakpoint_interval *a,
 }
 //}}}
 
+//{{{ void SV_BreakPoint:: init_interval_probabilities()
+void
+SV_BreakPoint::
+init_interval_probabilities()
+{
+	// skip if they have been initialized
+	if ( (interval_l.p == NULL) || (interval_r.p == NULL) ) {
+
+		// take the first piece of evidence from the list
+		SV_Evidence *e = evidence[0];
+		//cerr << "got e" << endl;
+		//e->print_evidence();
+		//cerr << "set e" << endl;
+		e->set_bp_interval_probability(&interval_l);
+		e->set_bp_interval_probability(&interval_r);
+	}
+}
+//}}}
+
 //{{{ void BreakPoint:: merge(BreakPoint *p)
 bool
 SV_BreakPoint::
 merge(SV_BreakPoint *p)
 {
+	//at this point malloc that space for the arrays in both this and in p
+	init_interval_probabilities();
+	p->init_interval_probabilities();
+
+
 	// p->a may not overlap a, so we need to check
 	// after this a_overlap_intr will point to the interval in p that
 	// overlaps the current a interval and bt_overlap_intr overlaps the
@@ -345,7 +370,6 @@ test_interval_merge(struct breakpoint_interval *curr_intr,
 	
 }
 //}}}
-
 
 #if 0
 //{{{ boost::numeric::ublas::matrix<double>* BreakPoint::get_matrix(double
@@ -577,8 +601,23 @@ print_bedpe(int score)
 		this << sep <<
 		weight << "\t" <<
 		interval_l.i.strand << "\t" <<
-		interval_r.i.strand << "\t" <<
-		type <<  "\t";
+		interval_r.i.strand << "\t";
+
+		cout << "TYPE:";
+
+		if (type == DELETION )
+        	cout << "DELETION";
+		else if (type == DUPLICATION)
+        	cout << "DUPLICATION";
+        else if (type == INVERSION)
+        	cout << "INVERSION";
+        else if (type == TRANSLOCATION)
+        	cout <<  "TRANSLOCATION";
+        else
+        	cout <<  "???";
+
+		cout <<  "\t";
+
 		//ascii_interval_prob(&interval_l) << "\t" <<
 		//ascii_interval_prob(&interval_r) <<
 
@@ -602,7 +641,7 @@ print_bedpe(int score)
 
 	vector<int>::iterator _ids_it;
 
-	cout << "ids:";
+	cout << "IDS:";
 	for ( _ids_it = _ids.begin(); _ids_it != _ids.end(); ++_ids_it) {
 		if (_ids_it != _ids.begin())
 			cout << ";";

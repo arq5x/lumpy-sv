@@ -72,7 +72,7 @@ class SV_PairReader : public SV_EvidenceReader
 		bool add_param(char *param, char *val);
 		string check_params();
 		struct pair_end_parameters get_pair_end_parameters();
-#if 1
+		static log_space* get_bp_interval_probability(char strand);
 		void initialize();
 		void set_statics();
 		void process_input(UCSCBins<SV_BreakPoint*> &l_bin,
@@ -83,7 +83,6 @@ class SV_PairReader : public SV_EvidenceReader
 		void terminate();
 		string get_curr_chr();
 		bool has_next();
-#endif
 };
 
 #endif

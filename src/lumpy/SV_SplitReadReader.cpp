@@ -27,6 +27,8 @@ SV_SplitReadReader()
 	weight = -1;
 	min_mapping_threshold = 0;
 	id = -1;
+	sample_id = SV_EvidenceReader::counter;
+	SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
 }
 //}}}
 
@@ -127,7 +129,8 @@ process_input(UCSCBins<SV_BreakPoint*> &l_bin,
 									l_bin,
 									r_bin,
 									weight,
-									id);
+									id,
+									sample_id);
 }
 //}}}
 
@@ -149,7 +152,8 @@ process_input_chr(string chr,
 									l_bin,
 									r_bin,
 									weight,
-									id);
+									id,
+									sample_id);
 
 		have_next_alignment = reader.GetNextAlignment(bam);
 		if ( bam.RefID < 0 )

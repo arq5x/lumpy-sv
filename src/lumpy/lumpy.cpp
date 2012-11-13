@@ -242,7 +242,14 @@ int main(int argc, char* argv[])
 
 			string msg = pe_r->check_params();
 			if ( msg.compare("") == 0 ) {
+				// Add to list of readers
 				evidence_readers.push_back(pe_r);
+				// Set the ditro map
+				pe_r->set_statics();
+				SV_Evidence::distros[pe_r->sample_id] = 
+					pair<log_space*,log_space*>(
+							SV_Pair::get_bp_interval_probability('+'),
+							SV_Pair::get_bp_interval_probability('-'));
 			} else {
 				cerr << "missing pair end parameters:" << msg << endl;
 				ShowHelp();
@@ -283,6 +290,11 @@ int main(int argc, char* argv[])
 			string msg = be_r->check_params();
 			if ( msg.compare("") == 0 ) {
 				evidence_readers.push_back(be_r);
+				SV_Evidence::distros[be_r->sample_id] = 
+					pair<log_space*,log_space*>(
+							SV_Bedpe::get_bp_interval_probability('+'),
+							SV_Bedpe::get_bp_interval_probability('-'));
+
 			} else {
 				cerr << "missing pair end parameters:" << msg << endl;
 				ShowHelp();
@@ -321,6 +333,11 @@ int main(int argc, char* argv[])
 			string msg = sr_r->check_params();
 			if ( msg.compare("") == 0 ) {
 				evidence_readers.push_back(sr_r);
+				SV_Evidence::distros[sr_r->sample_id] = 
+					pair<log_space*,log_space*>(
+							SV_SplitRead::get_bp_interval_probability('+'),
+							SV_SplitRead::get_bp_interval_probability('-'));
+
 			} else {
 				cerr << "missing pair end parameters:" << msg << endl;
 				ShowHelp();
@@ -433,6 +450,7 @@ int main(int argc, char* argv[])
 				++i_er) {
 
 			SV_EvidenceReader *er = *i_er;
+
 			if ( er->has_next() ) {
 				string curr_chr = er->get_curr_chr();
 				if ( curr_chr.compare(min_chr) <= 0 )  {
@@ -537,6 +555,6 @@ int main(int argc, char* argv[])
 			delete bp;
 		}
 
+	//}}}
 	return 1;
 }
-//}}}

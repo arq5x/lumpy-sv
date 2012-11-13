@@ -27,6 +27,8 @@ SV_BedpeReader()
 	back_distance = 0;
 	weight = 0;
 	id = -1;
+	sample_id = SV_EvidenceReader::counter;
+	SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
 }
 //}}}
 
@@ -133,7 +135,8 @@ process_input(UCSCBins<SV_BreakPoint*> &l_bin,
 									l_bin,
 									r_bin,
 									weight,
-									id);
+									id,
+									sample_id);
 			bedpeEntry = nullBedpe;
 		}
 
@@ -168,7 +171,8 @@ process_input_chr(string chr,
 									l_bin,
 									r_bin,
 									weight,
-									id);
+									id,
+									sample_id);
 			bedpeEntry = nullBedpe;
 		}
 

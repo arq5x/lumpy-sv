@@ -55,7 +55,8 @@ SV_Pair(const BamAlignment &bam_a,
 		const BamAlignment &bam_b,
 		const RefVector &refs,
 		int _weight,
-		int _id)
+		int _id,
+		int _sample_id)
 {
 	if ( bam_a.MapQuality < bam_b.MapQuality )
 		min_mapping_quality = bam_a.MapQuality;
@@ -99,26 +100,51 @@ SV_Pair(const BamAlignment &bam_a,
 
 	weight = _weight;
 	id = _id;
+	sample_id = _sample_id;
+}
+//}}}
+
+//{{{ log_space* SV_Pair:: get_interval_probability(char strand)
+log_space*
+SV_Pair::
+get_bp_interval_probability(char strand)
+{
+	int size = distro_size;
+	log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
+	unsigned int j;
+	for (j = 0; j < size; ++j) {
+		if (strand == '+') 
+			tmp_p[j] = get_ls(distro[j]);
+		else
+			tmp_p[(size - 1) - j] = get_ls(distro[j]);
+	}
+
+	return tmp_p;
 }
 //}}}
 
 //{{{ void SV_Pair:: set_interval_probability()
+/*
 void
 SV_Pair::
 set_bp_interval_probability(struct breakpoint_interval *i)
 {
 	int size = i->i.end - i->i.start + 1;
 	log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
+	log_space *src_p;
+
 	unsigned int j;
+	if (i->i.strand == '+') 
+		src_p = SV_Evidence::distros[sample_id].first;
+	else
+		src_p = SV_Evidence::distros[sample_id].second;
 	for (j = 0; j < size; ++j) {
-		if (i->i.strand == '+') 
-			tmp_p[j] = get_ls(distro[j]);
-		else
-			tmp_p[(size - 1) - j] = get_ls(distro[j]);
+		tmp_p[j] = src_p[j];
 	}
 
 	i->p = tmp_p;
 }
+*/
 //}}}
 
 //{{{ void SV_Pair:: set_bp_interval_start_end(struct breakpoint_interval *i,
@@ -162,8 +188,8 @@ get_bp()
 	set_bp_interval_start_end(&(new_bp->interval_l), &read_l, &read_r);
 	set_bp_interval_start_end(&(new_bp->interval_r), &read_r, &read_l);
 
-	set_bp_interval_probability(&(new_bp->interval_l));
-	set_bp_interval_probability(&(new_bp->interval_r));
+	new_bp->interval_r.p = NULL;
+	new_bp->interval_l.p = NULL;
 
 	if (new_bp->interval_l.i.strand == '+') // // + ?
 		if (new_bp->interval_r.i.strand == '+') // + +
@@ -373,7 +399,8 @@ process_pair(const BamAlignment &curr,
 			UCSCBins<SV_BreakPoint*> &l_bin,
 			UCSCBins<SV_BreakPoint*> &r_bin,
 			int weight,
-			int id)
+			int id,
+			int sample_id)
 {
 	if (mapped_pairs.find(curr.Name) == mapped_pairs.end())
 		mapped_pairs[curr.Name] = curr;
@@ -382,7 +409,8 @@ process_pair(const BamAlignment &curr,
 										curr,
 										refs,
 										weight,
-										id);
+										id,
+										sample_id);
 		if ( new_pair->is_sane() &&  new_pair->is_aberrant() ) {
 			SV_BreakPoint *new_bp = new_pair->get_bp();
 #ifdef TRACE
@@ -397,147 +425,3 @@ process_pair(const BamAlignment &curr,
 	}
 }
 //}}}
-
-#if 0
-//{{{void SV_Pair:: cluster(UCSCBins<SV_BreakPoint*> &bins);
-void
-SV_Pair::
-cluster(UCSCBins<SV_BreakPoint*> &l_bin,
-		UCSCBins<SV_BreakPoint*> &r_bin)
-{
-	SV_BreakPoint *new_bp = get_bp();
-	new_bp->cluster(l_bin, r_bin);
-
-	// Find matching break points
-	vector< UCSCElement<SV_BreakPoint*> > tmp_hits_a =
-			bins.get(new_bp->interval_l.i.chr,
-					 new_bp->interval_l.i.start,
-					 new_bp->interval_l.i.end,
-					 new_bp->interval_l.i.strand,
-					 true);		
-
-	vector< UCSCElement<SV_BreakPoint*> > tmp_hits_b =
-			bins.get(new_bp->interval_r.i.chr,
-					 new_bp->interval_r.i.start,
-					 new_bp->interval_r.i.end,
-					 new_bp->interval_r.i.strand,
-					 true);		
-
-	if ( ( tmp_hits_a.size() == 0 ) ||
-		 ( tmp_hits_b.size() == 0 ) ) {
-		cerr << "i1" << endl;
-		insert(bins, new_bp);
-	} else { //Each side has at least one hit
-		/*
-		 * tmp_hits_left contains the pointers to the break points that have an
-		 * interval overlapping the left end of the current pair,
-		 * tmp_hits_right has the same for the right end.  To find the
-		 * breakpoint(s) overlap both pairs we sort both vectors, then
-		 * intersect the two vectors.  Since the vectors contain the address to
-		 * the break point, the resulting intersection will contain a pointer
-		 * to the object that needs to be modified. 
-		 */
-		sort(tmp_hits_a.begin(), tmp_hits_a.end(),
-				UCSCElement<SV_BreakPoint*>::sort_ucscelement_by_value);
-
-		sort(tmp_hits_b.begin(), tmp_hits_b.end(),
-				UCSCElement<SV_BreakPoint*>::sort_ucscelement_by_value);
-
-		vector< UCSCElement<SV_BreakPoint*> > 
-			r(tmp_hits_a.size() + tmp_hits_b.size());
-
-		vector< UCSCElement<SV_BreakPoint*> >::iterator t_it;
-		for (t_it = tmp_hits_a.begin(); t_it < tmp_hits_a.end(); ++t_it)
-				cerr << "a:\t" << *(t_it->value) << endl;
-		for (t_it = tmp_hits_b.begin(); t_it < tmp_hits_b.end(); ++t_it)
-				cerr << "b:\t" << *(t_it->value) << endl;
-
-
-		vector< UCSCElement<SV_BreakPoint*> >::iterator it;
-
-		it = set_intersection(tmp_hits_a.begin(), 
-							  tmp_hits_a.end(),
-							  tmp_hits_b.begin(),
-							  tmp_hits_b.end(),
-							  r.begin(),
-							  UCSCElement<SV_BreakPoint*>::
-									sort_ucscelement_by_value);
-
-		if (it - r.begin() < 1) { //sides don't match, so insert
-			cerr << "i2" << endl;
-			insert(bins, new_bp);
-		} else if (it - r.begin() == 1) { // both sides match same breakpoint
-
-			// addr of the bp in both sets (and only item in the intersection)
-			SV_BreakPoint *bp = r[0].value;
-
-			vector< UCSCElement<SV_BreakPoint*> >::iterator l_it, r_it;
-			// find the left side match
-			for (l_it = tmp_hits_a.begin();
-					l_it < tmp_hits_a.end(); ++l_it)
-				if (l_it->value == bp)
-					break;
-
-			// find the right side match
-			for (r_it = tmp_hits_b.begin();
-					r_it < tmp_hits_b.end(); ++r_it)
-				if (r_it->value == bp)
-					break;
-
-			/* 
-			 * Test to see if both sides hit the same interval 
-			 * For this to be a valid hit, both ends need to hit the same
-			 * breakpoint, but different ends of the breakpoint.  Each end has
-			 * an id, test to see if the ids match
-			 */
-			if (l_it->id == r_it->id) { // both sides hit the same interval
-				cerr << "i3" << endl;
-				insert(bins, new_bp);
-			}  else {
-				cerr << "c" << endl;
-				/* 
-				 * Merge the current break point with the one that was found to
-				 * match (located at r[0] we need to remove r[0] from UCSCBin
-				 * and re-add it with the new coordinates
-				 */
-				if ( bp->merge(new_bp) ) {
-					//cerr << bp << "\t" << *this << endl;
-					//cerr << bp << "\t" << *bp << endl;
-					//cerr << bp->evidence.size() << endl;
-					free(new_bp);
-
-					int v = bins.remove(*l_it, false, true, true);
-
-					v = bins.remove(*r_it, false, true, true);
-
-					insert(bins, bp);
-
-				} else {
-				}
-
-			}
-		}
-	}
-}
-//}}}
-
-//{{{ void SV_Pair:: insert(UCSCBins<SV_BreakPoint*> &bins, SV_BreakPoint
-void
-SV_Pair::
-insert(UCSCBins<SV_BreakPoint*> &bins, SV_BreakPoint *new_bp)
-{
-	bins.add(new_bp->interval_l.i.chr,
-			 new_bp->interval_l.i.start,
-			 new_bp->interval_l.i.end,
-			 new_bp->interval_l.i.strand,
-			 new_bp);
-
-	bins.add(new_bp->interval_r.i.chr,
-			 new_bp->interval_r.i.start,
-			 new_bp->interval_r.i.end,
-			 new_bp->interval_r.i.strand,
-			 new_bp);
-}
-//}}}
-#endif
-

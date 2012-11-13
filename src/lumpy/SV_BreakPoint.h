@@ -52,6 +52,7 @@ class SV_BreakPoint
 		static const int DELETION = 1;
 		static const int DUPLICATION = 2;
 		static const int INVERSION = 3;
+		static const int TRANSLOCATION = 4;
 
 		static double p_trim_threshold;
 		static double p_merge_threshold;
@@ -94,6 +95,7 @@ class SV_BreakPoint
 
 		void trim_intervals();
 
+		void init_interval_probabilities();
 
 		void print_bedpe(int score);
 

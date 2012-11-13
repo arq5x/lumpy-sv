@@ -38,7 +38,7 @@ class SV_SplitRead: public SV_Evidence
 
 	private:
 
-		static void set_bp_interval_probability(struct breakpoint_interval *i);
+		//void set_bp_interval_probability(struct breakpoint_interval *i);
 		static void set_bp_interval_start_end(struct breakpoint_interval *i,
 											  struct interval *target_interval,
 											  struct interval *target_pair);
@@ -55,13 +55,15 @@ class SV_SplitRead: public SV_Evidence
 		SV_SplitRead(vector< BamAlignment > &block,
 					 const RefVector &refs,
 					 int weight,
-					 int id);
+					 int id,
+					 int sample_id);
 
 		SV_SplitRead(const BamAlignment &bam_a,
 					 const BamAlignment &bam_b,
 					 const RefVector &refs,
 					 int _weight,
-					 int _id);
+					 int _id,
+					 int _sample_id);
 
 		static int back_distance;
 		static int min_non_overlap;
@@ -73,6 +75,7 @@ class SV_SplitRead: public SV_Evidence
 		struct cigar_query query_l, query_r;
 		int min_mapping_quality;
 
+		static log_space* get_bp_interval_probability(char strand);
 
 		SV_BreakPoint* get_bp();
 
@@ -87,7 +90,8 @@ class SV_SplitRead: public SV_Evidence
 								  UCSCBins<SV_BreakPoint*> &l_bin,
 								  UCSCBins<SV_BreakPoint*> &r_bin,
 								  int weight,
-								  int id);
+								  int id,
+								  int sample_id);
 };
 
 #endif

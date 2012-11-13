@@ -41,8 +41,10 @@ int     SV_Bedpe:: back_distance = 0;
 SV_Bedpe::
 SV_Bedpe(const BEDPE *bedpeEntry,
 		 int _weight,
-		 int _id)
+		 int _id,
+		 int _sample_id)
 {
+	sample_id = _sample_id;
 	struct interval tmp_a, tmp_b;
 
 	tmp_a.start = bedpeEntry->start1;
@@ -135,8 +137,10 @@ get_bp()
 	set_bp_interval_start_end(&(new_bp->interval_l), &side_l, &side_r);
 	set_bp_interval_start_end(&(new_bp->interval_r), &side_r, &side_l);
 
-	set_bp_interval_probability(&(new_bp->interval_l));
-	set_bp_interval_probability(&(new_bp->interval_r));
+	//set_bp_interval_probability(&(new_bp->interval_l));
+	//set_bp_interval_probability(&(new_bp->interval_r));
+	new_bp->interval_r.p = NULL;
+	new_bp->interval_l.p = NULL;
 
 	new_bp->type = type;
 	new_bp->weight = weight;
@@ -165,21 +169,22 @@ set_bp_interval_start_end(struct breakpoint_interval *i,
 }
 //}}}
 
-//{{{ void SV_Bedpe:: set_interval_probability()
-void
+//{{{ log_space* SV_Bedpe:: get_bp_interval_probability(char strand)
+log_space*
 SV_Bedpe::
-set_bp_interval_probability(struct breakpoint_interval *i)
+get_bp_interval_probability(char strand)
 {
-	log_space *tmp_p = (log_space *) malloc(distro_size * sizeof(log_space));
+	int size = distro_size;
+	log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
 	unsigned int j;
-	for (j = 0; j < distro_size; ++j) {
-		if (i->i.strand == '+') 
+	for (j = 0; j < size; ++j) {
+		if (strand == '+') 
 			tmp_p[j] = get_ls(distro[j]);
 		else
-			tmp_p[(distro_size - 1) - j] = get_ls(distro[j]);
+			tmp_p[(size - 1) - j] = get_ls(distro[j]);
 	}
 
-	i->p = tmp_p;
+	return tmp_p;
 }
 //}}}
 
@@ -221,11 +226,13 @@ process_bedpe(const BEDPE *bedpeEntry,
 			  UCSCBins<SV_BreakPoint*> &l_bin,
 			  UCSCBins<SV_BreakPoint*> &r_bin,
 			  int weight,
-			  int id)
+			  int id,
+			  int sample_id)
 {
 	SV_Bedpe *new_bedpe = new SV_Bedpe(bedpeEntry,
 									   weight,
-									   id);
+									   id,
+									   sample_id);
 
 	SV_BreakPoint *new_bp = new_bedpe->get_bp();
 	new_bp->cluster(l_bin, r_bin);

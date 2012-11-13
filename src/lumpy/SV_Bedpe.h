@@ -30,20 +30,25 @@ class SV_Bedpe: public SV_Evidence
 	friend ostream& operator<<(ostream& out, const SV_Bedpe& p);
 
 	private:
-		static void set_bp_interval_probability(struct breakpoint_interval *i);
+		//void set_bp_interval_probability(struct breakpoint_interval *i);
 		static void set_bp_interval_start_end(struct breakpoint_interval *i,
 											  struct interval *target_interval,
 											  struct interval *target_pair);
 	public:
 		SV_Bedpe(const BEDPE *bedpeEntry,
 				 int weight,
-				 int id);
+				 int id,
+				 int sample_id);
 
 		static void process_bedpe(const BEDPE *bedpeEntry,
 								  UCSCBins<SV_BreakPoint*> &l_bin,
 								  UCSCBins<SV_BreakPoint*> &r_bin,
 								  int weight,
-								  int id);
+								  int id,
+								  int sample_id);
+
+
+		static log_space* get_bp_interval_probability(char strand);
 
 		static double *distro;
 		static int distro_size;

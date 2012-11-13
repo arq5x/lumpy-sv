@@ -52,6 +52,8 @@ SV_PairReader()
 	weight = 0;
 	id = -1;
 	min_mapping_threshold = 0;
+	sample_id = SV_EvidenceReader::counter;
+	SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
 
 	inited = false;
 }
@@ -206,7 +208,8 @@ process_input(UCSCBins<SV_BreakPoint*> &l_bin,
 								  l_bin,
 								  r_bin,
 								  weight,
-								  id);
+								  id,
+								  sample_id);
 }
 //}}}
 
@@ -227,7 +230,6 @@ process_input_chr(string chr,
 				  UCSCBins<SV_BreakPoint*> &l_bin,
 				  UCSCBins<SV_BreakPoint*> &r_bin)
 {
-	cerr << "Pair:" << chr << endl;
 	// Process this chr, or the next chr 
 	while ( have_next_alignment &&
 			( chr.compare( refs.at(bam.RefID).RefName) == 0 ) ) {
@@ -238,7 +240,8 @@ process_input_chr(string chr,
 								  l_bin,
 								  r_bin,
 								  weight,
-								  id);
+								  id,
+								  sample_id);
 		have_next_alignment = reader.GetNextAlignment(bam);
 		if ( bam.RefID < 0 )
 			have_next_alignment = false;

@@ -32,7 +32,7 @@ class SV_Pair: public SV_Evidence
 	friend ostream& operator<<(ostream& out, const SV_Pair& p);
 
 	private:
-		static void set_bp_interval_probability(struct breakpoint_interval *i);
+		//void set_bp_interval_probability(struct breakpoint_interval *i);
 		static void set_bp_interval_start_end(struct breakpoint_interval *i,
 											  struct interval *target_interval,
 											  struct interval *target_pair);
@@ -58,8 +58,10 @@ class SV_Pair: public SV_Evidence
 								UCSCBins<SV_BreakPoint*> &l_bin,
 								UCSCBins<SV_BreakPoint*> &r_bin,
 								int weight,
-								int id);
+								int id,
+								int sample_id);
 
+		static log_space* get_bp_interval_probability(char strand);
 
 		int min_mapping_quality;
 		struct interval read_l;
@@ -70,7 +72,9 @@ class SV_Pair: public SV_Evidence
 				const BamAlignment &bam_b,
 				const RefVector &refs,
 				int weight,
-				int id);
+				int id,
+				int sample_id);
+
 		SV_BreakPoint* get_bp();
 
 		bool is_aberrant();
