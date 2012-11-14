@@ -270,6 +270,7 @@ SV_SplitRead(const BamAlignment &bam_a,
 				( query_l.qs_pos < query_r.qs_pos) ) )
 		type = SV_BreakPoint::DUPLICATION;
     else {
+		/*
 		cerr << "ERROR IN BAM FILE.  " << 
 				"TYPE not detected (DELETION,DUPLICATION,INVERSION)" <<
 				endl;
@@ -280,6 +281,7 @@ SV_SplitRead(const BamAlignment &bam_a,
 			endl;
 
 		throw(1);
+		*/
 	}
 
 	weight = _weight;
@@ -393,6 +395,28 @@ is_sane()
 {
 	if ( min_mapping_quality < min_mapping_threshold )
 		return false;
+
+
+    if (side_l.strand != side_r.strand)
+		;
+    else if ( (	( side_l.strand == '+' ) && 
+				( side_r.strand == '+' ) && 
+				( query_l.qs_pos < query_r.qs_pos ) ) ||
+              (	( side_l.strand == '-' ) && 
+				( side_r.strand == '-' ) && 
+				( query_l.qs_pos > query_r.qs_pos) ) )
+		;
+    else if ( ( ( side_l.strand == '+' ) &&
+				( side_r.strand == '+' ) && 
+				( query_l.qs_pos > query_r.qs_pos ) ) ||
+              ( ( side_l.strand == '-' ) &&
+				( side_r.strand == '-' ) &&
+				( query_l.qs_pos < query_r.qs_pos) ) )
+		;
+    else {
+		return false;
+	}
+
 
 	int side_len_l = query_l.qe_pos - query_l.qs_pos;
 	int side_len_r = query_r.qe_pos - query_r.qs_pos;
