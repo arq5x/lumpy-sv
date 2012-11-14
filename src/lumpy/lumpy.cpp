@@ -396,7 +396,7 @@ int main(int argc, char* argv[])
 
 	//}}}
 
-	UCSCBins<SV_BreakPoint*> l_bin, r_bin;
+	UCSCBins<SV_BreakPoint*> r_bin;
 
 	SV_BreakPoint::p_trim_threshold = trim_threshold;
 	SV_BreakPoint::p_merge_threshold = merge_threshold;
@@ -455,7 +455,7 @@ int main(int argc, char* argv[])
 				string curr_chr = er->get_curr_chr();
 				if ( curr_chr.compare(min_chr) <= 0 )  {
 					er->set_statics();
-					er->process_input_chr(curr_chr,l_bin, r_bin);
+					er->process_input_chr(curr_chr, r_bin);
 				}
 			}
 		}

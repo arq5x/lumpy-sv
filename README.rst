@@ -328,3 +328,12 @@ length is 150::
 	    -sr \
 	    bam_file:sample.sr.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
 	    > sample.pesr.bedpe
+
+Test data sets
+==============
+The `test/test.sh` script executes lumpy against several simulated data sets
+and compares the results to the known correct reslut.  The sample data sets are
+not part of the lumpy code base, and can be found at
+`http://www.cs.virginia.edu/~rl6sf/lumpy/data.tar.gz`.  This tar ball should be
+extracted into the top-level lumpy directory.  The script `test/test.sh` checks
+for the the existance of this directory before running lumpy.

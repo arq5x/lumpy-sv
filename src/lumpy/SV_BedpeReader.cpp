@@ -126,13 +126,11 @@ initialize()
 //{{{ void SV_BedpeReader:: process_input()
 void
 SV_BedpeReader::
-process_input(UCSCBins<SV_BreakPoint*> &l_bin,
-			  UCSCBins<SV_BreakPoint*> &r_bin)
+process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 {
 	while (	bedpeStatus != BED_INVALID) {  
 		if (bedpeStatus == BED_VALID) {
 			SV_Bedpe::process_bedpe(&bedpeEntry,
-									l_bin,
 									r_bin,
 									weight,
 									id,
@@ -158,7 +156,6 @@ get_curr_chr()
 void
 SV_BedpeReader::
 process_input_chr(string chr,
-				  UCSCBins<SV_BreakPoint*> &l_bin,
 				  UCSCBins<SV_BreakPoint*> &r_bin)
 {
 
@@ -168,7 +165,6 @@ process_input_chr(string chr,
 
 		if (bedpeStatus == BED_VALID) {
 			SV_Bedpe::process_bedpe(&bedpeEntry,
-									l_bin,
 									r_bin,
 									weight,
 									id,

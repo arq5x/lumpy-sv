@@ -56,11 +56,9 @@ class SV_BedpeReader : public SV_EvidenceReader
 
 	void initialize();
 	void set_statics();
-	void process_input(UCSCBins<SV_BreakPoint*> &l_bin,
-					   UCSCBins<SV_BreakPoint*> &r_bin);
+	void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
 
 	void process_input_chr(string chr,
-						   UCSCBins<SV_BreakPoint*> &l_bin,
 						   UCSCBins<SV_BreakPoint*> &r_bin);
 	void terminate();
 	string get_curr_chr();

@@ -56,7 +56,6 @@ class SV_BreakPoint
 
 		static double p_trim_threshold;
 		static double p_merge_threshold;
-		struct breakpoint_interval interval_l, interval_r;
 
 		static bool sort_bp_by_interval_l_start(SV_BreakPoint *i,
 												SV_BreakPoint *j);
@@ -65,46 +64,34 @@ class SV_BreakPoint
 		static string ascii_prob(double *d, int size);
 
 		int type;
-		
 		int weight;
-
 		vector<SV_Evidence*> evidence;
 		map<int, int> ids;
+		struct breakpoint_interval interval_l, interval_r;
 
 		SV_BreakPoint(SV_Evidence *e);
-
 		SV_BreakPoint();
-
 		~SV_BreakPoint();
-
 		void free_evidence();
-
 		static bool does_intersect(struct breakpoint_interval *a,
 								   struct breakpoint_interval *b,
 								   bool check_strand);
-
 		bool merge(SV_BreakPoint *p);
-
 		static bool test_interval_merge(struct breakpoint_interval *curr_intr,
 					                    struct breakpoint_interval *new_intr,
 										CHR_POS *merged_start,
 										CHR_POS *merged_end,
 										log_space **merged_prob);
-
 		void print_evidence(string pre);
-
 		void trim_intervals();
-
 		void init_interval_probabilities();
-
 		void print_bedpe(int score);
-
-		void cluster(UCSCBins<SV_BreakPoint*> &l_bin,
-					 UCSCBins<SV_BreakPoint*> &r_bin);
-
+		//void cluster(UCSCBins<SV_BreakPoint*> &l_bin,
+					 //UCSCBins<SV_BreakPoint*> &r_bin);
+		void cluster(UCSCBins<SV_BreakPoint*> &r_bin);
 		void insert(UCSCBins<SV_BreakPoint*> &l_bin,
 					UCSCBins<SV_BreakPoint*> &r_bin);
-
+		void insert(UCSCBins<SV_BreakPoint*> &r_bin);
 		vector<int> get_evidence_ids();
 
 };

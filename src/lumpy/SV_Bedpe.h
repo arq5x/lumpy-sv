@@ -41,7 +41,6 @@ class SV_Bedpe: public SV_Evidence
 				 int sample_id);
 
 		static void process_bedpe(const BEDPE *bedpeEntry,
-								  UCSCBins<SV_BreakPoint*> &l_bin,
 								  UCSCBins<SV_BreakPoint*> &r_bin,
 								  int weight,
 								  int id,

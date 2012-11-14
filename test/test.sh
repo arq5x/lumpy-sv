@@ -1,5 +1,14 @@
 #!/bin/bash
 
+
+if [ ! -d "../data/" ]
+then
+	echo "../data/ directory does not exist"
+	echo "please download from http://www.cs.virginia.edu/~rl6sf/lumpy/data.tar.gz"
+	exit
+fi
+
+
 echo "Testing lumpy paired-end"
 ./bp_pe.sh 1 20 1e-3 150 \
 	../data/pe.pos_sorted.bam \

@@ -471,7 +471,6 @@ SV_SplitRead::
 process_split(const BamAlignment &curr,
 			  const RefVector refs,
 			  map<string, BamAlignment> &mapped_splits,
-			  UCSCBins<SV_BreakPoint*> &l_bin,
 			  UCSCBins<SV_BreakPoint*> &r_bin,
 			  int weight,
 			  int id,
@@ -494,7 +493,7 @@ process_split(const BamAlignment &curr,
 
 				vector<SV_Evidence*>::iterator it;
 
-				new_bp->cluster(l_bin, r_bin);
+				new_bp->cluster(r_bin);
 			} else
 				free(new_split_read);
 

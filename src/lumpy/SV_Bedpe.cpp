@@ -223,7 +223,6 @@ print_bedpe(int score)
 void
 SV_Bedpe::
 process_bedpe(const BEDPE *bedpeEntry,
-			  UCSCBins<SV_BreakPoint*> &l_bin,
 			  UCSCBins<SV_BreakPoint*> &r_bin,
 			  int weight,
 			  int id,
@@ -235,6 +234,6 @@ process_bedpe(const BEDPE *bedpeEntry,
 									   sample_id);
 
 	SV_BreakPoint *new_bp = new_bedpe->get_bp();
-	new_bp->cluster(l_bin, r_bin);
+	new_bp->cluster(r_bin);
 }
 //}}}

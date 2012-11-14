@@ -32,10 +32,8 @@ class SV_EvidenceReader
 
 		virtual void initialize();
 		virtual void set_statics();
-		virtual void process_input(UCSCBins<SV_BreakPoint*> &l_bin,
-								   UCSCBins<SV_BreakPoint*> &r_bin);
+		virtual void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
 		virtual void process_input_chr(string chr,
-									   UCSCBins<SV_BreakPoint*> &l_bin,
 									   UCSCBins<SV_BreakPoint*> &r_bin);
 		virtual void terminate();
 		virtual string get_curr_chr();

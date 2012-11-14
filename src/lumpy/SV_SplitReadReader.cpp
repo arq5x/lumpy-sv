@@ -119,14 +119,12 @@ get_curr_chr()
 //{{{ void SV_SplitReadReader:: process_input()
 void
 SV_SplitReadReader::
-process_input(UCSCBins<SV_BreakPoint*> &l_bin,
-			  UCSCBins<SV_BreakPoint*> &r_bin)
+process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 {
 	while (reader.GetNextAlignment(bam)) 
 		SV_SplitRead::process_split(bam,
 									refs,
 									mapped_splits,
-									l_bin,
 									r_bin,
 									weight,
 									id,
@@ -138,7 +136,6 @@ process_input(UCSCBins<SV_BreakPoint*> &l_bin,
 void
 SV_SplitReadReader::
 process_input_chr(string chr,
-				  UCSCBins<SV_BreakPoint*> &l_bin,
 				  UCSCBins<SV_BreakPoint*> &r_bin)
 {
 	cerr << "SplitRead:" << chr << endl;
@@ -149,7 +146,6 @@ process_input_chr(string chr,
 		SV_SplitRead::process_split(bam,
 									refs,
 									mapped_splits,
-									l_bin,
 									r_bin,
 									weight,
 									id,

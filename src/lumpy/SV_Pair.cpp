@@ -396,7 +396,6 @@ SV_Pair::
 process_pair(const BamAlignment &curr,
 			const RefVector refs,
 			map<string, BamAlignment> &mapped_pairs,
-			UCSCBins<SV_BreakPoint*> &l_bin,
 			UCSCBins<SV_BreakPoint*> &r_bin,
 			int weight,
 			int id,
@@ -416,7 +415,7 @@ process_pair(const BamAlignment &curr,
 #ifdef TRACE
 			cerr << "PE\t" << *new_bp << endl;
 #endif
-			new_bp->cluster(l_bin, r_bin);
+			new_bp->cluster(r_bin);
 		} else {
 			free(new_pair);
 		}
