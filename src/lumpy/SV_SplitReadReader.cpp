@@ -116,6 +116,15 @@ get_curr_chr()
 }
 //}}}
 
+//{{{ CHR_POS SV_SplitReadReader:: get_curr_pos()
+CHR_POS
+SV_SplitReadReader::
+get_curr_pos()
+{
+	return bam.Position;
+}
+//}}}
+
 //{{{ void SV_SplitReadReader:: process_input()
 void
 SV_SplitReadReader::
@@ -143,6 +152,33 @@ process_input_chr(string chr,
 	while ( have_next_alignment &&
 			( chr.compare( refs.at(bam.RefID).RefName) == 0 ) ) {
 
+		SV_SplitRead::process_split(bam,
+									refs,
+									mapped_splits,
+									r_bin,
+									weight,
+									id,
+									sample_id);
+
+		have_next_alignment = reader.GetNextAlignment(bam);
+		if ( bam.RefID < 0 )
+			have_next_alignment = false;
+	}
+}
+//}}}
+
+//{{{ void SV_SplitReadReader:: process_input_chr(string chr,
+void
+SV_SplitReadReader::
+process_input_chr_pos(string chr,
+					  CHR_POS pos,
+					  UCSCBins<SV_BreakPoint*> &r_bin)
+{
+	cerr << "SplitRead:" << chr << endl;
+	// Process this chr, or the next chr 
+	while ( have_next_alignment &&
+			( chr.compare( refs.at(bam.RefID).RefName) == 0 ) &&
+			( bam.Position < pos ) ) {
 		SV_SplitRead::process_split(bam,
 									refs,
 									mapped_splits,

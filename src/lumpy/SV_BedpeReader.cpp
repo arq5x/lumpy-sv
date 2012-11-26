@@ -152,6 +152,18 @@ get_curr_chr()
 }
 //}}}
 
+//{{{ string SV_BedpeReader:: get_curr_chr()
+CHR_POS
+SV_BedpeReader::
+get_curr_pos()
+{
+	if (bedpeEntry.start1 < bedpeEntry.start2)
+		return bedpeEntry.start1;
+	else
+		return bedpeEntry.start2;
+}
+//}}}
+
 //{{{ void SV_BedpeReader:: process_input_chr(string chr,
 void
 SV_BedpeReader::
@@ -176,6 +188,35 @@ process_input_chr(string chr,
 	}
 }
 //}}}
+
+
+//{{{ void SV_BedpeReader:: process_input_chr_pos(string chr,
+void
+SV_BedpeReader::
+process_input_chr_pos(string chr,
+					  CHR_POS pos,
+					  UCSCBins<SV_BreakPoint*> &r_bin)
+{
+
+	while ( ( bedpeStatus != BED_INVALID ) &&
+			( chr.compare( get_curr_chr() ) == 0 ) &&
+			( bedpeEntry.start1  < pos ) && 
+			( bedpeEntry.start2  < pos ) ) {
+			
+		if (bedpeStatus == BED_VALID) {
+			SV_Bedpe::process_bedpe(&bedpeEntry,
+									r_bin,
+									weight,
+									id,
+									sample_id);
+			bedpeEntry = nullBedpe;
+		}
+
+		bedpeStatus = bedpe->GetNextBedPE(bedpeEntry, lineNum);
+	}
+}
+//}}}
+
 
 //{{{ void SV_BedpeReader:: terminate()
 void 

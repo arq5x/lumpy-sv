@@ -78,8 +78,12 @@ class SV_PairReader : public SV_EvidenceReader
 		void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
 		void process_input_chr(string chr,
 							   UCSCBins<SV_BreakPoint*> &r_bin);
+		void process_input_chr_pos(string chr,
+								   CHR_POS pos,
+								   UCSCBins<SV_BreakPoint*> &r_bin);
 		void terminate();
 		string get_curr_chr();
+		CHR_POS get_curr_pos();
 		bool has_next();
 };
 

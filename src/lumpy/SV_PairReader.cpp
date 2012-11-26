@@ -221,6 +221,16 @@ get_curr_chr()
 }
 //}}}
 
+//{{{ 
+CHR_POS
+SV_PairReader::
+get_curr_pos()
+{
+	//cerr << "Pair get_curr_chr" << endl;
+	return bam.Position;
+}
+//}}}
+
 //{{{ void SV_PairReader:: process_input_chr(string chr,
 void
 SV_PairReader::
@@ -230,6 +240,32 @@ process_input_chr(string chr,
 	// Process this chr, or the next chr 
 	while ( have_next_alignment &&
 			( chr.compare( refs.at(bam.RefID).RefName) == 0 ) ) {
+		if (bam.IsMapped() && bam.IsMateMapped())  //Paired read
+			SV_Pair::process_pair(bam,
+								  refs,
+								  mapped_pairs,
+								  r_bin,
+								  weight,
+								  id,
+								  sample_id);
+		have_next_alignment = reader.GetNextAlignment(bam);
+		if ( bam.RefID < 0 )
+			have_next_alignment = false;
+	}
+}
+//}}}
+
+//{{{ void SV_PairReader:: process_input_chr(string chr,
+void
+SV_PairReader::
+process_input_chr_pos(string chr,
+					  CHR_POS pos,
+					  UCSCBins<SV_BreakPoint*> &r_bin)
+{
+	// Process this chr, or the next chr 
+	while ( have_next_alignment &&
+			( chr.compare( refs.at(bam.RefID).RefName) == 0 ) &&
+			( bam.Position < pos ) ) {
 		if (bam.IsMapped() && bam.IsMateMapped())  //Paired read
 			SV_Pair::process_pair(bam,
 								  refs,

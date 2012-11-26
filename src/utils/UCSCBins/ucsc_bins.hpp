@@ -95,6 +95,7 @@ class UCSCBins
 
 		vector< UCSCElement<T> >values();
 		vector< UCSCElement<T> >values(string chr);
+		vector< UCSCElement<T> >values(string chr,CHR_POS max_pos);
 
 		UCSCBins();
 
@@ -371,6 +372,36 @@ UCSCBins<T>::values(string target_chr)
 	return values;
 }
 //}}}
+
+//{{{ template <class T> vector<UCSCElement<T> > UCSCBins<T>::values(string
+template <class T>
+vector<UCSCElement<T> >
+UCSCBins<T>::values(string target_chr,
+					CHR_POS max_pos)
+{
+	vector< UCSCElement<T> > values;
+
+	typename map<BIN, element_vector >::iterator bin_it;
+
+	for (	bin_it = chrom_bins[target_chr].begin();
+			bin_it != chrom_bins[target_chr].end();
+			++bin_it ) {
+
+		typename vector< UCSCElement<T> >::iterator val_it;
+
+		for (	val_it =    (*bin_it).second.begin();
+				val_it !=   (*bin_it).second.end() ;
+				++val_it ) 
+			if (val_it->start < max_pos) 
+				values.push_back( *val_it );
+
+	}
+	
+	return values;
+}
+//}}}
+
+
 
 //{{{ template <class T> vector<UCSCElement<T> > UCSCBins<T>::values()
 template <class T>

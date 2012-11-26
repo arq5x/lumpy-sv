@@ -76,6 +76,7 @@ void ShowHelp(void)
 		"Usage:   " << PROGRAM_NAME << " [OPTIONS] " << endl << endl <<
 		"Options: " << endl <<
 		"\t-e"		"\tShow evidnece for each call" << endl <<
+		"\t-w"		"\tFile read windows size (default 1000000)" << endl <<
 		"\t-mw"		"\tminimum weight for a call" << endl <<
 		"\t-tt"		"\ttrim threshold" << endl <<
 		"\t-sr"		"\tbam_file:<file name>," << endl <<
@@ -183,6 +184,7 @@ int main(int argc, char* argv[])
 	double merge_threshold = 1e-10;
 	int min_weight = 0;
 	bool show_evidence = false;
+	CHR_POS window_size = 1000000;
 	//}}}
 
     //{{{ check to see if we should print out some help
@@ -366,6 +368,12 @@ int main(int argc, char* argv[])
                 i++;
 			}
 		}
+        else if(PARAMETER_CHECK("-w", 2, parameterLength)) {
+            if ((i+1) < argc) {
+                window_size = atoi(argv[i + 1]);
+                i++;
+			}
+		}
 
         else if(PARAMETER_CHECK("-e", 2, parameterLength)) {
 			show_evidence = true;
@@ -442,77 +450,68 @@ int main(int argc, char* argv[])
 		}
 		//}}}
 
-		//cerr << min_chr << endl;
+		CHR_POS max_pos = window_size;
+		bool input_processed = true;
 
-		// {{{ loop through each input file and process min_chr
-		for (	i_er = evidence_readers.begin();
-				i_er != evidence_readers.end();
-				++i_er) {
+		while (input_processed) {
+			input_processed = false;
+				
+			//{{{ read the files
+			for (	i_er = evidence_readers.begin();
+					i_er != evidence_readers.end();
+					++i_er) {
 
-			SV_EvidenceReader *er = *i_er;
+				SV_EvidenceReader *er = *i_er;
 
-			if ( er->has_next() ) {
-				string curr_chr = er->get_curr_chr();
-				if ( curr_chr.compare(min_chr) <= 0 )  {
-					er->set_statics();
-					er->process_input_chr(curr_chr, r_bin);
+				if ( er->has_next() ) {
+					string curr_chr = er->get_curr_chr();
+					CHR_POS curr_pos = er->get_curr_pos();
+					if ( ( curr_chr.compare(min_chr) <= 0 ) &&
+						 ( curr_pos < max_pos) )	{
+						er->set_statics();
+						//er->process_input_chr(curr_chr, r_bin);
+						er->process_input_chr_pos(curr_chr, max_pos, r_bin);
+						input_processed = true;
+					} 
 				}
 			}
-		}
-		//}}}
+			//}}}
 
-		//{{{ get breakpoints where both sides are in this chrm
 
-		vector< UCSCElement<SV_BreakPoint*> > values = r_bin.values(min_chr);
-		vector< UCSCElement<SV_BreakPoint*> >::iterator it;
+			//{{{ get breakpoints
+			vector< UCSCElement<SV_BreakPoint*> > values = 
+					r_bin.values(min_chr, max_pos);
 
-#if 0
-		//{{{ sort and uniq
-		cerr << "Sorting..." << endl;
-		sort(values.begin(), values.end(),
-				UCSCElement<SV_BreakPoint*>::sort_ucscelement_by_value);
-		cerr << "Done." << endl;
-		cerr << "Unique..." << endl;
-		it = unique(values.begin(),
-					values.end(),
-					UCSCElement<SV_BreakPoint*>::compare_ucscelement_by_value);
-		cerr << "Done." << endl;
+			vector< UCSCElement<SV_BreakPoint*> >::iterator it;
 
-		values.resize( it - values.begin() );
-		//}}}
-#endif
-		
-		vector< UCSCElement<SV_BreakPoint*> > to_remove;
-		//{{{ get breakpoints
-		for (it = values.begin(); it < values.end(); ++it) {
-			SV_BreakPoint *bp = it->value;
+			vector< UCSCElement<SV_BreakPoint*> > to_remove;
 
-			vector< UCSCElement<SV_BreakPoint*> > gets = 
-					r_bin.get(it->chr,
-							  it->start,
-							  it->end,
-							  it->strand,
-							  false);
+			for (it = values.begin(); it < values.end(); ++it) {
+				SV_BreakPoint *bp = it->value;
 
-			if ( ( bp->interval_l.i.chr.compare(min_chr) == 0 ) &&
-				 ( bp->interval_r.i.chr.compare(min_chr) == 0 ) ) {
+				// Make sure both ends of the bp match the current chrom
+				if ( ( bp->interval_l.i.chr.compare(min_chr) == 0 ) &&
+					 ( bp->interval_r.i.chr.compare(min_chr) == 0 ) &&
+					 ( bp->interval_l.i.start < max_pos ) &&
+					 ( bp->interval_r.i.start < max_pos ) ) {
 
-				if ( bp->weight >= min_weight ) {
-					 
-					bp->trim_intervals();
-					bp->print_bedpe(-1);
-					if (show_evidence)
-						bp->print_evidence("\t");
+					if ( bp->weight >= min_weight ) {
+						 
+						bp->trim_intervals();
+						bp->print_bedpe(-1);
+						if (show_evidence)
+							bp->print_evidence("\t");
+					}
+
+					r_bin.remove(*it, false, false, true);
+					bp->free_evidence();
+					delete bp;
 				}
-
-				r_bin.remove(*it, false, false, true);
-				bp->free_evidence();
-				delete bp;
 			}
-		}
-		//}}}
+			//}}}
 
-		//}}}
+			max_pos = max_pos *2;
+		}
 
 		has_next = false;
 		//{{{ Test if there is still input lines

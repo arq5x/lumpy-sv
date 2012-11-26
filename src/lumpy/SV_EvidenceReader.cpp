@@ -78,6 +78,16 @@ process_input_chr(string chr,
 }
 //}}}
 
+//{{{ void SV_EvidenceReader:: process_input_chr_pos(string chr,
+void
+SV_EvidenceReader::
+process_input_chr_pos(string chr,
+					  CHR_POS pos,
+					  UCSCBins<SV_BreakPoint*> &r_bin)
+{
+}
+//}}}
+
 //{{{ void SV_EvidenceReader:: terminate()
 void
 SV_EvidenceReader::
@@ -92,6 +102,16 @@ SV_EvidenceReader::
 get_curr_chr()
 {
 	return "";
+}
+//}}}
+
+//{{{ string SV_EvidenceReader:: get_curr_chr()
+CHR_POS
+SV_EvidenceReader::
+get_curr_pos()
+{
+	CHR_POS x;
+	return x;
 }
 //}}}
 
