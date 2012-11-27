@@ -55,7 +55,6 @@ class SV_Pair: public SV_Evidence
 		static void process_pair(const BamAlignment &curr,
 								const RefVector refs,
 								map<string, BamAlignment> &mapped_pairs,
-								UCSCBins<SV_BreakPoint*> &l_bin,
 								UCSCBins<SV_BreakPoint*> &r_bin,
 								int weight,
 								int id,
@@ -79,8 +78,7 @@ class SV_Pair: public SV_Evidence
 
 		bool is_aberrant();
 		bool is_sane();
-		void cluster(UCSCBins<SV_BreakPoint*> &l_bin,
-					 UCSCBins<SV_BreakPoint*> &r_bin);
+		void cluster( UCSCBins<SV_BreakPoint*> &r_bin);
 
 		static void set_distro_from_histo ();
 

@@ -197,15 +197,13 @@ initialize()
 //{{{ void SV_PairReader:: process_input()
 void
 SV_PairReader::
-process_input(UCSCBins<SV_BreakPoint*> &l_bin,
-			  UCSCBins<SV_BreakPoint*> &r_bin)
+process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 {
 	while (reader.GetNextAlignment(bam)) 
 		if (bam.IsMapped() && bam.IsMateMapped())  //Paired read
 			SV_Pair::process_pair(bam,
 								  refs,
 								  mapped_pairs,
-								  l_bin,
 								  r_bin,
 								  weight,
 								  id,
@@ -227,7 +225,6 @@ get_curr_chr()
 void
 SV_PairReader::
 process_input_chr(string chr,
-				  UCSCBins<SV_BreakPoint*> &l_bin,
 				  UCSCBins<SV_BreakPoint*> &r_bin)
 {
 	// Process this chr, or the next chr 
@@ -237,7 +234,6 @@ process_input_chr(string chr,
 			SV_Pair::process_pair(bam,
 								  refs,
 								  mapped_pairs,
-								  l_bin,
 								  r_bin,
 								  weight,
 								  id,

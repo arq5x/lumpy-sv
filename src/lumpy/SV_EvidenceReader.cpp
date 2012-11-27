@@ -64,8 +64,7 @@ set_statics()
 //{{{ void SV_EvidenceReader:: process_input(UCSCBins<SV_BreakPoint*> &l_bin,
 void
 SV_EvidenceReader::
-process_input(UCSCBins<SV_BreakPoint*> &l_bin,
-						   UCSCBins<SV_BreakPoint*> &r_bin)
+process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 {
 }
 //}}}
@@ -74,7 +73,6 @@ process_input(UCSCBins<SV_BreakPoint*> &l_bin,
 void
 SV_EvidenceReader::
 process_input_chr(string chr,
-				  UCSCBins<SV_BreakPoint*> &l_bin,
 				  UCSCBins<SV_BreakPoint*> &r_bin)
 {
 }

@@ -87,7 +87,6 @@ class SV_SplitRead: public SV_Evidence
 		static void process_split(const BamAlignment &curr,
 								  const RefVector refs,
 								  map<string, BamAlignment> &mapped_splits,
-								  UCSCBins<SV_BreakPoint*> &l_bin,
 								  UCSCBins<SV_BreakPoint*> &r_bin,
 								  int weight,
 								  int id,

@@ -655,9 +655,65 @@ print_bedpe(int score)
 //{{{void SV_BreakPoint:: cluster(UCSCBins<SV_BreakPoint*> &bins);
 void
 SV_BreakPoint::
-cluster(UCSCBins<SV_BreakPoint*> &l_bin,
-		UCSCBins<SV_BreakPoint*> &r_bin)
+//cluster(UCSCBins<SV_BreakPoint*> &l_bin,
+cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 {
+#if 1
+	vector< UCSCElement<SV_BreakPoint*> > tmp_hits_r =
+			r_bin.get(interval_r.i.chr,
+					  interval_r.i.start,
+					  interval_r.i.end,
+					  interval_r.i.strand,
+					  false);		
+
+	if (tmp_hits_r.size() == 0) {
+		//insert(l_bin,r_bin);
+		insert(r_bin);
+	} else { 
+
+		vector< UCSCElement<SV_BreakPoint*> >::iterator it;
+		it = tmp_hits_r.begin();
+
+		// remove hits that are of a different type, or do not intersect the
+		// left side, hopefully there is only 1 guy left
+		while(it != tmp_hits_r.end()) {
+			if(it->value->type != type)
+				it = tmp_hits_r.erase(it);
+			else if ( it->value->interval_l.i.chr != interval_l.i.chr )
+				it = tmp_hits_r.erase(it);
+			else if (!((it->value->interval_l.i.start <= interval_l.i.end) &&
+					   (it->value->interval_l.i.end >= interval_l.i.start) ) )
+				it = tmp_hits_r.erase(it);
+			else
+				++it;
+		}
+
+		// non left to match against
+		if (tmp_hits_r.size() < 1)
+			insert(r_bin);
+		//	insert(l_bin,r_bin);
+		// one match so merge
+		else if  (tmp_hits_r.size() == 1) {
+			// addr of the bp in both sets (and only item in the intersection)
+
+			SV_BreakPoint *bp = tmp_hits_r[0].value;
+
+			if ( bp->merge(this) ) {
+				UCSCElement<SV_BreakPoint*> rm = tmp_hits_r[0];
+				r_bin.remove(rm, false, false, true);
+
+				delete this;
+
+				//bp->insert(l_bin,r_bin);
+				bp->insert(r_bin);
+
+			}
+		} else {
+		}
+	}
+#endif
+
+#if 0
 	// Find matching break points
 	vector< UCSCElement<SV_BreakPoint*> > tmp_hits_l =
 			l_bin.get(interval_l.i.chr,
@@ -676,6 +732,7 @@ cluster(UCSCBins<SV_BreakPoint*> &l_bin,
 	if ( ( tmp_hits_l.size() == 0 ) ||
 		 ( tmp_hits_r.size() == 0 ) ) {
 
+		//insert(l_bin, r_bin);
 		insert(l_bin, r_bin);
 
 	} else { //Each side has at least one hit
@@ -708,6 +765,7 @@ cluster(UCSCBins<SV_BreakPoint*> &l_bin,
 		 * the break point, the resulting intersection will contain a pointer
 		 * to the object that needs to be modified. 
 		 */
+
 		sort(tmp_hits_l.begin(), tmp_hits_l.end(),
 				UCSCElement<SV_BreakPoint*>::sort_ucscelement_by_value);
 
@@ -735,9 +793,6 @@ cluster(UCSCBins<SV_BreakPoint*> &l_bin,
 			// addr of the bp in both sets (and only item in the intersection)
 			SV_BreakPoint *bp = r[0].value;
 
-#ifdef TRACE
-			cerr << "cluster()\tfound\t" << bp << endl;
-#endif
 			vector< UCSCElement<SV_BreakPoint*> >::iterator l_it, r_it;
 
 			/* 
@@ -768,8 +823,23 @@ cluster(UCSCBins<SV_BreakPoint*> &l_bin,
 			}
 		}
 	}
+#endif
 }
 //}}}
+
+//{{{ void SV_BreakPoint:: insert(UCSCBins<SV_BreakPoint*> &r_bin,
+void
+SV_BreakPoint::
+insert(UCSCBins<SV_BreakPoint*> &r_bin)
+{
+	r_bin.add(interval_r.i.chr,
+		 	  interval_r.i.start,
+			  interval_r.i.end,
+			  interval_r.i.strand,
+			  this);
+}
+//}}}
+
 
 //{{{ void SV_BreakPoint:: insert(UCSCBins<SV_BreakPoint*> &r_bin,
 void
