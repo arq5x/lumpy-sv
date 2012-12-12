@@ -472,6 +472,7 @@ int main(int argc, char* argv[])
 						//er->process_input_chr(curr_chr, r_bin);
 						er->process_input_chr_pos(curr_chr, max_pos, r_bin);
 						input_processed = true;
+						//cerr << r_bin.num_bps() << endl;
 					} 
 				}
 			}
@@ -484,7 +485,7 @@ int main(int argc, char* argv[])
 
 			vector< UCSCElement<SV_BreakPoint*> >::iterator it;
 
-			vector< UCSCElement<SV_BreakPoint*> > to_remove;
+			//vector< UCSCElement<SV_BreakPoint*> > to_remove;
 
 			for (it = values.begin(); it < values.end(); ++it) {
 				SV_BreakPoint *bp = it->value;
@@ -510,6 +511,7 @@ int main(int argc, char* argv[])
 			}
 			//}}}
 
+			//cerr << r_bin.num_bps() << endl;
 			max_pos = max_pos *2;
 		}
 

@@ -55,6 +55,7 @@ template <class T>
 class UCSCBins 
 {
 	unsigned long int next_id;
+	unsigned int size;
 
 	typedef vector<UCSCElement<T> > element_vector;
 	typedef map<BIN, element_vector, less<BIN> > bins;
@@ -70,6 +71,8 @@ class UCSCBins
 
 		static BIN getBin(CHR_POS start,
 						  CHR_POS end);
+
+		unsigned int num_bps();
 
 		void add(string chr,
 				 CHR_POS start,
@@ -198,6 +201,7 @@ const USHORT UCSCBins<T>::kBinNextShift = 3;
 template <class T>
 UCSCBins<T>::UCSCBins()
 {
+	size = 0;
 	chrom_bins = map<string, bins, less<string> >();
 }
 //}}}
@@ -210,6 +214,7 @@ UCSCBins<T>::add(string chr,
 			  CHR_POS end,
 			  UCSCElement<T> element) 
 {
+	++size;
 	element.id = next_id++;
 	BIN bin = getBin(start, end);
 	chrom_bins[chr][bin].push_back(element);
@@ -228,6 +233,7 @@ UCSCBins<T>:: add(string chr,
 	UCSCElement<T> element = UCSCElement<T>(start, end, strand, chr);
 	element.value = value;
 	element.id = next_id++;
+	++size;
 
 	BIN bin = getBin(start, end);
 	chrom_bins[chr][bin].push_back(element);
@@ -341,6 +347,7 @@ UCSCBins<T>::remove(UCSCElement<T> e,
 						if (remove_value)
 							free(elementItr->value);
 						chrom_bins[e.chr][j].erase(elementItr);
+						--size;
 						return 0;
 					}
 				}
@@ -350,6 +357,15 @@ UCSCBins<T>::remove(UCSCElement<T> e,
 		end_bin   >>= kBinNextShift;
 	}
 	return 1;
+}
+//}}}
+
+//{{{ 
+template <class T>
+unsigned int
+UCSCBins<T>::num_bps()
+{
+	return size;
 }
 //}}}
 
@@ -400,8 +416,6 @@ UCSCBins<T>::values(string target_chr,
 	return values;
 }
 //}}}
-
-
 
 //{{{ template <class T> vector<UCSCElement<T> > UCSCBins<T>::values()
 template <class T>
