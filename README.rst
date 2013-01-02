@@ -36,7 +36,7 @@ Edit the `defs.local` file in accordance with your configuration.
         * if Windows, sorry this is unsupported.
     - Edit the `GSL_LINK` environment variable.
         * This path depends on where gsl was installed.  The path should
-          contain the "gbgsl.so" file.  Possibilties are:
+          contain the "libgsl.so.0" file.  Possibilties are:
         * if OSX,   set GSL_LINK=-L/sw/lib/
         * if Linux, set GSL_LINK=-L/usr/lib/
         * if Windows, sorry this is unsupported.
