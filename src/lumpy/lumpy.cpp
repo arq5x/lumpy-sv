@@ -15,6 +15,7 @@
 //{{{ includes
 #include "version.h"
 #include "api/BamReader.h"
+#include "api/BamMultiReader.h"
 #include "api/BamAux.h"
 #include "BamAncillary.h"
 #include "bedFile.h"
@@ -28,6 +29,7 @@
 #include "SV_SplitReadReader.h"
 #include "SV_PairReader.h"
 #include "SV_BedpeReader.h"
+#include "SV_BamReader.h"
 #include "SV_Tools.h"
 
 #include "ucsc_bins.hpp"
@@ -184,7 +186,9 @@ int main(int argc, char* argv[])
 	double merge_threshold = 1e-10;
 	int min_weight = 0;
 	bool show_evidence = false;
+	bool has_bams = false, has_bedpes = false;
 	CHR_POS window_size = 1000000;
+	//vector<string> bam_files;
 	//}}}
 
     //{{{ check to see if we should print out some help
@@ -202,14 +206,16 @@ int main(int argc, char* argv[])
 	//}}}
 
 	//{{{ do some parsing (all of these parameters require 2 strings)
+	//vector<SV_EvidenceReader*> bam_evidence_readers;
 	vector<SV_EvidenceReader*> evidence_readers;
+	map<string, SV_EvidenceReader*> bam_evidence_readers;
 
     for(int i = 1; i < argc; i++) {
         int parameterLength = (int)strlen(argv[i]);
 
 		if(PARAMETER_CHECK("-pe", 3, parameterLength)) {
 			//{{{
-
+			has_bams = true;
 			SV_PairReader *pe_r = new SV_PairReader();
 
 			/*
@@ -245,7 +251,7 @@ int main(int argc, char* argv[])
 			string msg = pe_r->check_params();
 			if ( msg.compare("") == 0 ) {
 				// Add to list of readers
-				evidence_readers.push_back(pe_r);
+				//bam_evidence_readers.push_back(pe_r);
 				// Set the ditro map
 				pe_r->set_statics();
 				SV_Evidence::distros[pe_r->sample_id] = 
@@ -257,6 +263,10 @@ int main(int argc, char* argv[])
 				ShowHelp();
 			}
 
+			//bam_files.push_back(pe_r->get_source_file_name());
+			bam_evidence_readers[pe_r->get_source_file_name()] = pe_r;
+
+
 			i++;
 			//}}}
 		}
@@ -264,7 +274,7 @@ int main(int argc, char* argv[])
 
 		else if(PARAMETER_CHECK("-bedpe", 6, parameterLength)) {
 			//{{{
-			
+			has_bedpes = true;	
 			SV_BedpeReader *be_r = new SV_BedpeReader();
 
 			if ((i+1) < argc) {
@@ -292,13 +302,14 @@ int main(int argc, char* argv[])
 			string msg = be_r->check_params();
 			if ( msg.compare("") == 0 ) {
 				evidence_readers.push_back(be_r);
+				be_r->set_statics();
 				SV_Evidence::distros[be_r->sample_id] = 
 					pair<log_space*,log_space*>(
 							SV_Bedpe::get_bp_interval_probability('+'),
 							SV_Bedpe::get_bp_interval_probability('-'));
 
 			} else {
-				cerr << "missing pair end parameters:" << msg << endl;
+				cerr << "missing bedpe parameters:" << msg << endl;
 				ShowHelp();
 			}
 
@@ -308,6 +319,7 @@ int main(int argc, char* argv[])
 
 		else if(PARAMETER_CHECK("-sr", 3, parameterLength)) {
 			//{{{
+			has_bams = true;
 			SV_SplitReadReader *sr_r = new SV_SplitReadReader();
 
 			if ((i+1) < argc) {
@@ -334,16 +346,20 @@ int main(int argc, char* argv[])
 
 			string msg = sr_r->check_params();
 			if ( msg.compare("") == 0 ) {
-				evidence_readers.push_back(sr_r);
+				//bam_evidence_readers.push_back(sr_r);
+				sr_r->set_statics();
 				SV_Evidence::distros[sr_r->sample_id] = 
 					pair<log_space*,log_space*>(
 							SV_SplitRead::get_bp_interval_probability('+'),
 							SV_SplitRead::get_bp_interval_probability('-'));
 
 			} else {
-				cerr << "missing pair end parameters:" << msg << endl;
+				cerr << "missing split read parameters:" << msg << endl;
 				ShowHelp();
 			}
+
+			//bam_files.push_back(sr_r->get_source_file_name());
+			bam_evidence_readers[sr_r->get_source_file_name()] = sr_r;
 
 			i++;
 			//}}}
@@ -404,12 +420,40 @@ int main(int argc, char* argv[])
 
 	//}}}
 
+	if (has_bams) {
+		SV_BamReader *bam_r = new SV_BamReader(&bam_evidence_readers);
+		evidence_readers.push_back(bam_r);
+	}
+
 	UCSCBins<SV_BreakPoint*> r_bin;
 
 	SV_BreakPoint::p_trim_threshold = trim_threshold;
 	SV_BreakPoint::p_merge_threshold = merge_threshold;
 
 	vector<SV_EvidenceReader*>::iterator i_er;
+
+#if 0
+	BamMultiReader bam_reader;
+	if ( has_bams && !bam_reader.Open(bam_files) ) {
+		cerr << "Could not open input BAM files." << endl;
+		exit(1);
+	}
+
+	BamAlignment bam;
+	RefVector refs = bam_reader.GetReferenceData();
+	bool have_next_alignment = true;
+	SV_EvidenceReader *curr_reader;
+	have_next_alignment = bam_reader.GetNextAlignment(bam);
+	string last_file = "";
+	while (have_next_alignment) {
+		curr_reader = bam_evidence_readers[bam.Filename];	
+		if (last_file.compare(bam.Filename) !=0 )
+			curr_reader->set_statics();
+		last_file = bam.Filename;
+		curr_reader->process_input(bam,refs,r_bin);
+		have_next_alignment = bam_reader.GetNextAlignment(bam);
+	}
+#endif
 
 	//{{{ initialize all input files
 	for (	i_er = evidence_readers.begin();
@@ -469,15 +513,12 @@ int main(int argc, char* argv[])
 					if ( ( curr_chr.compare(min_chr) <= 0 ) &&
 						 ( curr_pos < max_pos) )	{
 						er->set_statics();
-						//er->process_input_chr(curr_chr, r_bin);
 						er->process_input_chr_pos(curr_chr, max_pos, r_bin);
 						input_processed = true;
-						//cerr << r_bin.num_bps() << endl;
 					} 
 				}
 			}
 			//}}}
-
 
 			//{{{ get breakpoints
 			vector< UCSCElement<SV_BreakPoint*> > values = 

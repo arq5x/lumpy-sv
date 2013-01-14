@@ -2,7 +2,7 @@
 // BamAlignment.cpp (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 17 October 2011 (DB)
+// Last modified: 4 December 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -25,12 +25,22 @@ using namespace std;
 */
 /*! \var BamAlignment::QueryBases
     \brief 'original' sequence (as reported from sequencing machine)
+
+    \note Setting this field to "*" indicates that the sequence is not to be stored on output.
+    In this case, the contents of the Qualities field should be invalidated as well (cleared or marked as "*").
 */
 /*! \var BamAlignment::AlignedBases
     \brief 'aligned' sequence (includes any indels, padding, clipping)
+
+    This field will be completely empty after reading from BamReader/BamMultiReader when
+    QueryBases is empty.
 */
 /*! \var BamAlignment::Qualities
     \brief FASTQ qualities (ASCII characters, not numeric values)
+
+    \note Setting this field to "*" indicates to BamWriter that the quality scores are not to be stored,
+    but instead will be output as a sequence of '0xFF'. Otherwise, QueryBases must not be a "*" and
+    the length of this field should equal the length of QueryBases.
 */
 /*! \var BamAlignment::TagData
     \brief tag data (use the provided methods to query/modify)
@@ -70,8 +80,12 @@ using namespace std;
     \brief constructor
 */
 BamAlignment::BamAlignment(void)
-    : RefID(-1)
+    : Length(0)
+    , RefID(-1)
     , Position(-1)
+    , Bin(0)
+    , MapQuality(0)
+    , AlignmentFlag(0)
     , MateRefID(-1)
     , MatePosition(-1)
     , InsertSize(0)
@@ -134,22 +148,17 @@ bool BamAlignment::BuildCharData(void) {
     const unsigned int tagDataLength  = dataLength - tagDataOffset;
 
     // check offsets to see what char data exists
-    const bool hasSeqData  = ( seqDataOffset  < dataLength );
-    const bool hasQualData = ( qualDataOffset < dataLength );
+    const bool hasSeqData  = ( seqDataOffset  < qualDataOffset );
+    const bool hasQualData = ( qualDataOffset < tagDataOffset );
     const bool hasTagData  = ( tagDataOffset  < dataLength );
 
-    // set up char buffers
-    const char* allCharData = SupportData.AllCharData.data();
-    const char* seqData     = ( hasSeqData  ? (((const char*)allCharData) + seqDataOffset)  : (const char*)0 );
-    const char* qualData    = ( hasQualData ? (((const char*)allCharData) + qualDataOffset) : (const char*)0 );
-          char* tagData     = ( hasTagData  ? (((char*)allCharData) + tagDataOffset)        : (char*)0 );
-
     // store alignment name (relies on null char in name as terminator)
-    Name.assign((const char*)(allCharData));
+    Name.assign(SupportData.AllCharData.data());
 
     // save query sequence
     QueryBases.clear();
     if ( hasSeqData ) {
+        const char* seqData = SupportData.AllCharData.data() + seqDataOffset;
         QueryBases.reserve(SupportData.QuerySequenceLength);
         for ( size_t i = 0; i < SupportData.QuerySequenceLength; ++i ) {
             const char singleBase = Constants::BAM_DNA_LOOKUP[ ( (seqData[(i/2)] >> (4*(1-(i%2)))) & 0xf ) ];
@@ -157,13 +166,21 @@ bool BamAlignment::BuildCharData(void) {
         }
     }
 
-    // save qualities, converting from numeric QV to 'FASTQ-style' ASCII character
+    // save qualities
+
     Qualities.clear();
     if ( hasQualData ) {
-        Qualities.reserve(SupportData.QuerySequenceLength);
-        for ( size_t i = 0; i < SupportData.QuerySequenceLength; ++i ) {
-            const char singleQuality = static_cast<const char>(qualData[i]+33);
-            Qualities.append(1, singleQuality);
+        const char* qualData = SupportData.AllCharData.data() + qualDataOffset;
+
+        // if marked as unstored (sequence of 0xFF) - don't do conversion, just fill with 0xFFs
+        if ( qualData[0] == (char)0xFF )
+            Qualities.resize(SupportData.QuerySequenceLength, (char)0xFF);
+
+        // otherwise convert from numeric QV to 'FASTQ-style' ASCII character
+        else {
+            Qualities.reserve(SupportData.QuerySequenceLength);
+            for ( size_t i = 0; i < SupportData.QuerySequenceLength; ++i )
+                Qualities.append(1, qualData[i]+33);
         }
     }
 
@@ -172,7 +189,7 @@ bool BamAlignment::BuildCharData(void) {
 
     // if QueryBases has data, build AlignedBases using CIGAR data
     // otherwise, AlignedBases will remain empty (this case IS allowed)
-    if ( !QueryBases.empty() ) {
+    if ( !QueryBases.empty() && QueryBases != "*" ) {
 
         // resize AlignedBases
         AlignedBases.reserve(SupportData.QuerySequenceLength);
@@ -231,6 +248,9 @@ bool BamAlignment::BuildCharData(void) {
     // save tag data
     TagData.clear();
     if ( hasTagData ) {
+
+        char* tagData = (((char*)SupportData.AllCharData.data()) + tagDataOffset);
+
         if ( IsBigEndian ) {
             size_t i = 0;
             while ( i < tagDataLength ) {
@@ -373,6 +393,72 @@ bool BamAlignment::FindTag(const std::string& tag,
     // checked all tags, none match
     return false;
 }
+
+/*! \fn bool BamAlignment::GetArrayTagType(const std::string& tag, char& type) const
+    \brief Retrieves the BAM tag type-code for the array elements associated with requested tag name.
+
+    \param[in]  tag  2-character tag name
+    \param[out] type retrieved (1-character) type-code
+
+    \return \c true if found. False if not found, or if tag is not an array type.
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::GetArrayTagType(const std::string& tag, char& type) const {
+
+    // skip if alignment is core-only
+    if ( SupportData.HasCoreOnly ) {
+        // TODO: set error string?
+        return false;
+    }
+
+    // skip if no tags present
+    if ( TagData.empty() ) {
+        // TODO: set error string?
+        return false;
+    }
+
+    // localize the tag data
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    // if tag not found, return failure
+    if ( !FindTag(tag, pTagData, tagDataLength, numBytesParsed) ){
+        // TODO: set error string?
+        return false;
+    }
+
+    // check that tag type code is array
+    type = *(pTagData - 1);
+    if ( type != Constants::BAM_TAG_TYPE_ARRAY ) {
+        // TODO: set error string
+        return false;
+    }
+
+    // fetch element type
+    const char elementType = *pTagData;
+    switch ( elementType ) {
+
+        // allowable types
+        case (Constants::BAM_TAG_TYPE_INT8)   :
+        case (Constants::BAM_TAG_TYPE_UINT8)  :
+        case (Constants::BAM_TAG_TYPE_INT16)  :
+        case (Constants::BAM_TAG_TYPE_UINT16) :
+        case (Constants::BAM_TAG_TYPE_INT32)  :
+        case (Constants::BAM_TAG_TYPE_UINT32) :
+        case (Constants::BAM_TAG_TYPE_FLOAT)  :
+            type = elementType;
+            break;
+
+        default:
+            //TODO: set error string
+            return false;
+    }
+
+    // if we get here, return success
+    return true;
+}
+
 
 /*! \fn int BamAlignment::GetEndPosition(bool usePadded = false, bool closedInterval = false) const
     \brief Calculates alignment end position, based on its starting position and CIGAR data.
@@ -529,6 +615,45 @@ bool BamAlignment::GetSoftClips(vector<int>& clipSizes,
 
     // return whether any soft clips found
     return softClipFound;
+}
+
+/*! \fn std::vector<std::string> BamAlignment::GetTagNames(void) const
+    \brief Retrieves the BAM tag names.
+
+    When paired with GetTagType() and GetTag(), this method allows you
+    to iterate over an alignment's tag data without knowing the names (or types)
+    beforehand.
+
+    \return \c vector containing all tag names found (empty if none available)
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+std::vector<std::string> BamAlignment::GetTagNames(void) const {
+
+    std::vector<std::string> result;
+    if ( SupportData.HasCoreOnly || TagData.empty() )
+        return result;
+
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+    while ( numBytesParsed < tagDataLength ) {
+
+        // get current tag name & type
+        const char* pTagName = pTagData;
+        const char* pTagType = pTagData + 2;
+        pTagData       += 3;
+        numBytesParsed +=3;
+
+        // store tag name
+        result.push_back( std::string(pTagName, 2)  );
+
+        // find the next tag
+        if ( *pTagType == '\0' ) break;
+        if ( !SkipToNextTag(*pTagType, pTagData, numBytesParsed) ) break;
+        if ( *pTagData == '\0' ) break;
+    }
+
+    return result;
 }
 
 /*! \fn bool BamAlignment::GetTagType(const std::string& tag, char& type) const

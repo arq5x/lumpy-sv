@@ -13,6 +13,8 @@
  * ***************************************************************************/
 
 #include "SV_EvidenceReader.h"
+#include "api/BamReader.h"
+using namespace BamTools;
 
 using namespace std;
 
@@ -57,6 +59,16 @@ initialize()
 void
 SV_EvidenceReader::
 set_statics()
+{
+}
+//}}}
+
+//{{{ void SV_EvidenceReader:: process_input( BamAlignment &_bam,
+void
+SV_EvidenceReader::
+process_input( BamAlignment &_bam,
+			   RefVector &_refs,
+			   UCSCBins<SV_BreakPoint*> &r_bin)
 {
 }
 //}}}
@@ -121,5 +133,14 @@ SV_EvidenceReader::
 has_next()
 {
 	return false;
+}
+//}}}
+
+//{{{ string SV_PairReader:: get_source_file_name()
+string
+SV_EvidenceReader::
+get_source_file_name()
+{
+	return "Error";
 }
 //}}}

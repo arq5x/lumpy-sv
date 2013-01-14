@@ -76,6 +76,10 @@ class SV_PairReader : public SV_EvidenceReader
 		void initialize();
 		void set_statics();
 		void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
+		void process_input( BamAlignment &_bam,
+							RefVector &_ref,
+							UCSCBins<SV_BreakPoint*> &r_bin);
+
 		void process_input_chr(string chr,
 							   UCSCBins<SV_BreakPoint*> &r_bin);
 		void process_input_chr_pos(string chr,
@@ -85,6 +89,7 @@ class SV_PairReader : public SV_EvidenceReader
 		string get_curr_chr();
 		CHR_POS get_curr_pos();
 		bool has_next();
+		string get_source_file_name();
 };
 
 #endif

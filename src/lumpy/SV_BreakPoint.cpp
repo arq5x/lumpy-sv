@@ -74,7 +74,13 @@ print_evidence(string pre)
 	for (it = evidence.begin(); it < evidence.end(); ++it) {
 		SV_Evidence *sv_e = *it;
 		cout << pre;
-		sv_e->print_evidence();
+		//sv_e->print_evidence();
+		SV_BreakPoint *tmp_bp = sv_e->get_bp();
+		tmp_bp->print_bedpe(-1);
+		//tmp_bp->init_interval_probabilities();
+		//struct breakpoint_interval i = tmp_bp->interval_l;
+		//cout <<  ascii_interval_prob(&i) << endl;
+		delete(tmp_bp);
 	}
 }
 //}}}
@@ -839,7 +845,6 @@ insert(UCSCBins<SV_BreakPoint*> &r_bin)
 			  this);
 }
 //}}}
-
 
 //{{{ void SV_BreakPoint:: insert(UCSCBins<SV_BreakPoint*> &r_bin,
 void

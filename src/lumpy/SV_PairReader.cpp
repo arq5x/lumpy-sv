@@ -183,13 +183,13 @@ initialize()
 {
 	//cerr << "Pair initialize" << endl;
 	// open the BAM file
-	reader.Open(bam_file);
+	//reader.Open(bam_file);
 
 	// get header & reference information
-	header = reader.GetHeaderText();
-	refs = reader.GetReferenceData();
+	//header = reader.GetHeaderText();
+	//refs = reader.GetReferenceData();
 
-	have_next_alignment = reader.GetNextAlignment(bam);
+	//have_next_alignment = reader.GetNextAlignment(bam);
 	//cerr << "Pair have_next_alignment " << have_next_alignment << endl;
 }
 //}}}
@@ -210,6 +210,25 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 								  sample_id);
 }
 //}}}
+
+//{{{ void SV_PairReader:: process_input(
+void
+SV_PairReader::
+process_input( BamAlignment &_bam,
+			   RefVector &_refs,
+			   UCSCBins<SV_BreakPoint*> &r_bin)
+{
+		if (_bam.IsMapped() && _bam.IsMateMapped()) 
+			SV_Pair::process_pair(_bam,
+								  _refs,
+								  mapped_pairs,
+								  r_bin,
+								  weight,
+								  id,
+								  sample_id);
+}
+//}}}
+
 
 //{{{ string SV_PairReader:: get_curr_chr()
 string
@@ -298,5 +317,14 @@ has_next()
 {
 	//cerr << "Pair has_next:" << have_next_alignment << endl;
 	return have_next_alignment;
+}
+//}}}
+
+//{{{ string SV_PairReader:: get_source_file_name()
+string
+SV_PairReader::
+get_source_file_name()
+{
+	return bam_file;
 }
 //}}}
