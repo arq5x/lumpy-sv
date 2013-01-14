@@ -18,6 +18,8 @@
 #include <string>
 #include "ucsc_bins.hpp"
 #include "SV_BreakPoint.h"
+#include "api/BamReader.h"
+using namespace BamTools;
 
 using namespace std;
 
@@ -32,6 +34,9 @@ class SV_EvidenceReader
 
 		virtual void initialize();
 		virtual void set_statics();
+		virtual void process_input( BamAlignment &_bam,
+									RefVector &_ref,
+									UCSCBins<SV_BreakPoint*> &r_bin);
 		virtual void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
 		virtual void process_input_chr(string chr,
 									   UCSCBins<SV_BreakPoint*> &r_bin);
@@ -44,5 +49,6 @@ class SV_EvidenceReader
 
 		virtual bool has_next();
 
+		virtual string get_source_file_name();
 };
 #endif

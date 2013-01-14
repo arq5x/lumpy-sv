@@ -11,13 +11,15 @@
  *
  * Licenced under the GNU General Public License 2.0 license.
  * ***************************************************************************/
-
+class SV_BreakPoint;
 #ifndef __SV_Evidence_H__
 #define __SV_Evidence_H__
 
 #include <iostream>
 #include <map>
 #include <utility>
+
+#include "SV_BreakPoint.h"
 
 using namespace std;
 
@@ -39,6 +41,7 @@ class SV_Evidence
 
 		virtual void print_evidence();
 		virtual ~SV_Evidence();
+		virtual SV_BreakPoint* get_bp();
 		//virtual log_space* get_bp_interval_probability(char strand);
 
 };

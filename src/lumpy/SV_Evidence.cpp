@@ -32,6 +32,12 @@ SV_Evidence::
 {
 }
 
+SV_BreakPoint*
+SV_Evidence::
+get_bp()
+{
+	return NULL;
+}
 
 //{{{ void SV_Pair:: set_interval_probability()
 void

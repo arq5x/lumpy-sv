@@ -12,6 +12,7 @@
  * Licenced under the GNU General Public License 2.0 license.
  * ***************************************************************************/
 
+class SV_Evidence;
 #ifndef __SV_BREAKPOINT_H__
 #define __SV_BREAKPOINT_H__
 

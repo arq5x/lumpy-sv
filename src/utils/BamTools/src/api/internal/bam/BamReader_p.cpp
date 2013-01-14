@@ -2,7 +2,7 @@
 // BamReader_p.cpp (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 28 November 2011 (DB)
+// Last modified: 18 November 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
@@ -92,6 +92,10 @@ bool BamReaderPrivate::CreateIndex(const BamIndex::IndexType& type) {
 // return path & filename of current BAM file
 const string BamReaderPrivate::Filename(void) const {
     return m_filename;
+}
+
+const SamHeader& BamReaderPrivate::GetConstSamHeader(void) const {
+    return m_header.ToConstSamHeader();
 }
 
 string BamReaderPrivate::GetErrorString(void) const {
@@ -232,6 +236,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
 
     // read in the 'block length' value, make sure it's not zero
     char buffer[sizeof(uint32_t)];
+    fill_n(buffer, sizeof(uint32_t), 0);
     m_stream.Read(buffer, sizeof(uint32_t));
     alignment.SupportData.BlockLength = BamTools::UnpackUnsignedInt(buffer);
     if ( m_isBigEndian ) BamTools::SwapEndian_32(alignment.SupportData.BlockLength);

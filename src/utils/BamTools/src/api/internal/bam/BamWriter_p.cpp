@@ -2,7 +2,7 @@
 // BamWriter_p.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 18 November 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -210,7 +210,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
     // calculate char lengths
     const unsigned int nameLength         = al.Name.size() + 1;
     const unsigned int numCigarOperations = al.CigarData.size();
-    const unsigned int queryLength        = al.QueryBases.size();
+    const unsigned int queryLength        = ( (al.QueryBases == "*") ? 0 : al.QueryBases.size() );
     const unsigned int tagDataLength      = al.TagData.size();
 
     // no way to tell if alignment's bin is already defined (there is no default, invalid value)
@@ -223,15 +223,18 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
     const unsigned int packedCigarLength = packedCigar.size();
 
     // encode the query
+    unsigned int encodedQueryLength = 0;
     string encodedQuery;
-    EncodeQuerySequence(al.QueryBases, encodedQuery);
-    const unsigned int encodedQueryLength = encodedQuery.size();
+    if ( queryLength > 0 ) {
+        EncodeQuerySequence(al.QueryBases, encodedQuery);
+        encodedQueryLength = encodedQuery.size();
+    }
 
     // write the block size
     const unsigned int dataBlockSize = nameLength +
                                        packedCigarLength +
                                        encodedQueryLength +
-                                       queryLength +
+                                       queryLength +         // here referring to quality length
                                        tagDataLength;
     unsigned int blockSize = Constants::BAM_CORE_SIZE + dataBlockSize;
     if ( m_isBigEndian ) BamTools::SwapEndian_32(blockSize);
@@ -274,16 +277,24 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
     else
         m_stream.Write(packedCigar.data(), packedCigarLength);
 
-    // write the encoded query sequence
-    m_stream.Write(encodedQuery.data(), encodedQueryLength);
+    if ( queryLength > 0 ) {
 
-    // write the base qualities
-    char* pBaseQualities = (char*)al.Qualities.data();
-    for ( size_t i = 0; i < queryLength; ++i )
-        pBaseQualities[i] -= 33; // FASTQ conversion
-    m_stream.Write(pBaseQualities, queryLength);
+        // write the encoded query sequence
+        m_stream.Write(encodedQuery.data(), encodedQueryLength);
 
-    // write the read group tag
+        // write the base qualities
+        char* pBaseQualities = new char[queryLength]();
+        if ( al.Qualities.empty() || ( al.Qualities.size() == 1 && al.Qualities[0] == '*' ) || al.Qualities[0] == (char)0xFF )
+            memset(pBaseQualities, 0xFF, queryLength); // if missing or '*', fill with invalid qual
+        else {
+            for ( size_t i = 0; i < queryLength; ++i )
+                pBaseQualities[i] = al.Qualities.at(i) - 33; // FASTQ ASCII -> phred score conversion
+        }
+        m_stream.Write(pBaseQualities, queryLength);
+        delete[] pBaseQualities;
+    }
+
+    // write the tag data
     if ( m_isBigEndian ) {
 
         char* tagData = new char[tagDataLength]();
@@ -434,13 +445,14 @@ void BamWriterPrivate::WriteReferences(const BamTools::RefVector& referenceSeque
     RefVector::const_iterator rsEnd  = referenceSequences.end();
     for ( ; rsIter != rsEnd; ++rsIter ) {
 
-        // write the reference sequence name length
-        uint32_t referenceSequenceNameLen = rsIter->RefName.size() + 1;
-        if ( m_isBigEndian ) BamTools::SwapEndian_32(referenceSequenceNameLen);
-        m_stream.Write((char*)&referenceSequenceNameLen, Constants::BAM_SIZEOF_INT);
+        // write the reference sequence name length (+1 for terminator)
+        const uint32_t actualNameLen = rsIter->RefName.size() + 1;
+        uint32_t maybeSwappedNameLen = actualNameLen;
+        if ( m_isBigEndian ) BamTools::SwapEndian_32(maybeSwappedNameLen);
+        m_stream.Write((char*)&maybeSwappedNameLen, Constants::BAM_SIZEOF_INT);
 
         // write the reference sequence name
-        m_stream.Write(rsIter->RefName.c_str(), referenceSequenceNameLen);
+        m_stream.Write(rsIter->RefName.c_str(), actualNameLen);
 
         // write the reference sequence length
         int32_t referenceLength = rsIter->RefLength;
@@ -452,11 +464,12 @@ void BamWriterPrivate::WriteReferences(const BamTools::RefVector& referenceSeque
 void BamWriterPrivate::WriteSamHeaderText(const std::string& samHeaderText) {
 
     // write the SAM header  text length
-    uint32_t samHeaderLen = samHeaderText.size();
-    if ( m_isBigEndian ) BamTools::SwapEndian_32(samHeaderLen);
-    m_stream.Write((char*)&samHeaderLen, Constants::BAM_SIZEOF_INT);
+    const uint32_t actualHeaderLen = samHeaderText.size();
+    uint32_t maybeSwappedHeaderLen = samHeaderText.size();
+    if ( m_isBigEndian ) BamTools::SwapEndian_32(maybeSwappedHeaderLen);
+    m_stream.Write((char*)&maybeSwappedHeaderLen, Constants::BAM_SIZEOF_INT);
 
     // write the SAM header text
-    if ( samHeaderLen > 0 )
-        m_stream.Write(samHeaderText.data(), samHeaderLen);
+    if ( actualHeaderLen > 0 )
+        m_stream.Write(samHeaderText.data(), actualHeaderLen);
 }

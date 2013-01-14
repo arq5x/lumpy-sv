@@ -141,6 +141,23 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 }
 //}}}
 
+//{{{ void SV_SplitReadReader:: process_input( BamAlignment &_bam,
+void
+SV_SplitReadReader::
+process_input( BamAlignment &_bam,
+			   RefVector &_refs,
+			   UCSCBins<SV_BreakPoint*> &r_bin)
+{
+	SV_SplitRead::process_split(_bam,
+								_refs,
+								mapped_splits,
+								r_bin,
+								weight,
+								id,
+								sample_id);
+}
+//}}}
+
 //{{{ void SV_SplitReadReader:: process_input_chr(string chr,
 void
 SV_SplitReadReader::
@@ -210,5 +227,14 @@ SV_SplitReadReader::
 has_next()
 {
 	return have_next_alignment;
+}
+//}}}
+
+//{{{ string SV_PairReader:: get_source_file_name()
+string
+SV_SplitReadReader::
+get_source_file_name()
+{
+	return bam_file;
 }
 //}}}
