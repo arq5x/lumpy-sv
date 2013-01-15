@@ -26,6 +26,7 @@
 SV_BamReader::
 SV_BamReader()
 {
+	curr_reader = NULL;
 }
 //}}}
 
@@ -34,8 +35,18 @@ SV_BamReader::
 SV_BamReader(map<string, SV_EvidenceReader*> *_bam_evidence_readers)
 {
 	bam_evidence_readers = _bam_evidence_readers;
+	curr_reader = NULL;
 }
 //}}}
+SV_BamReader::
+~SV_BamReader()
+{
+	map<string, SV_EvidenceReader*>::iterator it;
+	for (it = bam_evidence_readers->begin();
+			it != bam_evidence_readers->end();
+			++it)
+		delete(it->second);
+}
 
 //{{{ string SV_BamReader:: check_params()
 string
@@ -152,22 +163,46 @@ process_input_chr_pos(string chr,
 					  UCSCBins<SV_BreakPoint*> &r_bin)
 {
 	string last_file = "";
+	SV_EvidenceReader *last_reader;
 
 	// Process this chr, or the next chr 
 	//cerr << "START" << endl;
 	while ( has_next_alignment &&
 			( chr.compare( refs.at(bam.RefID).RefName) == 0 ) &&
 			( bam.Position < pos ) ) {
+
+		/*
+		if (last_file.compare(bam.Filename) !=0 ) {
+			if (curr_reader != NULL)
+				curr_reader->unset_statics();
+
+			curr_reader = (*bam_evidence_readers)[bam.Filename];
+			curr_reader->set_statics();
+		}
+		
+		curr_reader->process_input(bam,refs,r_bin);
+
+		has_next_alignment = bam_reader.GetNextAlignment(bam);
+		last_file = bam.Filename;
+		*/
 		
 		//cerr << bam.Filename << "\t" <<
 			//bam.Position <<
 			//endl;
+			//
+		
 		curr_reader = (*bam_evidence_readers)[bam.Filename];
-		if (last_file.compare(bam.Filename) !=0 )
+		if (last_file.compare(bam.Filename) !=0 ) {
+			if (last_reader != NULL)
+				last_reader->unset_statics();
 			curr_reader->set_statics();
+		}
 		last_file = bam.Filename;
 		curr_reader->process_input(bam,refs,r_bin);
+		last_reader = curr_reader;
+
 		has_next_alignment = bam_reader.GetNextAlignment(bam);
+
 		//cerr << bam.Filename << "\t" <<
 			//bam.Position <<
 			//endl;

@@ -89,6 +89,14 @@ set_statics()
 }
 //}}}
 
+//{{{ void SV_SplitReadReader:: unset_statics()
+void
+SV_SplitReadReader::
+unset_statics()
+{
+}
+//}}}
+
 //{{{ void SV_SplitReadReader:: initialize()
 void
 SV_SplitReadReader::

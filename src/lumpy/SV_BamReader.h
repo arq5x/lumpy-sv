@@ -41,6 +41,7 @@ class SV_BamReader : public SV_EvidenceReader
 
 	public:
 		SV_BamReader();
+		~SV_BamReader();
 		SV_BamReader(map<string, SV_EvidenceReader*> *_bam_evidence_readers);
 
 		bool add_param(char *param, char *val);

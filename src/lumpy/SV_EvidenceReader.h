@@ -34,6 +34,7 @@ class SV_EvidenceReader
 
 		virtual void initialize();
 		virtual void set_statics();
+		virtual void unset_statics();
 		virtual void process_input( BamAlignment &_bam,
 									RefVector &_ref,
 									UCSCBins<SV_BreakPoint*> &r_bin);

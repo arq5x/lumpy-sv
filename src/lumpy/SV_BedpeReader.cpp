@@ -109,6 +109,15 @@ set_statics()
 }
 //}}}
 
+//{{{ void SV_BedpeReader:: unset_statics()
+void
+SV_BedpeReader::
+unset_statics()
+{
+	free(SV_Bedpe::distro);
+}
+//}}}
+
 //{{{ void SV_BedpeReader:: initialize()
 void
 SV_BedpeReader::
