@@ -258,6 +258,7 @@ int main(int argc, char* argv[])
 					pair<log_space*,log_space*>(
 							SV_Pair::get_bp_interval_probability('+'),
 							SV_Pair::get_bp_interval_probability('-'));
+				pe_r->unset_statics();
 			} else {
 				cerr << "missing pair end parameters:" << msg << endl;
 				ShowHelp();
@@ -307,6 +308,7 @@ int main(int argc, char* argv[])
 					pair<log_space*,log_space*>(
 							SV_Bedpe::get_bp_interval_probability('+'),
 							SV_Bedpe::get_bp_interval_probability('-'));
+				be_r->unset_statics();
 
 			} else {
 				cerr << "missing bedpe parameters:" << msg << endl;
@@ -352,6 +354,7 @@ int main(int argc, char* argv[])
 					pair<log_space*,log_space*>(
 							SV_SplitRead::get_bp_interval_probability('+'),
 							SV_SplitRead::get_bp_interval_probability('-'));
+				sr_r->unset_statics();
 
 			} else {
 				cerr << "missing split read parameters:" << msg << endl;
@@ -514,11 +517,14 @@ int main(int argc, char* argv[])
 						 ( curr_pos < max_pos) )	{
 						er->set_statics();
 						er->process_input_chr_pos(curr_chr, max_pos, r_bin);
+						er->unset_statics();
 						input_processed = true;
 					} 
 				}
 			}
 			//}}}
+
+			cerr << "bps:" << r_bin.num_bps() << "\t";
 
 			//{{{ get breakpoints
 			vector< UCSCElement<SV_BreakPoint*> > values = 
@@ -552,7 +558,7 @@ int main(int argc, char* argv[])
 			}
 			//}}}
 
-			//cerr << r_bin.num_bps() << endl;
+			cerr << r_bin.num_bps() << endl;
 			max_pos = max_pos *2;
 		}
 
@@ -598,5 +604,19 @@ int main(int argc, char* argv[])
 		}
 
 	//}}}
+	
+	map<int, pair<log_space*,log_space*> >::iterator e_it;
+	for(e_it =  SV_Evidence::distros.begin();
+		e_it !=  SV_Evidence::distros.end();
+		++e_it) {
+		free(e_it->second.first);
+		free(e_it->second.second);
+	}
+	for (	i_er = evidence_readers.begin();
+			i_er != evidence_readers.end();
+			++i_er) {
+		delete(*i_er);
+	}
+
 	return 1;
 }

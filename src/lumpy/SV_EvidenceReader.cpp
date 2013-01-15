@@ -63,6 +63,14 @@ set_statics()
 }
 //}}}
 
+//{{{ void SV_EvidenceReader:: unset_statics()
+void
+SV_EvidenceReader::
+unset_statics()
+{
+}
+//}}}
+
 //{{{ void SV_EvidenceReader:: process_input( BamAlignment &_bam,
 void
 SV_EvidenceReader::

@@ -176,6 +176,16 @@ set_statics()
 }
 //}}}
 
+//{{{ void SV_PairReader:: unset_statics()
+void
+SV_PairReader::
+unset_statics()
+{
+	free(SV_Pair::histo);
+	free(SV_Pair::distro);
+}
+//}}}
+
 //{{{ void SV_PairReader:: initialize()
 void
 SV_PairReader::

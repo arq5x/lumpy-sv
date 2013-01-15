@@ -75,6 +75,7 @@ class SV_PairReader : public SV_EvidenceReader
 		static log_space* get_bp_interval_probability(char strand);
 		void initialize();
 		void set_statics();
+		void unset_statics();
 		void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
 		void process_input( BamAlignment &_bam,
 							RefVector &_ref,
