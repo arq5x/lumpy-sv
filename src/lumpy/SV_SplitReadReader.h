@@ -64,6 +64,7 @@ class SV_SplitReadReader : public SV_EvidenceReader
 		string check_params();
 		void initialize();
 		void set_statics();
+		void unset_statics();
 		void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
 		void process_input( BamAlignment &_bam,
 							RefVector &_ref,
