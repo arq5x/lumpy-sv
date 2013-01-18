@@ -41,7 +41,7 @@ struct split_read_parameters {
 
 class SV_SplitReadReader : public SV_EvidenceReader
 {
-	private:
+	public:
 		string bam_file;
 		unsigned int min_non_overlap,
 					 back_distance,
@@ -51,7 +51,6 @@ class SV_SplitReadReader : public SV_EvidenceReader
 		bool is_open,
 			 have_next_alignment;
 
-	public:
 		BamAlignment bam;
 		BamReader reader;
 		map<string, BamAlignment> mapped_splits;

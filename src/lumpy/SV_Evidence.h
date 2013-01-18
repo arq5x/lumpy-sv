@@ -20,6 +20,8 @@ class SV_BreakPoint;
 #include <utility>
 
 #include "SV_BreakPoint.h"
+#include "SV_Evidence.h"
+#include "SV_EvidenceReader.h"
 
 using namespace std;
 

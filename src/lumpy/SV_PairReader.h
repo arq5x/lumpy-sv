@@ -45,7 +45,7 @@ struct pair_end_parameters {
 
 class SV_PairReader : public SV_EvidenceReader
 {
-	private:
+	public:
 		string bam_file,
 			   histo_file;
 		double mean, stdev;
@@ -58,8 +58,11 @@ class SV_PairReader : public SV_EvidenceReader
 		int id;
 		bool is_open,
 			 have_next_alignment;
+		double *histo;
+		double *distro;
+		unsigned int histo_start,histo_end;
+		int distro_size;
 
-	public:
 		BamAlignment bam;
 		BamReader reader;
 		map<string, BamAlignment> mapped_pairs;
@@ -72,7 +75,6 @@ class SV_PairReader : public SV_EvidenceReader
 		bool add_param(char *param, char *val);
 		string check_params();
 		struct pair_end_parameters get_pair_end_parameters();
-		static log_space* get_bp_interval_probability(char strand);
 		void initialize();
 		void set_statics();
 		void unset_statics();

@@ -15,6 +15,7 @@
 #include "BamAncillary.h"
 using namespace BamTools;
 
+#include "SV_PairReader.h"
 #include "SV_BreakPoint.h"
 #include "SV_Pair.h"
 #include "log_space.h"
@@ -30,20 +31,7 @@ using namespace BamTools;
 using namespace std;
 
 //{{{ statics
-//distro_sizedouble  SV_Pair:: cluster_Z = 0;
 double  SV_Pair:: insert_Z = 0;
-double  SV_Pair:: insert_stdev = 0;
-double  SV_Pair:: insert_mean = 0;
-int     SV_Pair:: min_non_overlap = 0;
-double *SV_Pair:: histo = NULL;
-double *SV_Pair:: distro = NULL;
-int     SV_Pair:: distro_size = 0;
-int     SV_Pair:: histo_size = 0;
-int     SV_Pair:: histo_start = 0;
-int     SV_Pair:: histo_end = 0;
-int     SV_Pair:: back_distance = 0;
-int     SV_Pair:: read_length = 0;
-int     SV_Pair:: min_mapping_threshold = 0;
 //}}}
 
 //{{{ SV_Pair:: SV_Pair(const BamAlignment &bam_a,
@@ -56,8 +44,11 @@ SV_Pair(const BamAlignment &bam_a,
 		const RefVector &refs,
 		int _weight,
 		int _id,
-		int _sample_id)
+		int _sample_id,
+		SV_PairReader *_reader)
 {
+	reader = _reader;
+
 	if ( bam_a.MapQuality < bam_b.MapQuality )
 		min_mapping_quality = bam_a.MapQuality;
 	else 
@@ -107,7 +98,9 @@ SV_Pair(const BamAlignment &bam_a,
 //{{{ log_space* SV_Pair:: get_interval_probability(char strand)
 log_space*
 SV_Pair::
-get_bp_interval_probability(char strand)
+get_bp_interval_probability(char strand,
+							int distro_size,
+							double *distro)
 {
 	int size = distro_size;
 	log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
@@ -156,7 +149,9 @@ void
 SV_Pair::
 set_bp_interval_start_end(struct breakpoint_interval *i,
 						  struct interval *target_interval,
-						  struct interval *target_pair)
+						  struct interval *target_pair,
+						  int back_distance,
+						  int distro_size)
 {
 #if 0
 	cerr << target_interval->start << "\t" <<
@@ -185,8 +180,16 @@ get_bp()
 	// Make a new break point
 	SV_BreakPoint *new_bp = new SV_BreakPoint(this);
 
-	set_bp_interval_start_end(&(new_bp->interval_l), &read_l, &read_r);
-	set_bp_interval_start_end(&(new_bp->interval_r), &read_r, &read_l);
+	set_bp_interval_start_end(&(new_bp->interval_l),
+							  &read_l,
+							  &read_r,
+							  reader->back_distance,
+							  reader->distro_size);
+	set_bp_interval_start_end(&(new_bp->interval_r),
+							  &read_r,
+							  &read_l,
+							  reader->back_distance,
+							  reader->distro_size);
 
 	new_bp->interval_r.p = NULL;
 	new_bp->interval_l.p = NULL;
@@ -219,10 +222,12 @@ is_aberrant()
 	if ( read_l.strand == '-')
 		return true;
 
-	if ( (read_r.end - read_l.start) >= insert_mean + (insert_Z*insert_stdev) )
+	if ( (read_r.end - read_l.start) >= 
+			reader->mean + (insert_Z*reader->stdev) )
 		return true;
 
-	if ( (read_r.end - read_l.start) <= insert_mean - (insert_Z*insert_stdev) )
+	if ( (read_r.end - read_l.start) <= 
+			reader->mean - (insert_Z*reader->stdev) )
 		return true;
 
 	return false;
@@ -234,7 +239,7 @@ bool
 SV_Pair::
 is_sane()
 {
-	if ( min_mapping_quality < min_mapping_threshold )
+	if ( min_mapping_quality < reader->min_mapping_threshold )
 		return false;
 
 	int read_len_a = read_l.end - read_l.start;
@@ -259,7 +264,7 @@ is_sane()
 	// how much does not overlap // overlap is at most read_len
 	int non_overlap = min(read_len_a, read_len_b) - overlap;
 
-	if ( (overlap > 0) && (abs(non_overlap) < min_non_overlap) )
+	if ( (overlap > 0) && (abs(non_overlap) < reader->min_non_overlap) )
 		return false;
 	else 
 		return true;
@@ -357,6 +362,7 @@ print_bedpe(int score)
 }
 //}}}
 
+#if 0
 //{{{void set_sv_pair_distro()
 // We will assume that the distrobution to upsstream will follow the histogram
 // and downstream will be follow an exponetial decay distribution based on the
@@ -389,6 +395,44 @@ set_distro_from_histo ()
     }
 }
 //}}}
+#endif
+
+//{{{void set_sv_pair_distro()
+// We will assume that the distrobution to upsstream will follow the histogram
+// and downstream will be follow an exponetial decay distribution based on the
+// back_distance
+int
+SV_Pair::
+set_distro_from_histo (int back_distance,
+					   int histo_start,
+					   int histo_end,
+					   double *histo,
+					   double **distro)
+{
+    double lambda = log(0.0001)/(-1 * back_distance);
+    // the bp distribution begins SV_Pair::back_distance base pairs back
+    // from the end of the read (or begining for the negative strand), then
+    // extends for SV_Pair::histo_end base pairs, so the total size is
+    // SV_Pair::back_distance + SV_Pair::histo_end
+	int distro_size = back_distance + histo_end;
+
+	*distro = (double *) malloc(distro_size * sizeof(double));
+
+    for (int i = 0; i < back_distance; ++i)
+        (*distro)[i] = exp(-1*lambda*(back_distance - i));
+
+    for (int i = back_distance; i < histo_start; ++i)
+        (*distro)[i] = 1;
+
+    double last = 0;
+    for (int i = histo_end - 1; i >= histo_start; --i) {
+		(*distro)[i + back_distance] = histo[i - histo_start] + last;
+        last = (*distro)[i + back_distance];
+    }
+
+	return distro_size;
+}
+//}}}
 
 //{{{ void process_pair(const BamAlignment &curr,
 void 
@@ -399,7 +443,8 @@ process_pair(const BamAlignment &curr,
 			UCSCBins<SV_BreakPoint*> &r_bin,
 			int weight,
 			int id,
-			int sample_id)
+			int sample_id,
+			SV_PairReader *reader)
 {
 	if (mapped_pairs.find(curr.Name) == mapped_pairs.end())
 		mapped_pairs[curr.Name] = curr;
@@ -409,9 +454,12 @@ process_pair(const BamAlignment &curr,
 										refs,
 										weight,
 										id,
-										sample_id);
+										sample_id,
+										reader);
+
 		if ( new_pair->is_sane() &&  new_pair->is_aberrant() ) {
 			SV_BreakPoint *new_bp = new_pair->get_bp();
+
 #ifdef TRACE
 			cerr << "PE\t" << *new_bp << endl;
 #endif
