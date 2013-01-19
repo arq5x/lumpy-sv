@@ -188,9 +188,9 @@ process_input_chr_pos(string chr,
 		last_file = bam.Filename;
 		*/
 		
-		cerr << bam.Filename << "\t" <<
-			bam.Position <<
-			endl;
+		//cerr << bam.Filename << "\t" <<
+			//bam.Position <<
+			//endl;
 			//
 		
 		curr_reader = (*bam_evidence_readers)[bam.Filename];

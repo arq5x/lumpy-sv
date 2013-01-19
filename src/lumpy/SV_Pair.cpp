@@ -207,6 +207,8 @@ get_bp()
 
 	new_bp->weight = weight;
 
+	cerr << *new_bp << endl;
+
 	return new_bp;
 }
 //}}}
@@ -223,11 +225,11 @@ is_aberrant()
 		return true;
 
 	if ( (read_r.end - read_l.start) >= 
-			reader->mean + (insert_Z*reader->stdev) )
+			reader->mean + (reader->discordant_z*reader->stdev) )
 		return true;
 
 	if ( (read_r.end - read_l.start) <= 
-			reader->mean - (insert_Z*reader->stdev) )
+			reader->mean - (reader->discordant_z*reader->stdev) )
 		return true;
 
 	return false;
