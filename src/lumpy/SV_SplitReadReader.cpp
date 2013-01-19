@@ -81,9 +81,9 @@ void
 SV_SplitReadReader::
 set_statics()
 {
-	SV_SplitRead::min_mapping_threshold = min_mapping_threshold;
-	SV_SplitRead::back_distance = back_distance;
-	SV_SplitRead::min_non_overlap = min_non_overlap;
+	//SV_SplitRead::min_mapping_threshold = min_mapping_threshold;
+	//SV_SplitRead::back_distance = back_distance;
+	//SV_SplitRead::min_non_overlap = min_non_overlap;
 	//SV_SplitRead:: read_length = read_length;
 	//SV_SplitRead:: min_split_size = min_split_size;
 }
@@ -104,13 +104,11 @@ initialize()
 {
 	//cerr << "SplitRead initialize" << endl;
 	// open the BAM file
-	reader.Open(bam_file);
-
+	//reader.Open(bam_file);
 	// get header & reference information
-	header = reader.GetHeaderText();
-	refs = reader.GetReferenceData();
-
-	have_next_alignment = reader.GetNextAlignment(bam);
+	//header = reader.GetHeaderText();
+	//refs = reader.GetReferenceData();
+	//have_next_alignment = reader.GetNextAlignment(bam);
 	//cerr << "SplitRead have_next_alignment " << have_next_alignment << endl;
 }
 //}}}
@@ -145,7 +143,8 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 									r_bin,
 									weight,
 									id,
-									sample_id);
+									sample_id,
+									this);
 }
 //}}}
 
@@ -162,7 +161,8 @@ process_input( BamAlignment &_bam,
 								r_bin,
 								weight,
 								id,
-								sample_id);
+								sample_id,
+								this);
 }
 //}}}
 
@@ -183,7 +183,8 @@ process_input_chr(string chr,
 									r_bin,
 									weight,
 									id,
-									sample_id);
+									sample_id,
+									this);
 
 		have_next_alignment = reader.GetNextAlignment(bam);
 		if ( bam.RefID < 0 )
@@ -210,7 +211,8 @@ process_input_chr_pos(string chr,
 									r_bin,
 									weight,
 									id,
-									sample_id);
+									sample_id,
+									this);
 
 		have_next_alignment = reader.GetNextAlignment(bam);
 		if ( bam.RefID < 0 )

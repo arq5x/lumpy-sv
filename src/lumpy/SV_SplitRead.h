@@ -18,6 +18,7 @@
 //#include "BamAncillary.h"
 using namespace BamTools;
 
+#include "SV_SplitReadReader.h"
 #include "SV_Evidence.h"
 #include "SV_BreakPoint.h"
 #include "ucsc_bins.hpp"
@@ -56,26 +57,32 @@ class SV_SplitRead: public SV_Evidence
 					 const RefVector &refs,
 					 int weight,
 					 int id,
-					 int sample_id);
+					 int sample_id,
+					 SV_SplitReadReader *reader);
 
 		SV_SplitRead(const BamAlignment &bam_a,
 					 const BamAlignment &bam_b,
 					 const RefVector &refs,
 					 int _weight,
 					 int _id,
-					 int _sample_id);
+					 int _sample_id,
+					 SV_SplitReadReader *reader);
 
+		/*
 		static int back_distance;
 		static int min_non_overlap;
 		static int min_mapping_threshold;
 		static int min_split_size;
 		static int read_length;
+		*/
 
 		struct interval side_l, side_r;
 		struct cigar_query query_l, query_r;
 		int min_mapping_quality;
+		SV_SplitReadReader *reader;
 
-		static log_space* get_bp_interval_probability(char strand);
+		static log_space* get_bp_interval_probability(char strand,
+													  int back_distance);
 
 		SV_BreakPoint* get_bp();
 
@@ -90,7 +97,8 @@ class SV_SplitRead: public SV_Evidence
 								  UCSCBins<SV_BreakPoint*> &r_bin,
 								  int weight,
 								  int id,
-								  int sample_id);
+								  int sample_id,
+								  SV_SplitReadReader *reader);
 };
 
 #endif

@@ -38,6 +38,8 @@ SV_BamReader(map<string, SV_EvidenceReader*> *_bam_evidence_readers)
 	curr_reader = NULL;
 }
 //}}}
+
+//{{{SV_BamReader:: ~SV_BamReader()
 SV_BamReader::
 ~SV_BamReader()
 {
@@ -47,6 +49,7 @@ SV_BamReader::
 			++it)
 		delete(it->second);
 }
+//}}}
 
 //{{{ string SV_BamReader:: check_params()
 string
@@ -65,7 +68,6 @@ add_param(char *param, char *val)
 	return false;
 }
 //}}}
-
 
 //{{{ void SV_BamReader:: initialize()
 void
@@ -222,7 +224,6 @@ terminate()
 	bam_reader.Close();
 }
 //}}}
-
 
 //{{{ string SV_BamReader:: get_source_file_name()
 string

@@ -16,6 +16,7 @@
 using namespace BamTools;
 
 #include <exception>
+#include "SV_SplitReadReader.h"
 #include "SV_BreakPoint.h"
 #include "SV_SplitRead.h"
 #include "log_space.h"
@@ -30,14 +31,6 @@ using namespace BamTools;
 #include <gsl_statistics_double.h>
 
 using namespace std;
-
-//{{{ statics
-int     SV_SplitRead:: back_distance = 0;
-int     SV_SplitRead:: min_non_overlap = 0;
-int     SV_SplitRead:: min_split_size = 20;
-int     SV_SplitRead:: read_length = 76;
-int     SV_SplitRead:: min_mapping_threshold = 10;
-//}}}
 
 //{{{ void SV_SplitRead:: update_cigar_query(CigarOp op,
 void
@@ -96,8 +89,10 @@ SV_SplitRead(vector< BamAlignment > &block,
 			 const RefVector &refs,
 			 int _weight,
 			 int _id,
-			 int _sample_id)
+			 int _sample_id,
+			 SV_SplitReadReader *_reader)
 {
+	reader = _reader;
 	sample_id = _sample_id;
 
 	if ( block.at(0).MapQuality < block.at(1).MapQuality )
@@ -206,8 +201,10 @@ SV_SplitRead(const BamAlignment &bam_a,
 			 const RefVector &refs,
 			 int _weight,
 			 int _id,
-			 int _sample_id)
+			 int _sample_id,
+			 SV_SplitReadReader *_reader)
 {
+	reader = _reader;
 	sample_id = _sample_id;
 
 	if ( bam_a.MapQuality < bam_b.MapQuality )
@@ -322,10 +319,10 @@ get_bp()
 			   ( side_l.strand == '+' ) && 
 			   ( side_r.strand == '-' ) ) ) {
 
-			new_bp->interval_l.i.start = side_l.start - back_distance;
-			new_bp->interval_l.i.end = side_l.start + 1 + back_distance;
-			new_bp->interval_r.i.start = side_r.start - back_distance;
-			new_bp->interval_r.i.end = side_r.start + 1 + back_distance;
+			new_bp->interval_l.i.start = side_l.start - reader->back_distance;
+			new_bp->interval_l.i.end = side_l.start + 1 + reader->back_distance;
+			new_bp->interval_r.i.start = side_r.start - reader->back_distance;
+			new_bp->interval_r.i.end = side_r.start + 1 + reader->back_distance;
 
 		} else if ( ( ( query_l.qs_pos < query_r.qs_pos ) &&
 					  ( side_l.strand == '+' ) &&
@@ -334,25 +331,25 @@ get_bp()
 					  ( side_l.strand == '-' ) &&
 					  ( side_r.strand == '+' ) ) ) {
 
-			new_bp->interval_l.i.start = side_l.end - 1 - back_distance;
-			new_bp->interval_l.i.end = side_l.end + back_distance;
-			new_bp->interval_r.i.start = side_r.end - 1 - back_distance;
-			new_bp->interval_r.i.end = side_r.end + back_distance;
+			new_bp->interval_l.i.start = side_l.end - 1 - reader->back_distance;
+			new_bp->interval_l.i.end = side_l.end + reader->back_distance;
+			new_bp->interval_r.i.start = side_r.end - 1 - reader->back_distance;
+			new_bp->interval_r.i.end = side_r.end + reader->back_distance;
 		} else {
 			abort();
 		}
 	} else if (type == SV_BreakPoint::DELETION) {
 
-		new_bp->interval_l.i.start = side_l.end - 1 - back_distance;
-		new_bp->interval_l.i.end = side_l.end + back_distance;
-		new_bp->interval_r.i.start = side_r.start - back_distance;
-		new_bp->interval_r.i.end = side_r.start + 1 + back_distance;
+		new_bp->interval_l.i.start = side_l.end - 1 - reader->back_distance;
+		new_bp->interval_l.i.end = side_l.end + reader->back_distance;
+		new_bp->interval_r.i.start = side_r.start - reader->back_distance;
+		new_bp->interval_r.i.end = side_r.start + 1 + reader->back_distance;
 	} else if (type == SV_BreakPoint::DUPLICATION) {
 
-		new_bp->interval_l.i.start = side_l.start - back_distance;
-		new_bp->interval_l.i.end = side_l.start + 1 + back_distance;
-		new_bp->interval_r.i.start = side_r.end - 1 - back_distance;
-		new_bp->interval_r.i.end = side_r.end + back_distance;
+		new_bp->interval_l.i.start = side_l.start - reader->back_distance;
+		new_bp->interval_l.i.end = side_l.start + 1 + reader->back_distance;
+		new_bp->interval_r.i.start = side_r.end - 1 - reader->back_distance;
+		new_bp->interval_r.i.end = side_r.end + reader->back_distance;
 	}  else {
 		abort();
 	}
@@ -370,7 +367,8 @@ get_bp()
 //{{{ log_space* SV_SplitRead:: get_bp_interval_probability(char strand)
 log_space*
 SV_SplitRead::
-get_bp_interval_probability(char strand)
+get_bp_interval_probability(char strand,
+							int back_distance)
 {
     double lambda = log(0.0001)/(-1 * back_distance);
 
@@ -393,7 +391,7 @@ bool
 SV_SplitRead::
 is_sane()
 {
-	if ( min_mapping_quality < min_mapping_threshold )
+	if ( min_mapping_quality < reader->min_mapping_threshold )
 		return false;
 
 
@@ -431,7 +429,7 @@ is_sane()
 
 	int curr_min_non_overlap = min(non_overlap_l, non_overlap_r);
 
-	if ( curr_min_non_overlap >= min_non_overlap )
+	if ( curr_min_non_overlap >= reader->min_non_overlap )
 		return true;
 	else 
 		return false;
@@ -498,19 +496,23 @@ process_split(const BamAlignment &curr,
 			  UCSCBins<SV_BreakPoint*> &r_bin,
 			  int weight,
 			  int id,
-			  int sample_id)
+			  int sample_id,
+			  SV_SplitReadReader *_reader)
 {
 
 	if (mapped_splits.find(curr.Name) == mapped_splits.end())
 		mapped_splits[curr.Name] = curr;
 	else {
 		try {
-			SV_SplitRead *new_split_read = new SV_SplitRead(mapped_splits[curr.Name],
-															curr,
-															refs,
-															weight,
-															id,
-															sample_id);
+			SV_SplitRead *new_split_read = 
+				new SV_SplitRead(mapped_splits[curr.Name],
+								 curr,
+								 refs,
+								 weight,
+								 id,
+								 sample_id,
+								 _reader);
+
 			SV_BreakPoint *new_bp = NULL;
 			if (new_split_read->is_sane()) {
 				new_bp = new_split_read->get_bp();
