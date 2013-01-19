@@ -524,8 +524,6 @@ int main(int argc, char* argv[])
 			}
 			//}}}
 
-			cerr << "bps:" << r_bin.num_bps() << "\t";
-
 			//{{{ get breakpoints
 			vector< UCSCElement<SV_BreakPoint*> > values = 
 					r_bin.values(min_chr, max_pos);
@@ -558,7 +556,6 @@ int main(int argc, char* argv[])
 			}
 			//}}}
 
-			cerr << r_bin.num_bps() << endl;
 			max_pos = max_pos *2;
 		}
 
