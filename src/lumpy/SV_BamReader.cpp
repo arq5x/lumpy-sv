@@ -194,11 +194,13 @@ process_input_chr_pos(string chr,
 			//
 		
 		curr_reader = (*bam_evidence_readers)[bam.Filename];
+		/*
 		if (last_file.compare(bam.Filename) !=0 ) {
 			if (last_reader != NULL)
 				last_reader->unset_statics();
 			curr_reader->set_statics();
 		}
+		*/
 		last_file = bam.Filename;
 		curr_reader->process_input(bam,refs,r_bin);
 		last_reader = curr_reader;
