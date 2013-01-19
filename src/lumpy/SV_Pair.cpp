@@ -204,6 +204,8 @@ get_bp()
 
 	new_bp->weight = weight;
 
+	cerr << *new_bp << endl;
+
 	return new_bp;
 }
 //}}}
