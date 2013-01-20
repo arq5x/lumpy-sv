@@ -506,9 +506,10 @@ int main(int argc, char* argv[])
 			for (it = values.begin(); it < values.end(); ++it) {
 				SV_BreakPoint *bp = it->value;
 
-				// Make sure both ends of the bp match the current chrom
-				if ( ( bp->interval_l.i.chr.compare(min_chr) == 0 ) &&
-					 ( bp->interval_r.i.chr.compare(min_chr) == 0 ) &&
+				// Make sure both ends of the bp are less than or equal to the
+				// current chrom
+				if ( ( bp->interval_l.i.chr.compare(min_chr) <= 0 ) &&
+					 ( bp->interval_r.i.chr.compare(min_chr) <= 0 ) &&
 					 ( bp->interval_l.i.start < max_pos ) &&
 					 ( bp->interval_r.i.start < max_pos ) ) {
 
