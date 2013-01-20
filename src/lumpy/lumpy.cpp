@@ -495,6 +495,7 @@ int main(int argc, char* argv[])
 			}
 			//}}}
 
+			cerr << r_bin.num_bps() << "\t";
 			//{{{ get breakpoints
 			vector< UCSCElement<SV_BreakPoint*> > values = 
 					r_bin.values(min_chr, max_pos);
@@ -508,10 +509,12 @@ int main(int argc, char* argv[])
 
 				// Make sure both ends of the bp are less than or equal to the
 				// current chrom
+				/*
 				if ( ( bp->interval_l.i.chr.compare(min_chr) <= 0 ) &&
 					 ( bp->interval_r.i.chr.compare(min_chr) <= 0 ) &&
 					 ( bp->interval_l.i.start < max_pos ) &&
 					 ( bp->interval_r.i.start < max_pos ) ) {
+				*/
 
 					if ( bp->weight >= min_weight ) {
 						 
@@ -524,9 +527,10 @@ int main(int argc, char* argv[])
 					r_bin.remove(*it, false, false, true);
 					bp->free_evidence();
 					delete bp;
-				}
+				//}
 			}
 			//}}}
+			cerr << r_bin.num_bps() << endl;
 
 			max_pos = max_pos *2;
 		}
