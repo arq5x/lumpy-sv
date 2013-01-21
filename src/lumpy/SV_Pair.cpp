@@ -446,29 +446,32 @@ process_pair(const BamAlignment &curr,
 			int sample_id,
 			SV_PairReader *reader)
 {
-	if (mapped_pairs.find(curr.Name) == mapped_pairs.end())
-		mapped_pairs[curr.Name] = curr;
-	else {
-		SV_Pair *new_pair = new SV_Pair(mapped_pairs[curr.Name],
-										curr,
-										refs,
-										weight,
-										id,
-										sample_id,
-										reader);
+	if (curr.RefID == curr.MateRefID) {
 
-		if ( new_pair->is_sane() &&  new_pair->is_aberrant() ) {
-			SV_BreakPoint *new_bp = new_pair->get_bp();
+		if (mapped_pairs.find(curr.Name) == mapped_pairs.end())
+			mapped_pairs[curr.Name] = curr;
+		else {
+			SV_Pair *new_pair = new SV_Pair(mapped_pairs[curr.Name],
+											curr,
+											refs,
+											weight,
+											id,
+											sample_id,
+											reader);
+
+			if ( new_pair->is_sane() &&  new_pair->is_aberrant() ) {
+				SV_BreakPoint *new_bp = new_pair->get_bp();
 
 #ifdef TRACE
-			cerr << "PE\t" << *new_bp << endl;
+				cerr << "PE\t" << *new_bp << endl;
 #endif
-			new_bp->cluster(r_bin);
-		} else {
-			free(new_pair);
-		}
+				new_bp->cluster(r_bin);
+			} else {
+				free(new_pair);
+			}
 
-		mapped_pairs.erase(curr.Name);
+			mapped_pairs.erase(curr.Name);
+		}
 	}
 }
 //}}}
