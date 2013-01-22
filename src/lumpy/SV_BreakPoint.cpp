@@ -687,8 +687,8 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 				it = tmp_hits_r.erase(it);
 			else if ( it->value->interval_l.i.chr != interval_l.i.chr )
 				it = tmp_hits_r.erase(it);
-			else if (!((it->value->interval_l.i.start <= interval_l.i.end) &&
-					   (it->value->interval_l.i.end >= interval_l.i.start) ) )
+			else if (!((it->value->interval_l.i.start < interval_l.i.end) &&
+					   (it->value->interval_l.i.end > interval_l.i.start) ) )
 				it = tmp_hits_r.erase(it);
 			else
 				++it;
