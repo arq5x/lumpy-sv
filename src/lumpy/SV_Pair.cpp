@@ -13,6 +13,7 @@
  * ***************************************************************************/
 
 #include "BamAncillary.h"
+#include "api/BamWriter.h"
 using namespace BamTools;
 
 #include "SV_PairReader.h"
@@ -446,32 +447,67 @@ process_pair(const BamAlignment &curr,
 			int sample_id,
 			SV_PairReader *reader)
 {
-	if (curr.RefID == curr.MateRefID) {
+	if (mapped_pairs.find(curr.Name) == mapped_pairs.end())
+		mapped_pairs[curr.Name] = curr;
+	else {
+		SV_Pair *new_pair = new SV_Pair(mapped_pairs[curr.Name],
+										curr,
+										refs,
+										weight,
+										id,
+										sample_id,
+										reader);
 
-		if (mapped_pairs.find(curr.Name) == mapped_pairs.end())
-			mapped_pairs[curr.Name] = curr;
-		else {
-			SV_Pair *new_pair = new SV_Pair(mapped_pairs[curr.Name],
-											curr,
-											refs,
-											weight,
-											id,
-											sample_id,
-											reader);
-
-			if ( new_pair->is_sane() &&  new_pair->is_aberrant() ) {
-				SV_BreakPoint *new_bp = new_pair->get_bp();
+		if ( new_pair->is_sane() &&  new_pair->is_aberrant() ) {
+			SV_BreakPoint *new_bp = new_pair->get_bp();
 
 #ifdef TRACE
-				cerr << "PE\t" << *new_bp << endl;
+			cerr << "PE\t" << *new_bp << endl;
 #endif
-				new_bp->cluster(r_bin);
-			} else {
-				free(new_pair);
-			}
-
-			mapped_pairs.erase(curr.Name);
+			new_bp->cluster(r_bin);
+		} else {
+			free(new_pair);
 		}
+
+		mapped_pairs.erase(curr.Name);
+	}
+}
+//}}}
+
+//{{{ void process_intra_chrom_pair(const BamAlignment &curr,
+void 
+SV_Pair::
+process_intra_chrom_pair(const BamAlignment &curr,
+						 const RefVector refs,
+						 BamWriter &inter_chrom_reads,
+						 map<string, BamAlignment> &mapped_pairs,
+						 UCSCBins<SV_BreakPoint*> &r_bin,
+						 int weight,
+						 int id,
+						 int sample_id,
+						 SV_PairReader *reader)
+{
+	if (curr.RefID == curr.MateRefID) {
+
+		process_pair(curr,
+					 refs,
+					 mapped_pairs,
+					 r_bin,
+					 weight,
+					 id,
+					 sample_id,
+					 reader);
+
+	} else if (curr.IsMapped() && 
+			   curr.IsMateMapped() && 
+			   (curr.RefID >= 0) &&
+			   (curr.MateRefID >= 0) ) {
+		BamAlignment al = curr;
+		//vector<string> tag_val;
+		//tag_val.push_back("xxxxxxx");
+		string x = reader->get_source_file_name();
+		al.AddTag("LS","Z",x);
+		inter_chrom_reads.SaveAlignment(al);
 	}
 }
 //}}}

@@ -30,6 +30,7 @@
 #include "SV_PairReader.h"
 #include "SV_BedpeReader.h"
 #include "SV_BamReader.h"
+#include "SV_InterChromBamReader.h"
 #include "SV_Tools.h"
 
 #include "ucsc_bins.hpp"
@@ -188,6 +189,7 @@ int main(int argc, char* argv[])
 	bool show_evidence = false;
 	bool has_bams = false, has_bedpes = false;
 	CHR_POS window_size = 1000000;
+	string inter_chrom_file_prefix = "lumpy_inter_chrom";
 	//vector<string> bam_files;
 	//}}}
 
@@ -421,6 +423,7 @@ int main(int argc, char* argv[])
 
 	if (has_bams) {
 		SV_BamReader *bam_r = new SV_BamReader(&bam_evidence_readers);
+		bam_r->set_inter_chrom_file_name(inter_chrom_file_prefix + ".bam");
 		evidence_readers.push_back(bam_r);
 	}
 
@@ -451,6 +454,10 @@ int main(int argc, char* argv[])
 	}
 	//}}}
 
+	
+	//{{{ process the intra-chrom events that were saved to a file
+	CHR_POS max_pos = 0;
+	string last_min_chr = "";
 	while ( has_next ) {
 		string min_chr = "";
 		//{{{ find min_chr among all input files
@@ -470,7 +477,12 @@ int main(int argc, char* argv[])
 		}
 		//}}}
 
-		CHR_POS max_pos = window_size;
+		// if the chrome switches, reset the max_pos
+		if (last_min_chr.compare(min_chr) != 0) {
+			max_pos = window_size;
+			last_min_chr = min_chr;
+		}
+
 		bool input_processed = true;
 
 		while (input_processed) {
@@ -488,7 +500,9 @@ int main(int argc, char* argv[])
 					CHR_POS curr_pos = er->get_curr_pos();
 					if ( ( curr_chr.compare(min_chr) <= 0 ) &&
 						 ( curr_pos < max_pos) )	{
-						er->process_input_chr_pos(curr_chr, max_pos, r_bin);
+						er->process_input_chr_pos(curr_chr,
+												  max_pos,
+												  r_bin);
 						input_processed = true;
 					} 
 				}
@@ -545,6 +559,7 @@ int main(int argc, char* argv[])
 		}
 		//}}}
 	}
+	//}}}
 	
 	//{{{ terminate input files
 	for (	i_er = evidence_readers.begin();
@@ -555,29 +570,161 @@ int main(int argc, char* argv[])
 	}
 	//}}}
 	
-	//cerr << "Done with input files" << endl;
-
-	//{{{ Call break points
+	//{{{ Call remaining break points
 	vector< UCSCElement<SV_BreakPoint*> > values = r_bin.values();
 	vector< UCSCElement<SV_BreakPoint*> >::iterator it;
 
-		for (it = values.begin(); it != values.end(); ++it) {
-			SV_BreakPoint *bp = it->value;
+	for (it = values.begin(); it != values.end(); ++it) {
+		SV_BreakPoint *bp = it->value;
 
-			if ( bp->weight >= min_weight ) {
-				 
-				bp->trim_intervals();
-				bp->print_bedpe(-1);
-				if (show_evidence)
-					bp->print_evidence("\t");
-			}
-
-			bp->free_evidence();
-			delete bp;
+		if ( bp->weight >= min_weight ) {
+			 
+			bp->trim_intervals();
+			bp->print_bedpe(-1);
+			if (show_evidence)
+				bp->print_evidence("\t");
 		}
+
+		bp->free_evidence();
+		delete bp;
+	}
 
 	//}}}
 	
+	sort_inter_chrom_bam( inter_chrom_file_prefix + ".bam",
+						  inter_chrom_file_prefix + ".sort.bam");
+
+#if 1
+	//{{{ process the inter-chrom events that were saved to a file
+	SV_InterChromBamReader *ic_r = new SV_InterChromBamReader(
+			inter_chrom_file_prefix + ".sort.bam",
+			&bam_evidence_readers);
+	ic_r->initialize();
+
+	vector<SV_EvidenceReader*> inter_chrom_evidence_readers;
+	inter_chrom_evidence_readers.push_back(ic_r);
+
+	// There are two files containg all of the inter-chrom events,
+	// one bam and one bedpe, each line in the file corresponds to the
+	// properies set in one of the readers.  Each line has a "LS" (lumpy
+	// source) property that gives its source file name.  Using that entry, the
+	// line will be sent to the reader for processing.
+	
+	// get new evidence readers for both bedpe and bam inter-chrom readers
+	has_next = true;	
+
+	string last_min_primary_chr = "";
+	string last_min_secondary_chr = "";
+	max_pos = 0;
+	while ( has_next ) {
+		string min_primary_chr = "";
+		string min_secondary_chr = "";
+
+		//{{{ find min_chr pair among all input files
+		for (	i_er = inter_chrom_evidence_readers.begin();
+				i_er != inter_chrom_evidence_readers.end();
+				++i_er) {
+			SV_EvidenceReader *er = *i_er;
+
+			if ( er->has_next() ) {
+				string curr_primary_chr = er->get_curr_primary_chr();
+				string curr_secondary_chr = er->get_curr_secondary_chr();
+
+				if ( (( min_primary_chr.compare("") == 0 ) &&
+					  ( min_secondary_chr.compare("") == 0 )) ||
+					 (( curr_primary_chr.compare(min_primary_chr) < 0 ) && 
+					  ( curr_secondary_chr.compare(min_secondary_chr) < 0 )) ) {
+					min_primary_chr = curr_primary_chr;
+					min_secondary_chr = curr_secondary_chr;
+				}
+			}
+		}
+		//}}}
+
+		// if the chrome pair switches, reset the max_pos
+		if ( (last_min_primary_chr.compare(min_primary_chr) != 0) ||
+			 (last_min_secondary_chr.compare(min_secondary_chr) != 0) ) {
+			max_pos = window_size;
+			last_min_primary_chr = min_primary_chr;
+			last_min_secondary_chr = min_secondary_chr;
+		}
+
+		bool input_processed = true;
+
+		while (input_processed) {
+			input_processed = false;
+				
+			//{{{ read the files, process anything in frame
+			for (	i_er = inter_chrom_evidence_readers.begin();
+					i_er != inter_chrom_evidence_readers.end();
+					++i_er) {
+
+				SV_EvidenceReader *er = *i_er;
+
+				if ( er->has_next() ) {
+					string curr_primary_chr = er->get_curr_primary_chr();
+					string curr_secondary_chr = er->get_curr_secondary_chr();
+					CHR_POS curr_pos = er->get_curr_primary_pos();
+
+					if ( (curr_primary_chr.compare(min_primary_chr) <= 0)&&
+						 (curr_secondary_chr.compare(min_secondary_chr) <= 0)&&
+						 (curr_pos < max_pos) )	{
+						er->process_input_chr_pos(curr_primary_chr,
+												  curr_secondary_chr,
+												  max_pos,
+												  r_bin);
+						input_processed = true;
+					} 
+				}
+			}
+			//}}}
+
+			//cerr << r_bin.num_bps() << "\t";
+			//{{{ get breakpoints
+			// get anything that has ends in both chroms
+			vector< UCSCElement<SV_BreakPoint*> > values = 
+					r_bin.values(min_secondary_chr);
+
+			vector< UCSCElement<SV_BreakPoint*> >::iterator it;
+
+			for (it = values.begin(); it < values.end(); ++it) {
+				SV_BreakPoint *bp = it->value;
+				if ( bp->weight >= min_weight ) {
+					 
+					bp->trim_intervals();
+					bp->print_bedpe(-1);
+					if (show_evidence)
+						bp->print_evidence("\t");
+				}
+
+				r_bin.remove(*it, false, false, true);
+				bp->free_evidence();
+				delete bp;
+			}
+			//}}}
+			//cerr << r_bin.num_bps() << endl;
+
+			max_pos = max_pos * 2;
+		}
+
+		has_next = false;
+		//{{{ Test if there is still input lines
+		for (	i_er = inter_chrom_evidence_readers.begin();
+				i_er != inter_chrom_evidence_readers.end();
+				++i_er) {
+			SV_EvidenceReader *er = *i_er;
+			has_next = has_next || er->has_next();
+		}
+		//}}}
+	
+	}
+
+
+////////////////////////////////////////
+	//}}}
+	
+#endif
+	//{{{ free up stuff
 	map<int, pair<log_space*,log_space*> >::iterator e_it;
 	for(e_it =  SV_Evidence::distros.begin();
 		e_it !=  SV_Evidence::distros.end();
@@ -590,6 +737,7 @@ int main(int argc, char* argv[])
 			++i_er) {
 		delete(*i_er);
 	}
+	//}}}
 
 	return 1;
 }

@@ -59,6 +59,8 @@ class SV_Bedpe: public SV_Evidence
 		struct interval side_r;
 		SV_BedpeReader *reader;
 
+		bool is_interchromosomal();
+
 		SV_BreakPoint* get_bp();
 
 		void print_bedpe(int score);

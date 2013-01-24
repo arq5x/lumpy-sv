@@ -12,8 +12,8 @@
  * Licenced under the GNU General Public License 2.0 license.
  * ***************************************************************************/
 
-#ifndef __SV_BAMREADER_H__
-#define __SV_BAMREADER_H__
+#ifndef __SV_INTERCHROMBAMREADER_H__
+#define __SV_INTERCHROMBAMREADER_H__
 
 #include <string>
 #include <map>
@@ -30,24 +30,34 @@ using namespace std;
 
 using namespace BamTools;
 
-class SV_BamReader : public SV_EvidenceReader
+class SV_InterChromBamReader : public SV_EvidenceReader
 {
 	private:
 		bool is_open, has_next_alignment;
 		map<string, SV_EvidenceReader*> *bam_evidence_readers;
-		BamMultiReader bam_reader;
+		BamReader bam_reader;
 		RefVector refs;
 		BamAlignment bam;
 		string header;
-		SV_EvidenceReader *curr_reader;
-		BamWriter inter_chrom_reads;
-		string tmp_file_name;
+		string inter_chrom_bam_file;
 
 	public:
-		SV_BamReader();
-		~SV_BamReader();
-		SV_BamReader(map<string, SV_EvidenceReader*> *_bam_evidence_readers);
+		string get_curr_primary_chr();
+		string get_curr_secondary_chr();
 
+		CHR_POS get_curr_primary_pos();
+		CHR_POS get_curr_secondary_pos();
+
+		SV_InterChromBamReader();
+		~SV_InterChromBamReader();
+		SV_InterChromBamReader(
+				string _inter_chrom_bam_file,
+				map<string, SV_EvidenceReader*> *_bam_evidence_readers);
+
+		void process_input_chr_pos(string primary_chr,
+								   string secondary_chr,
+								   CHR_POS pos,
+								   UCSCBins<SV_BreakPoint*> &r_bin);
 		bool add_param(char *param, char *val);
 		string check_params();
 
@@ -63,17 +73,16 @@ class SV_BamReader : public SV_EvidenceReader
 
 		void process_input_chr(string chr,
 							   UCSCBins<SV_BreakPoint*> &r_bin);
-#endif
 		void process_input_chr_pos(string chr,
 								   CHR_POS pos,
 								   UCSCBins<SV_BreakPoint*> &r_bin);
+#endif
 
 		void terminate();
-		string get_curr_chr();
-		CHR_POS get_curr_pos();
+		//string get_curr_chr();
+		//CHR_POS get_curr_pos();
 		bool has_next();
 		string get_source_file_name();
-		void set_inter_chrom_file_name(string file_name);
 };
 
 #endif

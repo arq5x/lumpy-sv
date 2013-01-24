@@ -79,6 +79,17 @@ class SV_Pair: public SV_Evidence
 								int sample_id,
 								SV_PairReader *reader);
 
+		static void process_intra_chrom_pair(
+								 const BamAlignment &curr,
+								 const RefVector refs,
+								 BamWriter &inter_chrom_reads,
+								 map<string, BamAlignment> &mapped_pairs,
+								 UCSCBins<SV_BreakPoint*> &r_bin,
+								 int weight,
+								 int id,
+								 int sample_id,
+								 SV_PairReader *reader);
+
 		static log_space* get_bp_interval_probability(char strand,
 													  int distro_size,
 													  double *distro);
@@ -86,6 +97,7 @@ class SV_Pair: public SV_Evidence
 
 		bool is_aberrant();
 		bool is_sane();
+		bool is_interchromosomal();
 		void cluster( UCSCBins<SV_BreakPoint*> &r_bin);
 
 		static void set_distro_from_histo ();

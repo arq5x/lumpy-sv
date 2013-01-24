@@ -417,6 +417,7 @@ UCSCBins<T>::values(string target_chr,
 }
 //}}}
 
+
 //{{{ template <class T> vector<UCSCElement<T> > UCSCBins<T>::values()
 template <class T>
 vector<UCSCElement<T> >

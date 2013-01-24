@@ -531,3 +531,63 @@ process_split(const BamAlignment &curr,
 	}
 }
 //}}}
+
+//{{{ void process_intra_chrom_split(const BamAlignment &curr,
+void
+SV_SplitRead::
+process_intra_chrom_split(const BamAlignment &curr,
+						  const RefVector refs,
+						  BamWriter &inter_chrom_reads,
+						  map<string, BamAlignment> &mapped_splits,
+						  UCSCBins<SV_BreakPoint*> &r_bin,
+						  int weight,
+						  int id,
+						  int sample_id,
+						  SV_SplitReadReader *reader)
+{
+
+	if (mapped_splits.find(curr.Name) == mapped_splits.end())
+		mapped_splits[curr.Name] = curr;
+	else {
+		if ( mapped_splits[curr.Name].RefID == curr.RefID ) {
+			try {
+				SV_SplitRead *new_split_read = 
+					new SV_SplitRead(mapped_splits[curr.Name],
+									 curr,
+									 refs,
+									 weight,
+									 id,
+									 sample_id,
+									 reader);
+
+				SV_BreakPoint *new_bp = NULL;
+				if (new_split_read->is_sane()) {
+					new_bp = new_split_read->get_bp();
+
+					vector<SV_Evidence*>::iterator it;
+
+					new_bp->cluster(r_bin);
+				} else
+					free(new_split_read);
+
+			} catch (int) {
+				cerr << "Error creating split read: " << endl;
+			}
+
+		} else {
+			BamAlignment al1 = curr;
+			BamAlignment al2 = mapped_splits[curr.Name];
+
+			al1.MateRefID = al2.RefID;
+			al2.MateRefID = al1.RefID;
+
+			al1.MatePosition = al2.Position;
+			al2.MatePosition = al1.Position;
+
+			inter_chrom_reads.SaveAlignment(al1);
+			inter_chrom_reads.SaveAlignment(al2);
+		}
+		mapped_splits.erase(curr.Name);
+	}
+}
+//}}}
