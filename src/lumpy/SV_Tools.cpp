@@ -35,6 +35,29 @@ const unsigned int SORT_DEFAULT_MAX_BUFFER_MEMORY = 1024;
 
 using namespace std;
 
+//{{{ static inline int strnum_cmp(const char *a, const char *b)
+static inline int strnum_cmp(const char *a, const char *b)
+{
+	char *pa, *pb;
+	pa = (char*)a; pb = (char*)b;
+	while (*pa && *pb) {
+		if (isdigit(*pa) && isdigit(*pb)) {
+			long ai, bi;
+			ai = strtol(pa, &pa, 10);
+			bi = strtol(pb, &pb, 10);
+			if (ai != bi) return ai<bi? -1 : ai>bi? 1 : 0;
+		} else {
+			if (*pa != *pb) break;
+			++pa; ++pb;
+		}
+	}
+	if (*pa == *pb)
+		return (pa-a) < (pb-b)? -1 : (pa-a) > (pb-b)? 1 : 0;
+
+	return *pa<*pb? -1 : *pa>*pb? 1 : 0;
+}
+//}}}
+
 //{{{int read_histo_file(string file_name,
 /*
  * the histo file contains the histogram (frequency) of insert sizes
@@ -153,14 +176,16 @@ struct inter_chrom_sort
 			r_secondary_ref = r.MateRefID,
 			r_secondary_pos = r.MatePosition;
 
-	if (l.IsSecondMate()) {
+	//if (l.IsSecondMate()) {
+	if (l.RefID > l.MateRefID) {
 		l_primary_ref = l.MateRefID;
 		l_primary_pos = l.MatePosition;
 		l_secondary_ref = l.RefID;
 		l_secondary_pos = l.Position;
 	}
 
-	if (r.IsSecondMate()) {
+	//if (r.IsSecondMate()) {
+	if (r.RefID > r.MateRefID) {
 		r_primary_ref = r.MateRefID;
 		r_primary_pos = r.MatePosition;
 		r_secondary_ref = r.RefID;

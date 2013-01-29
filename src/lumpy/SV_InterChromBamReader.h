@@ -45,6 +45,9 @@ class SV_InterChromBamReader : public SV_EvidenceReader
 		string get_curr_primary_chr();
 		string get_curr_secondary_chr();
 
+		int32_t get_curr_primary_refid();
+		int32_t get_curr_secondary_refid();
+
 		CHR_POS get_curr_primary_pos();
 		CHR_POS get_curr_secondary_pos();
 
@@ -79,7 +82,7 @@ class SV_InterChromBamReader : public SV_EvidenceReader
 #endif
 
 		void terminate();
-		//string get_curr_chr();
+		string get_curr_chr();
 		//CHR_POS get_curr_pos();
 		bool has_next();
 		string get_source_file_name();

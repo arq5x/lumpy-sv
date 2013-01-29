@@ -91,7 +91,7 @@ has_next()
 }
 //}}}
 
-#if 0
+#if 1
 //{{{ string SV_InterChromBamReader:: get_curr_chr()
 string
 SV_InterChromBamReader::
@@ -103,12 +103,38 @@ get_curr_chr()
 //}}}
 #endif
 
+//{{{ string SV_InterChromBamReader:: get_curr_primary_refid()
+int32_t
+SV_InterChromBamReader::
+get_curr_primary_refid()
+{
+	//if (bam.IsFirstMate())
+	if (bam.RefID < bam.MateRefID)
+		return bam.RefID;
+	else
+		return bam.MateRefID;
+}
+//}}}
+
+//{{{ string SV_InterChromBamReader:: get_curr_secondary_refid()
+int32_t
+SV_InterChromBamReader::
+get_curr_secondary_refid()
+{
+	if (bam.RefID < bam.MateRefID)
+		return bam.MateRefID;
+	else
+		return bam.RefID;
+}
+//}}}
+
 //{{{ string SV_InterChromBamReader:: get_curr_primary_chr()
 string
 SV_InterChromBamReader::
 get_curr_primary_chr()
 {
-	if (bam.IsFirstMate())
+	//if (bam.IsFirstMate())
+	if (bam.RefID < bam.MateRefID)
 		return refs.at(bam.RefID).RefName;
 	else
 		return refs.at(bam.MateRefID).RefName;
@@ -120,7 +146,8 @@ string
 SV_InterChromBamReader::
 get_curr_secondary_chr()
 {
-	if (bam.IsFirstMate())
+	//if (bam.IsFirstMate())
+	if (bam.RefID < bam.MateRefID)
 		return refs.at(bam.MateRefID).RefName;
 	else
 		return refs.at(bam.RefID).RefName;

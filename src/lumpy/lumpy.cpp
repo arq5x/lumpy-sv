@@ -48,6 +48,8 @@ using namespace BamTools;
 #include <string>
 #include <limits.h>
 #include <math.h>
+#include <cstdio>
+
 
 #include <gsl_statistics_int.h>
 
@@ -454,7 +456,6 @@ int main(int argc, char* argv[])
 	}
 	//}}}
 
-	
 	//{{{ process the intra-chrom events that were saved to a file
 	CHR_POS max_pos = 0;
 	string last_min_chr = "";
@@ -509,7 +510,6 @@ int main(int argc, char* argv[])
 			}
 			//}}}
 
-			cerr << r_bin.num_bps() << "\t";
 			//{{{ get breakpoints
 			vector< UCSCElement<SV_BreakPoint*> > values = 
 					r_bin.values(min_chr, max_pos);
@@ -544,7 +544,6 @@ int main(int argc, char* argv[])
 				//}
 			}
 			//}}}
-			cerr << r_bin.num_bps() << endl;
 
 			max_pos = max_pos *2;
 		}
@@ -594,7 +593,6 @@ int main(int argc, char* argv[])
 	sort_inter_chrom_bam( inter_chrom_file_prefix + ".bam",
 						  inter_chrom_file_prefix + ".sort.bam");
 
-#if 1
 	//{{{ process the inter-chrom events that were saved to a file
 	SV_InterChromBamReader *ic_r = new SV_InterChromBamReader(
 			inter_chrom_file_prefix + ".sort.bam",
@@ -613,12 +611,14 @@ int main(int argc, char* argv[])
 	// get new evidence readers for both bedpe and bam inter-chrom readers
 	has_next = true;	
 
-	string last_min_primary_chr = "";
-	string last_min_secondary_chr = "";
+	int32_t last_min_primary_refid = -1;
+	int32_t last_min_secondary_refid = -1;
 	max_pos = 0;
 	while ( has_next ) {
 		string min_primary_chr = "";
 		string min_secondary_chr = "";
+		int32_t min_primary_refid = -1;
+		int32_t min_secondary_refid = -1;
 
 		//{{{ find min_chr pair among all input files
 		for (	i_er = inter_chrom_evidence_readers.begin();
@@ -627,26 +627,29 @@ int main(int argc, char* argv[])
 			SV_EvidenceReader *er = *i_er;
 
 			if ( er->has_next() ) {
-				string curr_primary_chr = er->get_curr_primary_chr();
-				string curr_secondary_chr = er->get_curr_secondary_chr();
+				int32_t curr_primary_refid = er->get_curr_primary_refid();
+				int32_t curr_secondary_refid = er->get_curr_secondary_refid();
 
-				if ( (( min_primary_chr.compare("") == 0 ) &&
-					  ( min_secondary_chr.compare("") == 0 )) ||
-					 (( curr_primary_chr.compare(min_primary_chr) < 0 ) && 
-					  ( curr_secondary_chr.compare(min_secondary_chr) < 0 )) ) {
-					min_primary_chr = curr_primary_chr;
-					min_secondary_chr = curr_secondary_chr;
+				if ( (( min_primary_refid == -1 ) &&
+					  ( min_secondary_refid == -1 )) ||
+					 (( curr_primary_refid < min_primary_refid)  && 
+					  ( curr_secondary_refid < min_secondary_refid)) ){
+					min_primary_refid = curr_primary_refid;
+					min_secondary_refid = curr_secondary_refid;
+					min_secondary_chr = er->get_curr_secondary_chr();
+					min_primary_chr = er->get_curr_primary_chr();
 				}
+
 			}
 		}
 		//}}}
 
 		// if the chrome pair switches, reset the max_pos
-		if ( (last_min_primary_chr.compare(min_primary_chr) != 0) ||
-			 (last_min_secondary_chr.compare(min_secondary_chr) != 0) ) {
+		if ( (last_min_primary_refid != min_primary_refid) ||
+			 (last_min_secondary_refid != min_secondary_refid) ) {
 			max_pos = window_size;
-			last_min_primary_chr = min_primary_chr;
-			last_min_secondary_chr = min_secondary_chr;
+			last_min_primary_refid = min_primary_refid;
+			last_min_secondary_refid = min_secondary_refid;
 		}
 
 		bool input_processed = true;
@@ -662,15 +665,24 @@ int main(int argc, char* argv[])
 				SV_EvidenceReader *er = *i_er;
 
 				if ( er->has_next() ) {
-					string curr_primary_chr = er->get_curr_primary_chr();
-					string curr_secondary_chr = er->get_curr_secondary_chr();
+					//string curr_primary_chr = er->get_curr_primary_chr();
+					//string curr_secondary_chr = er->get_curr_secondary_chr();
+					int32_t curr_primary_refid = er->get_curr_primary_refid();
+					int32_t curr_secondary_refid = 
+							er->get_curr_secondary_refid();
 					CHR_POS curr_pos = er->get_curr_primary_pos();
 
+/*
 					if ( (curr_primary_chr.compare(min_primary_chr) <= 0)&&
 						 (curr_secondary_chr.compare(min_secondary_chr) <= 0)&&
 						 (curr_pos < max_pos) )	{
-						er->process_input_chr_pos(curr_primary_chr,
-												  curr_secondary_chr,
+*/
+					if ( (curr_primary_refid <= min_primary_refid) &&
+						 (curr_secondary_refid <= min_secondary_refid) &&
+						 (curr_pos < max_pos) )	{
+
+						er->process_input_chr_pos(er->get_curr_primary_chr(),
+												  er->get_curr_secondary_chr(),
 												  max_pos,
 												  r_bin);
 						input_processed = true;
@@ -679,7 +691,6 @@ int main(int argc, char* argv[])
 			}
 			//}}}
 
-			//cerr << r_bin.num_bps() << "\t";
 			//{{{ get breakpoints
 			// get anything that has ends in both chroms
 			vector< UCSCElement<SV_BreakPoint*> > values = 
@@ -690,7 +701,6 @@ int main(int argc, char* argv[])
 			for (it = values.begin(); it < values.end(); ++it) {
 				SV_BreakPoint *bp = it->value;
 				if ( bp->weight >= min_weight ) {
-					 
 					bp->trim_intervals();
 					bp->print_bedpe(-1);
 					if (show_evidence)
@@ -702,7 +712,6 @@ int main(int argc, char* argv[])
 				delete bp;
 			}
 			//}}}
-			//cerr << r_bin.num_bps() << endl;
 
 			max_pos = max_pos * 2;
 		}
@@ -719,12 +728,34 @@ int main(int argc, char* argv[])
 	
 	}
 
-
-////////////////////////////////////////
 	//}}}
 	
-#endif
+	//{{{ Call remaining break points
+	values = r_bin.values();
+
+	for (it = values.begin(); it != values.end(); ++it) {
+		SV_BreakPoint *bp = it->value;
+
+		if ( bp->weight >= min_weight ) {
+			 
+			bp->trim_intervals();
+			bp->print_bedpe(-1);
+			if (show_evidence)
+				bp->print_evidence("\t");
+		}
+
+		bp->free_evidence();
+		delete bp;
+	}
+
+	//}}}
+
 	//{{{ free up stuff
+	
+	string s = inter_chrom_file_prefix + ".bam";
+	remove(s.c_str());
+	s = inter_chrom_file_prefix + ".sort.bam";
+	remove(s.c_str());
 	map<int, pair<log_space*,log_space*> >::iterator e_it;
 	for(e_it =  SV_Evidence::distros.begin();
 		e_it !=  SV_Evidence::distros.end();

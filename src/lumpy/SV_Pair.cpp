@@ -74,10 +74,12 @@ SV_Pair(const BamAlignment &bam_a,
 	else 
 		tmp_b.strand = '+';
 
-	if ( tmp_a.chr.compare(tmp_b.chr) > 0 ) {
+	//if ( tmp_a.chr.compare(tmp_b.chr) > 0 ) {
+	if ( bam_a.RefID < bam_b.RefID ) {
 		read_l = tmp_a;
 		read_r = tmp_b;
-	} else if ( tmp_a.chr.compare(tmp_b.chr) < 0 ) {
+	//} else if ( tmp_a.chr.compare(tmp_b.chr) < 0 ) {
+	} else if ( bam_a.RefID > bam_b.RefID) {
 		read_l = tmp_b;
 		read_r = tmp_a;
 	} else { // ==

@@ -181,6 +181,33 @@ get_source_file_name()
 //}}}
 //
 
+//{{{ string SV_EvidenceReader:: get_curr_primary_refid()
+int32_t
+SV_EvidenceReader::
+get_curr_primary_refid()
+{
+	cerr << "Error reaching SV_EvidenceReader:: get_curr_primary_refid "
+		<<endl;
+	abort();
+	int32_t a = 1;
+	return a;
+}
+//}}}
+
+//{{{ string SV_EvidenceReader:: get_curr_secondary_refid()
+int32_t
+SV_EvidenceReader::
+get_curr_secondary_refid()
+{
+	cerr << "Error reaching SV_EvidenceReader:: get_curr_secondary_refid "
+		<<endl;
+	abort();
+	int32_t a = 1;
+	return a;
+}
+//}}}
+
+
 //{{{ string SV_EvidenceReader:: get_curr_primary_chr()
 string
 SV_EvidenceReader::

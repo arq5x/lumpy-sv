@@ -71,6 +71,9 @@ class SV_EvidenceReader
 		virtual string get_curr_primary_chr();
 		virtual string get_curr_secondary_chr();
 
+		virtual int32_t get_curr_primary_refid();
+		virtual int32_t get_curr_secondary_refid();
+
 		virtual CHR_POS get_curr_primary_pos();
 		virtual CHR_POS get_curr_secondary_pos();
 

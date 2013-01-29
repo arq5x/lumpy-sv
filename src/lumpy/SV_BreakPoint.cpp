@@ -132,9 +132,6 @@ init_interval_probabilities()
 
 		// take the first piece of evidence from the list
 		SV_Evidence *e = evidence[0];
-		//cerr << "got e" << endl;
-		//e->print_evidence();
-		//cerr << "set e" << endl;
 		e->set_bp_interval_probability(&interval_l);
 		e->set_bp_interval_probability(&interval_r);
 	}
@@ -661,7 +658,6 @@ print_bedpe(int score)
 //{{{void SV_BreakPoint:: cluster(UCSCBins<SV_BreakPoint*> &bins);
 void
 SV_BreakPoint::
-//cluster(UCSCBins<SV_BreakPoint*> &l_bin,
 cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 {
 #if 1

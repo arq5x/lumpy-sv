@@ -374,6 +374,8 @@ template <class T>
 vector<UCSCElement<T> >
 UCSCBins<T>::values(string target_chr)
 {
+
+	//cerr << "values:" << target_chr << "\t";
 	vector< UCSCElement<T> > values;
 
 	typename map<BIN, element_vector >::iterator bin_it;
