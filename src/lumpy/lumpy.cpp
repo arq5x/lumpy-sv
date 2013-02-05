@@ -249,14 +249,6 @@ int main(int argc, char* argv[])
 				// Add to list of readers
 				// Set the ditro map
 				
-				/*
-				pe_r->set_statics();
-				SV_Evidence::distros[pe_r->sample_id] = 
-					pair<log_space*,log_space*>(
-							SV_Pair::get_bp_interval_probability('+'),
-							SV_Pair::get_bp_interval_probability('-'));
-				pe_r->unset_statics();
-				*/
 				pe_r->initialize();
 				SV_Evidence::distros[pe_r->sample_id] = 
 					pair<log_space*,log_space*>(
@@ -266,6 +258,7 @@ int main(int argc, char* argv[])
 						SV_Pair::get_bp_interval_probability('-',
 															 pe_r->distro_size,
 															 pe_r->distro));
+				SV_Evidence::distros_size[pe_r->sample_id] = pe_r->distro_size;
 			} else {
 				cerr << "missing pair end parameters:" << msg << endl;
 				ShowHelp();
@@ -318,6 +311,7 @@ int main(int argc, char* argv[])
 						get_bp_interval_probability('-',
 												    be_r->distro_size,
 												    be_r->distro));
+				SV_Evidence::distros_size[be_r->sample_id] = be_r->distro_size;
 				evidence_readers.push_back(be_r);
 			} else {
 				cerr << "missing bedpe parameters:" << msg << endl;
@@ -366,6 +360,8 @@ int main(int argc, char* argv[])
 							SV_SplitRead::
 							get_bp_interval_probability('-',
 														sr_r->back_distance));
+				SV_Evidence::distros_size[sr_r->sample_id] = 
+						sr_r->back_distance * 2;
 			} else {
 				cerr << "missing split read parameters:" << msg << endl;
 				ShowHelp();

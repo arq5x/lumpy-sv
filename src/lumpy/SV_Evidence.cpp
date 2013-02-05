@@ -19,6 +19,7 @@
 using namespace std;
 
 map<int, pair<log_space*,log_space*> > SV_Evidence:: distros;
+map<int, int> SV_Evidence:: distros_size;
 
 void
 SV_Evidence::
@@ -53,8 +54,15 @@ set_bp_interval_probability(struct breakpoint_interval *i)
 		src_p = SV_Evidence::distros[sample_id].first;
 	else
 		src_p = SV_Evidence::distros[sample_id].second;
+
+	// It is possible that the start of this interval was trucated because it
+	// started close the the start of the chrome, and the back distance for the
+	// + strand or the extension of the distribution for the - strand would
+	// have caused an underrun.  In this case we need to clip the begining of
+	// the distro
+	int offset = SV_Evidence::distros_size[sample_id] - size;
 	for (j = 0; j < size; ++j) {
-		tmp_p[j] = src_p[j];
+		tmp_p[j] = src_p[j + offset];
 	}
 
 	i->p = tmp_p;

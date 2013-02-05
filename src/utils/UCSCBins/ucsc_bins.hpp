@@ -360,7 +360,7 @@ UCSCBins<T>::remove(UCSCElement<T> e,
 }
 //}}}
 
-//{{{ 
+//{{{ template <class T> unsigned int UCSCBins<T>::num_bps()
 template <class T>
 unsigned int
 UCSCBins<T>::num_bps()

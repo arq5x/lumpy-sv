@@ -171,16 +171,20 @@ merge(SV_BreakPoint *p)
 		//{{{ Give error and abort
 		cerr << "Error in merge(): no correct overlap" << endl <<
 				"t:" <<
+				interval_l.i.chr << "," <<
 				interval_l.i.start << "," <<
 				interval_l.i.end << "," <<
 				interval_l.i.strand << " " <<
+				interval_r.i.chr << "," <<
 				interval_r.i.start << "," <<
 				interval_r.i.end << "," <<
 				interval_r.i.strand << "\t" <<
 				"p:" <<
+				p->interval_l.i.chr << "," <<
 				p->interval_l.i.start << "," <<
 				p->interval_l.i.end << "," <<
 				p->interval_l.i.strand << " " <<
+				p->interval_r.i.chr << "," <<
 				p->interval_r.i.start << "," <<
 				p->interval_r.i.end << "," <<
 				p->interval_r.i.strand << "\t" <<

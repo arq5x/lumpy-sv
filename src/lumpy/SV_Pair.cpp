@@ -119,30 +119,6 @@ get_bp_interval_probability(char strand,
 }
 //}}}
 
-//{{{ void SV_Pair:: set_interval_probability()
-/*
-void
-SV_Pair::
-set_bp_interval_probability(struct breakpoint_interval *i)
-{
-	int size = i->i.end - i->i.start + 1;
-	log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
-	log_space *src_p;
-
-	unsigned int j;
-	if (i->i.strand == '+') 
-		src_p = SV_Evidence::distros[sample_id].first;
-	else
-		src_p = SV_Evidence::distros[sample_id].second;
-	for (j = 0; j < size; ++j) {
-		tmp_p[j] = src_p[j];
-	}
-
-	i->p = tmp_p;
-}
-*/
-//}}}
-
 //{{{ void SV_Pair:: set_bp_interval_start_end(struct breakpoint_interval *i,
 /* targer_pair is the other interval in the pair, it is used to bound the
  * breakpoint probabilty distribution range.  The breakpoint cannot exist after
@@ -166,11 +142,18 @@ set_bp_interval_start_end(struct breakpoint_interval *i,
 	i->i.chr = target_interval->chr;
 	i->i.strand = target_interval->strand;
 	if ( i->i.strand == '+' ) {
-		i->i.start = target_interval->end - back_distance;
+		if (back_distance > target_interval->end)
+			i->i.start = 0;
+		else
+			i->i.start = target_interval->end - back_distance;
 		i->i.end = i->i.start + distro_size - 1;
 	} else {
 		i->i.end = target_interval->start + back_distance;
-		i->i.start = i->i.end - distro_size + 1;
+
+		if (distro_size > i->i.end)
+			i->i.start = 0;
+		else
+			i->i.start = i->i.end - distro_size + 1;
 	}
 }
 //}}}
@@ -459,7 +442,6 @@ process_pair(const BamAlignment &curr,
 										id,
 										sample_id,
 										reader);
-
 		if ( new_pair->is_sane() &&  new_pair->is_aberrant() ) {
 			SV_BreakPoint *new_bp = new_pair->get_bp();
 
