@@ -580,10 +580,10 @@ int main(int argc, char* argv[])
 				bp->print_evidence("\t");
 		}
 
+		r_bin.remove(*it, false, false, true);
 		bp->free_evidence();
 		delete bp;
 	}
-
 	//}}}
 	
 	sort_inter_chrom_bam( inter_chrom_file_prefix + ".bam",
@@ -686,6 +686,7 @@ int main(int argc, char* argv[])
 				}
 			}
 			//}}}
+			
 
 			//{{{ get breakpoints
 			// get anything that has ends in both chroms
@@ -696,6 +697,7 @@ int main(int argc, char* argv[])
 
 			for (it = values.begin(); it < values.end(); ++it) {
 				SV_BreakPoint *bp = it->value;
+				//cerr << *bp << endl;
 				if ( bp->weight >= min_weight ) {
 					bp->trim_intervals();
 					bp->print_bedpe(-1);
@@ -740,6 +742,7 @@ int main(int argc, char* argv[])
 				bp->print_evidence("\t");
 		}
 
+		r_bin.remove(*it, false, false, true);
 		bp->free_evidence();
 		delete bp;
 	}
