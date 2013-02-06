@@ -202,6 +202,7 @@ template <class T>
 UCSCBins<T>::UCSCBins()
 {
 	size = 0;
+	next_id = 0;
 	chrom_bins = map<string, bins, less<string> >();
 }
 //}}}
@@ -234,7 +235,6 @@ UCSCBins<T>:: add(string chr,
 	element.value = value;
 	element.id = next_id++;
 	++size;
-
 	BIN bin = getBin(start, end);
 	chrom_bins[chr][bin].push_back(element);
 }
@@ -418,7 +418,6 @@ UCSCBins<T>::values(string target_chr,
 	return values;
 }
 //}}}
-
 
 //{{{ template <class T> vector<UCSCElement<T> > UCSCBins<T>::values()
 template <class T>

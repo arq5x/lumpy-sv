@@ -678,6 +678,7 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 	} else { 
 
 		vector< UCSCElement<SV_BreakPoint*> >::iterator it;
+
 		it = tmp_hits_r.begin();
 
 		// remove hits that are of a different type, or do not intersect the
@@ -703,8 +704,8 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 			// addr of the bp in both sets (and only item in the intersection)
 
 			SV_BreakPoint *bp = tmp_hits_r[0].value;
-
 			if ( bp->merge(this) ) {
+
 				UCSCElement<SV_BreakPoint*> rm = tmp_hits_r[0];
 				r_bin.remove(rm, false, false, true);
 

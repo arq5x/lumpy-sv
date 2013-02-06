@@ -450,7 +450,7 @@ process_pair(const BamAlignment &curr,
 #endif
 			new_bp->cluster(r_bin);
 		} else {
-			free(new_pair);
+			delete(new_pair);
 		}
 
 		mapped_pairs.erase(curr.Name);
