@@ -132,13 +132,6 @@ set_bp_interval_start_end(struct breakpoint_interval *i,
 						  int back_distance,
 						  int distro_size)
 {
-#if 0
-	cerr << target_interval->start << "\t" <<
-			target_interval->end << "\t" <<
-			target_pair->start << "\t" <<
-			target_pair->end << endl;
-#endif
-			
 	i->i.chr = target_interval->chr;
 	i->i.strand = target_interval->strand;
 	if ( i->i.strand == '+' ) {
