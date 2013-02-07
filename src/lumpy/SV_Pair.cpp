@@ -107,7 +107,7 @@ get_bp_interval_probability(char strand,
 {
 	int size = distro_size;
 	log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
-	unsigned int j;
+	int j;
 	for (j = 0; j < size; ++j) {
 		if (strand == '+') 
 			tmp_p[j] = get_ls(distro[j]);
@@ -129,8 +129,8 @@ SV_Pair::
 set_bp_interval_start_end(struct breakpoint_interval *i,
 						  struct interval *target_interval,
 						  struct interval *target_pair,
-						  int back_distance,
-						  int distro_size)
+						  unsigned int back_distance,
+						  unsigned int distro_size)
 {
 	i->i.chr = target_interval->chr;
 	i->i.strand = target_interval->strand;

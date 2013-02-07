@@ -503,8 +503,6 @@ SV_BreakPoint:: trim_interval(struct breakpoint_interval *curr_interval,
 							  log_space *interval_v,
 							  unsigned int size)
 {
-	//log_space ls_t = get_ls(p_trim_threshold);
-
 	log_space max = -INFINITY;
 	unsigned int i;
 	for (i = 0; i < size; ++i)
@@ -519,31 +517,14 @@ SV_BreakPoint:: trim_interval(struct breakpoint_interval *curr_interval,
 			break;
 
 	int v_last = -1;
-	for (i = size - 1; i >= 0; --i)
+	for (i = size - 1; i > 0; --i)
 		if (get_p(interval_v[i])/get_p(max) < p_trim_threshold) 
 			v_last=i;
 		else
 			break;
 
-//	v_first = -1;
-//	v_last = -1;
-//	// Find the range of values that are above the threshold
-//	for (i = 0; i < size; ++i) {
-//		if (interval_v[i] > ls_t)
-//			if (v_first > -1)
-//				v_last = i;
-//			else {
-//				v_first = i;
-//				v_last = i;
-//			}
-//	}
-
-	//cerr << v_first << "," << v_last << endl;
 
 	if ( (v_first != -1) && (v_last != -1) ) {
-
-		//cerr << v_first << "\t" << v_last << endl;
-
 		// Adjust the breakpoint intervals
 		curr_interval->i.start = curr_interval->i.start + v_first;
 		curr_interval->i.end = curr_interval->i.start + (v_last - v_first);

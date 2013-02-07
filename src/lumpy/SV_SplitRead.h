@@ -82,8 +82,9 @@ class SV_SplitRead: public SV_Evidence
 		int min_mapping_quality;
 		SV_SplitReadReader *reader;
 
-		static log_space* get_bp_interval_probability(char strand,
-													  int back_distance);
+		static log_space* 
+				get_bp_interval_probability(char strand,
+											unsigned int back_distance);
 
 		SV_BreakPoint* get_bp();
 

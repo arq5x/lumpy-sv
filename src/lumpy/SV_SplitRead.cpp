@@ -220,8 +220,8 @@ SV_SplitRead(const BamAlignment &bam_a,
 		 //( ( tmp_a.chr.compare(tmp_b.chr) == 0 ) && 
 		   //( tmp_a.start > tmp_b.start ) ) ) {
 
-	if ( (block.at(0).RefID > block.at(1).RefID) ||
-			( (block.at(0).RefID == block.at(1).RefID) &&
+	if ( (bam_a.RefID > bam_b.RefID) ||
+			( (bam_a.RefID == bam_b.RefID) &&
 			  (tmp_a.start > tmp_b.start ) ) ) {
 		side_r = tmp_a;
 		side_l = tmp_b;
@@ -381,13 +381,13 @@ get_bp()
 log_space*
 SV_SplitRead::
 get_bp_interval_probability(char strand,
-							int back_distance)
+							unsigned int back_distance)
 {
     double lambda = log(0.0001)/(-1 * back_distance);
 
 	unsigned int distro_size = 2*back_distance;
 	log_space *tmp_p = (log_space *) malloc( distro_size * sizeof(log_space));
-	int j;
+	unsigned int j;
 	for (j = 0; j < back_distance; ++j)
 			tmp_p[j] = get_ls( exp(-1*lambda*(back_distance - j)));
 

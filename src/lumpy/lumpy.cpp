@@ -66,8 +66,6 @@ using namespace std;
 
 //{{{ forward declarations
 void ShowHelp(void);
-
-static inline int strnum_cmp(const char *a, const char *b);
 //}}}
 
 //{{{ void ShowHelp(void)
@@ -84,6 +82,8 @@ void ShowHelp(void)
 		"\t-w"		"\tFile read windows size (default 1000000)" << endl <<
 		"\t-mw"		"\tminimum weight for a call" << endl <<
 		"\t-tt"		"\ttrim threshold" << endl <<
+		"\t-t"		"\ttemp file prefix, must be to a writeable directory" << 
+					endl <<
 		"\t-sr"		"\tbam_file:<file name>," << endl <<
 					"\t\tback_distance:<distance>" << endl << 
 					"\t\tmin_mapping_threshold:<mapping quality>" << endl << 
@@ -110,73 +110,6 @@ void ShowHelp(void)
 					endl;
     // end the program here
     exit(1);
-}
-//}}}
-
-//{{{ static inline int strnum_cmp(const char *a, const char *b)
-//read name str cmp
-static inline int strnum_cmp(const char *a, const char *b)
-{
-	char *pa, *pb;
-	pa = (char*)a; pb = (char*)b;
-	while (*pa && *pb) {
-		if (isdigit(*pa) && isdigit(*pb)) {
-			long ai, bi;
-			ai = strtol(pa, &pa, 10);
-			bi = strtol(pb, &pb, 10);
-			if (ai != bi) return ai<bi? -1 : ai>bi? 1 : 0;
-		} else {
-			if (*pa != *pb) break;
-			++pa; ++pb;
-		}
-	}
-	if (*pa == *pb)
-		return (pa-a) < (pb-b)? -1 : (pa-a) > (pb-b)? 1 : 0;
-	return *pa<*pb? -1 : *pa>*pb? 1 : 0;
-}
-//}}}
-
-//{{{ void parse_cmd_line_args(int *i,
-void
-parse_cmd_line_args(int *i,
-					int argc,
-					char **argv,
-					SV_EvidenceReader *e_r,
-					vector<SV_EvidenceReader*> &evidence_readers,
-					string e_name)
-{
-	if ((*i+1) < argc) {
-		char *params = argv[*i + 1];
-		char *param_val, *brka, *brkb;
-
-		for (	param_val = strtok_r(params, ",", &brka);
-				param_val;
-				param_val = strtok_r(NULL, ",", &brka)) {   
-			char *param = strtok_r(param_val, ":", &brkb);
-			char *val = strtok_r(NULL, ":", &brkb);
-
-			if (val == NULL) {
-				cerr << "Parameter requied for " << param << endl;
-				ShowHelp();
-			}
-
-			if ( ! e_r->add_param(param, val) ) {
-				cerr << "Unknown pair end parameter:" << param << endl;
-				ShowHelp();
-			}
-		}
-	}
-
-	string msg = e_r->check_params();
-	if ( msg.compare("") == 0 ) {
-		evidence_readers.push_back(e_r);
-	} else {
-		cerr << "missing " << e_name << " parameters:" << msg << endl;
-		ShowHelp();
-	}
-
-	i++;
-
 }
 //}}}
 
@@ -404,6 +337,12 @@ int main(int argc, char* argv[])
 			show_evidence = true;
 		}
 
+        else if(PARAMETER_CHECK("-t", 2, parameterLength)) {
+            if ((i+1) < argc) {
+				inter_chrom_file_prefix = argv[i + 1];
+			}
+		}
+
         else {
             cerr << endl << "*****ERROR: Unrecognized parameter: " <<
 					argv[i] << " *****" << endl << endl;
@@ -565,7 +504,7 @@ int main(int argc, char* argv[])
 	}
 	//}}}
 	
-	//{{{ Call remaining break points
+	//{{{ Call remaining intra breakpoints
 	vector< UCSCElement<SV_BreakPoint*> > values = r_bin.values();
 	vector< UCSCElement<SV_BreakPoint*> >::iterator it;
 

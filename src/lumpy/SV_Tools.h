@@ -18,7 +18,7 @@
 #include <string>
 using namespace std;
 
-static inline int strnum_cmp(const char *a, const char *b);
+//static inline int strnum_cmp(const char *a, const char *b);
 
 int read_histo_file(string file_name,
 					 double **histo,
