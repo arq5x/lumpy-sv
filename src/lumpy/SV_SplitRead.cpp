@@ -298,7 +298,8 @@ get_bp()
 			else
 				new_bp->interval_l.i.start = 0;
 
-			new_bp->interval_l.i.end = side_l.start + 1 + reader->back_distance;
+			new_bp->interval_l.i.end = side_l.start + reader->back_distance;
+			//new_bp->interval_l.i.end = side_l.start + 1 + reader->back_distance;
 
 			if (side_r.start > reader->back_distance)
 				new_bp->interval_r.i.start = 
@@ -317,7 +318,8 @@ get_bp()
 
 			if (side_l.end > reader->back_distance)
 				new_bp->interval_l.i.start =
-					side_l.end - 1 - reader->back_distance;
+					side_l.end  - reader->back_distance;
+					//side_l.end - 1 - reader->back_distance;
 			else 
 				new_bp->interval_l.i.start = 0;
 
@@ -325,7 +327,8 @@ get_bp()
 
 			if (side_r.end > reader->back_distance)
 				new_bp->interval_r.i.start = 
-					side_r.end - 1 - reader->back_distance;
+					side_r.end - reader->back_distance;
+					//side_r.end - 1 - reader->back_distance;
 			else
 				new_bp->interval_r.i.start = 0;
 
@@ -336,7 +339,8 @@ get_bp()
 	} else if (type == SV_BreakPoint::DELETION) {
 
 		if (side_l.end > reader->back_distance)
-			new_bp->interval_l.i.start = side_l.end - 1 - reader->back_distance;
+			new_bp->interval_l.i.start = side_l.end - reader->back_distance;
+			//new_bp->interval_l.i.start = side_l.end - 1 - reader->back_distance;
 		else
 			new_bp->interval_l.i.start = 0;
 
@@ -347,7 +351,8 @@ get_bp()
 		else
 			new_bp->interval_r.i.start = 0;
 
-		new_bp->interval_r.i.end = side_r.start + 1 + reader->back_distance;
+		new_bp->interval_r.i.end = side_r.start + reader->back_distance;
+		//new_bp->interval_r.i.end = side_r.start + 1 + reader->back_distance;
 	} else if (type == SV_BreakPoint::DUPLICATION) {
 
 		if (side_l.start > reader->back_distance)
@@ -355,10 +360,12 @@ get_bp()
 		else
 			new_bp->interval_l.i.start = 0;
 
-		new_bp->interval_l.i.end = side_l.start + 1 + reader->back_distance;
+		new_bp->interval_l.i.end = side_l.start + reader->back_distance;
+		//new_bp->interval_l.i.end = side_l.start + 1 + reader->back_distance;
 		
 		if (side_r.end > reader->back_distance)
-			new_bp->interval_r.i.start = side_r.end - 1 - reader->back_distance;
+			new_bp->interval_r.i.start = side_r.end - reader->back_distance;
+			//new_bp->interval_r.i.start = side_r.end - 1 - reader->back_distance;
 		else 
 			new_bp->interval_r.i.start = 0;
 
@@ -385,7 +392,7 @@ get_bp_interval_probability(char strand,
 {
     double lambda = log(0.0001)/(-1 * back_distance);
 
-	unsigned int distro_size = 2*back_distance;
+	unsigned int distro_size = 2*back_distance + 1;
 	log_space *tmp_p = (log_space *) malloc( distro_size * sizeof(log_space));
 	unsigned int j;
 	for (j = 0; j < back_distance; ++j)
