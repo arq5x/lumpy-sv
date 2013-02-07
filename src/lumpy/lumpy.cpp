@@ -360,6 +360,7 @@ int main(int argc, char* argv[])
 
 	if (has_bams) {
 		SV_BamReader *bam_r = new SV_BamReader(&bam_evidence_readers);
+		bam_r->initialize();
 		bam_r->set_inter_chrom_file_name(inter_chrom_file_prefix + ".bam");
 		evidence_readers.push_back(bam_r);
 	}
@@ -372,12 +373,14 @@ int main(int argc, char* argv[])
 	vector<SV_EvidenceReader*>::iterator i_er;
 
 	//{{{ initialize all input files
+	/*
 	for (	i_er = evidence_readers.begin();
 			i_er != evidence_readers.end();
 			++i_er) {
 		SV_EvidenceReader *er = *i_er;
 		er->initialize();
 	}
+	*/
 	//}}}
 	
 	bool has_next = false;
@@ -458,24 +461,17 @@ int main(int argc, char* argv[])
 
 				// Make sure both ends of the bp are less than or equal to the
 				// current chrom
-				/*
-				if ( ( bp->interval_l.i.chr.compare(min_chr) <= 0 ) &&
-					 ( bp->interval_r.i.chr.compare(min_chr) <= 0 ) &&
-					 ( bp->interval_l.i.start < max_pos ) &&
-					 ( bp->interval_r.i.start < max_pos ) ) {
-				*/
+				if ( bp->weight >= min_weight ) {
+					 
+					bp->trim_intervals();
+					bp->print_bedpe(-1);
+					if (show_evidence)
+						bp->print_evidence("\t");
+				}
 
-					if ( bp->weight >= min_weight ) {
-						 
-						bp->trim_intervals();
-						bp->print_bedpe(-1);
-						if (show_evidence)
-							bp->print_evidence("\t");
-					}
-
-					r_bin.remove(*it, false, false, true);
-					bp->free_evidence();
-					delete bp;
+				r_bin.remove(*it, false, false, true);
+				bp->free_evidence();
+				delete bp;
 				//}
 			}
 			//}}}
