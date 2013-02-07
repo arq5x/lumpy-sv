@@ -126,9 +126,9 @@ SV_SplitRead(vector< BamAlignment > &block,
     tmp_b.end = block.at(1).GetEndPosition();
 
 
-	if ( ( tmp_a.chr.compare(tmp_b.chr) > 0 ) ||
-		 ( ( tmp_a.chr.compare(tmp_b.chr) == 0 ) && 
-		   ( tmp_a.start > tmp_b.start ) ) ) {
+	if ( (block.at(0).RefID > block.at(1).RefID) ||
+			( (block.at(0).RefID == block.at(1).RefID) &&
+			  (tmp_a.start > tmp_b.start ) ) ) {
 		side_r = tmp_a;
 		side_l = tmp_b;
 		query_r = query_a;
@@ -139,26 +139,6 @@ SV_SplitRead(vector< BamAlignment > &block,
 		query_l = query_a;
 		query_r = query_b;
 	}
-
-#if 0
-	cerr << "tmp:" <<
-			tmp_a.chr << "," <<
-			tmp_a.start << "," <<
-			tmp_a.end << "," <<
-			tmp_a.strand << "\t" <<
-			tmp_b.chr << "," <<
-			tmp_b.start << "," <<
-			tmp_b.end << "," <<
-			tmp_b.strand << endl;
-
-
-	cerr << "set:" <<
-			side_l.strand << "," <<
-			query_l.qs_pos << "\t" <<
-			side_r.strand << "," <<
-			query_r.qs_pos << "\t" <<
-			endl;
-#endif
 
     if (side_l.strand != side_r.strand)
 		type = SV_BreakPoint::INVERSION;
@@ -236,9 +216,13 @@ SV_SplitRead(const BamAlignment &bam_a,
     tmp_b.end = bam_b.GetEndPosition();
 
 
-	if ( ( tmp_a.chr.compare(tmp_b.chr) > 0 ) ||
-		 ( ( tmp_a.chr.compare(tmp_b.chr) == 0 ) && 
-		   ( tmp_a.start > tmp_b.start ) ) ) {
+	//if ( ( tmp_a.chr.compare(tmp_b.chr) > 0 ) ||
+		 //( ( tmp_a.chr.compare(tmp_b.chr) == 0 ) && 
+		   //( tmp_a.start > tmp_b.start ) ) ) {
+
+	if ( (bam_a.RefID > bam_b.RefID) ||
+			( (bam_a.RefID == bam_b.RefID) &&
+			  (tmp_a.start > tmp_b.start ) ) ) {
 		side_r = tmp_a;
 		side_l = tmp_b;
 		query_r = query_a;
@@ -267,7 +251,6 @@ SV_SplitRead(const BamAlignment &bam_a,
 				( query_l.qs_pos < query_r.qs_pos) ) )
 		type = SV_BreakPoint::DUPLICATION;
     else {
-		/*
 		cerr << "ERROR IN BAM FILE.  " << 
 				"TYPE not detected (DELETION,DUPLICATION,INVERSION)" <<
 				endl;
@@ -278,7 +261,6 @@ SV_SplitRead(const BamAlignment &bam_a,
 			endl;
 
 		throw(1);
-		*/
 	}
 
 	weight = _weight;
@@ -296,15 +278,6 @@ get_bp()
 
 	new_bp->type = type;
 
-/*
-    vector<SV_Evidence*>::iterator it;
-    for (it = new_bp->evidence.begin(); it < new_bp->evidence.end(); ++it) {
-        SV_Evidence *sv_e = *it;
-        cout << "+\t";
-        sv_e->print_evidence();
-    }
-*/
-
 	new_bp->interval_l.i.chr = side_l.chr;
 	new_bp->interval_l.i.strand = side_l.strand;
 
@@ -319,9 +292,20 @@ get_bp()
 			   ( side_l.strand == '+' ) && 
 			   ( side_r.strand == '-' ) ) ) {
 
-			new_bp->interval_l.i.start = side_l.start - reader->back_distance;
+			if ( side_l.start > reader->back_distance)
+				new_bp->interval_l.i.start = 
+						side_l.start - reader->back_distance;
+			else
+				new_bp->interval_l.i.start = 0;
+
 			new_bp->interval_l.i.end = side_l.start + 1 + reader->back_distance;
-			new_bp->interval_r.i.start = side_r.start - reader->back_distance;
+
+			if (side_r.start > reader->back_distance)
+				new_bp->interval_r.i.start = 
+						side_r.start - reader->back_distance;
+			else
+				new_bp->interval_r.i.start = 0;
+
 			new_bp->interval_r.i.end = side_r.start + 1 + reader->back_distance;
 
 		} else if ( ( ( query_l.qs_pos < query_r.qs_pos ) &&
@@ -331,24 +315,53 @@ get_bp()
 					  ( side_l.strand == '-' ) &&
 					  ( side_r.strand == '+' ) ) ) {
 
-			new_bp->interval_l.i.start = side_l.end - 1 - reader->back_distance;
+			if (side_l.end > reader->back_distance)
+				new_bp->interval_l.i.start =
+					side_l.end - 1 - reader->back_distance;
+			else 
+				new_bp->interval_l.i.start = 0;
+
 			new_bp->interval_l.i.end = side_l.end + reader->back_distance;
-			new_bp->interval_r.i.start = side_r.end - 1 - reader->back_distance;
+
+			if (side_r.end > reader->back_distance)
+				new_bp->interval_r.i.start = 
+					side_r.end - 1 - reader->back_distance;
+			else
+				new_bp->interval_r.i.start = 0;
+
 			new_bp->interval_r.i.end = side_r.end + reader->back_distance;
 		} else {
 			abort();
 		}
 	} else if (type == SV_BreakPoint::DELETION) {
 
-		new_bp->interval_l.i.start = side_l.end - 1 - reader->back_distance;
+		if (side_l.end > reader->back_distance)
+			new_bp->interval_l.i.start = side_l.end - 1 - reader->back_distance;
+		else
+			new_bp->interval_l.i.start = 0;
+
 		new_bp->interval_l.i.end = side_l.end + reader->back_distance;
-		new_bp->interval_r.i.start = side_r.start - reader->back_distance;
+
+		if (side_r.start > reader->back_distance)
+			new_bp->interval_r.i.start = side_r.start - reader->back_distance;
+		else
+			new_bp->interval_r.i.start = 0;
+
 		new_bp->interval_r.i.end = side_r.start + 1 + reader->back_distance;
 	} else if (type == SV_BreakPoint::DUPLICATION) {
 
-		new_bp->interval_l.i.start = side_l.start - reader->back_distance;
+		if (side_l.start > reader->back_distance)
+			new_bp->interval_l.i.start = side_l.start - reader->back_distance;
+		else
+			new_bp->interval_l.i.start = 0;
+
 		new_bp->interval_l.i.end = side_l.start + 1 + reader->back_distance;
-		new_bp->interval_r.i.start = side_r.end - 1 - reader->back_distance;
+		
+		if (side_r.end > reader->back_distance)
+			new_bp->interval_r.i.start = side_r.end - 1 - reader->back_distance;
+		else 
+			new_bp->interval_r.i.start = 0;
+
 		new_bp->interval_r.i.end = side_r.end + reader->back_distance;
 	}  else {
 		abort();
@@ -368,13 +381,13 @@ get_bp()
 log_space*
 SV_SplitRead::
 get_bp_interval_probability(char strand,
-							int back_distance)
+							unsigned int back_distance)
 {
     double lambda = log(0.0001)/(-1 * back_distance);
 
 	unsigned int distro_size = 2*back_distance;
 	log_space *tmp_p = (log_space *) malloc( distro_size * sizeof(log_space));
-	int j;
+	unsigned int j;
 	for (j = 0; j < back_distance; ++j)
 			tmp_p[j] = get_ls( exp(-1*lambda*(back_distance - j)));
 
@@ -527,6 +540,66 @@ process_split(const BamAlignment &curr,
 			cerr << "Error creating split read: " << endl;
 		}
 
+		mapped_splits.erase(curr.Name);
+	}
+}
+//}}}
+
+//{{{ void process_intra_chrom_split(const BamAlignment &curr,
+void
+SV_SplitRead::
+process_intra_chrom_split(const BamAlignment &curr,
+						  const RefVector refs,
+						  BamWriter &inter_chrom_reads,
+						  map<string, BamAlignment> &mapped_splits,
+						  UCSCBins<SV_BreakPoint*> &r_bin,
+						  int weight,
+						  int id,
+						  int sample_id,
+						  SV_SplitReadReader *reader)
+{
+
+	if (mapped_splits.find(curr.Name) == mapped_splits.end())
+		mapped_splits[curr.Name] = curr;
+	else {
+		if ( mapped_splits[curr.Name].RefID == curr.RefID ) {
+			try {
+				SV_SplitRead *new_split_read = 
+					new SV_SplitRead(mapped_splits[curr.Name],
+									 curr,
+									 refs,
+									 weight,
+									 id,
+									 sample_id,
+									 reader);
+
+				SV_BreakPoint *new_bp = NULL;
+				if (new_split_read->is_sane()) {
+					new_bp = new_split_read->get_bp();
+
+					vector<SV_Evidence*>::iterator it;
+
+					new_bp->cluster(r_bin);
+				} else
+					free(new_split_read);
+
+			} catch (int) {
+				cerr << "Error creating split read: " << endl;
+			}
+
+		} else {
+			BamAlignment al1 = curr;
+			BamAlignment al2 = mapped_splits[curr.Name];
+
+			al1.MateRefID = al2.RefID;
+			al2.MateRefID = al1.RefID;
+
+			al1.MatePosition = al2.Position;
+			al2.MatePosition = al1.Position;
+
+			inter_chrom_reads.SaveAlignment(al1);
+			inter_chrom_reads.SaveAlignment(al2);
+		}
 		mapped_splits.erase(curr.Name);
 	}
 }

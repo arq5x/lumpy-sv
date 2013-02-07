@@ -131,6 +131,7 @@ get_curr_pos()
 }
 //}}}
 
+#if 0
 //{{{ void SV_SplitReadReader:: process_input()
 void
 SV_SplitReadReader::
@@ -139,6 +140,7 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 	while (reader.GetNextAlignment(bam)) 
 		SV_SplitRead::process_split(bam,
 									refs,
+									reader.GetHeader().ToString(),
 									mapped_splits,
 									r_bin,
 									weight,
@@ -147,6 +149,7 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 									this);
 }
 //}}}
+#endif
 
 //{{{ void SV_SplitReadReader:: process_input( BamAlignment &_bam,
 void
@@ -166,6 +169,27 @@ process_input( BamAlignment &_bam,
 }
 //}}}
 
+//{{{ void SV_SplitReadReader:: process_input( BamAlignment &_bam,
+void
+SV_SplitReadReader::
+process_input( BamAlignment &_bam,
+			   RefVector &_refs,
+			   BamWriter &inter_chrom_reads,
+			   UCSCBins<SV_BreakPoint*> &r_bin)
+{
+	SV_SplitRead::process_intra_chrom_split(_bam,
+											_refs,
+											inter_chrom_reads,
+											mapped_splits,
+											r_bin,
+											weight,
+											id,
+											sample_id,
+											this);
+}
+//}}}
+
+#if 0
 //{{{ void SV_SplitReadReader:: process_input_chr(string chr,
 void
 SV_SplitReadReader::
@@ -179,6 +203,7 @@ process_input_chr(string chr,
 
 		SV_SplitRead::process_split(bam,
 									refs,
+									reader.GetHeader().ToString(),
 									mapped_splits,
 									r_bin,
 									weight,
@@ -192,7 +217,9 @@ process_input_chr(string chr,
 	}
 }
 //}}}
+#endif
 
+#if 0
 //{{{ void SV_SplitReadReader:: process_input_chr(string chr,
 void
 SV_SplitReadReader::
@@ -207,6 +234,7 @@ process_input_chr_pos(string chr,
 			( bam.Position < pos ) ) {
 		SV_SplitRead::process_split(bam,
 									refs,
+									reader.GetHeader().ToString(),
 									mapped_splits,
 									r_bin,
 									weight,
@@ -220,6 +248,7 @@ process_input_chr_pos(string chr,
 	}
 }
 //}}}
+#endif
 
 //{{{ void SV_SplitReadReader:: terminate()
 void 

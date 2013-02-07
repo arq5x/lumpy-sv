@@ -202,6 +202,7 @@ initialize()
 }
 //}}}
 
+#if 0
 //{{{ void SV_PairReader:: process_input()
 void
 SV_PairReader::
@@ -219,6 +220,7 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 								  this);
 }
 //}}}
+#endif
 
 //{{{ void SV_PairReader:: process_input(
 void
@@ -236,6 +238,27 @@ process_input( BamAlignment &_bam,
 								  id,
 								  sample_id,
 								  this);
+}
+//}}}
+
+//{{{ void SV_PairReader:: process_input(
+void
+SV_PairReader::
+process_input( BamAlignment &_bam,
+			   RefVector &_refs,
+			   BamWriter &inter_chrom_reads,
+			   UCSCBins<SV_BreakPoint*> &r_bin)
+{
+		if (_bam.IsMapped() && _bam.IsMateMapped()) 
+			SV_Pair::process_intra_chrom_pair(_bam,
+											  _refs,
+											  inter_chrom_reads,
+											  mapped_pairs,
+											  r_bin,
+											  weight,
+											  id,
+											  sample_id,
+											  this);
 }
 //}}}
 
@@ -259,6 +282,7 @@ get_curr_pos()
 }
 //}}}
 
+#if 0
 //{{{ void SV_PairReader:: process_input_chr(string chr,
 void
 SV_PairReader::
@@ -271,6 +295,7 @@ process_input_chr(string chr,
 		if (bam.IsMapped() && bam.IsMateMapped())  //Paired read
 			SV_Pair::process_pair(bam,
 								  refs,
+								  reader.GetHeader().ToString(),
 								  mapped_pairs,
 								  r_bin,
 								  weight,
@@ -283,7 +308,9 @@ process_input_chr(string chr,
 	}
 }
 //}}}
+#endif
 
+#if 0
 //{{{ void SV_PairReader:: process_input_chr(string chr,
 void
 SV_PairReader::
@@ -298,6 +325,7 @@ process_input_chr_pos(string chr,
 		if (bam.IsMapped() && bam.IsMateMapped())  //Paired read
 			SV_Pair::process_pair(bam,
 								  refs,
+								  N
 								  mapped_pairs,
 								  r_bin,
 								  weight,
@@ -310,6 +338,7 @@ process_input_chr_pos(string chr,
 	}
 }
 //}}}
+#endif
 
 //{{{ void SV_PairReader:: terminate()
 void 

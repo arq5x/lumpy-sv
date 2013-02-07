@@ -13,6 +13,7 @@
  * ***************************************************************************/
 
 #include "BamAncillary.h"
+#include "api/BamWriter.h"
 using namespace BamTools;
 
 #include "SV_PairReader.h"
@@ -73,10 +74,12 @@ SV_Pair(const BamAlignment &bam_a,
 	else 
 		tmp_b.strand = '+';
 
-	if ( tmp_a.chr.compare(tmp_b.chr) > 0 ) {
+	//if ( tmp_a.chr.compare(tmp_b.chr) > 0 ) {
+	if ( bam_a.RefID < bam_b.RefID ) {
 		read_l = tmp_a;
 		read_r = tmp_b;
-	} else if ( tmp_a.chr.compare(tmp_b.chr) < 0 ) {
+	//} else if ( tmp_a.chr.compare(tmp_b.chr) < 0 ) {
+	} else if ( bam_a.RefID > bam_b.RefID) {
 		read_l = tmp_b;
 		read_r = tmp_a;
 	} else { // ==
@@ -104,7 +107,7 @@ get_bp_interval_probability(char strand,
 {
 	int size = distro_size;
 	log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
-	unsigned int j;
+	int j;
 	for (j = 0; j < size; ++j) {
 		if (strand == '+') 
 			tmp_p[j] = get_ls(distro[j]);
@@ -114,30 +117,6 @@ get_bp_interval_probability(char strand,
 
 	return tmp_p;
 }
-//}}}
-
-//{{{ void SV_Pair:: set_interval_probability()
-/*
-void
-SV_Pair::
-set_bp_interval_probability(struct breakpoint_interval *i)
-{
-	int size = i->i.end - i->i.start + 1;
-	log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
-	log_space *src_p;
-
-	unsigned int j;
-	if (i->i.strand == '+') 
-		src_p = SV_Evidence::distros[sample_id].first;
-	else
-		src_p = SV_Evidence::distros[sample_id].second;
-	for (j = 0; j < size; ++j) {
-		tmp_p[j] = src_p[j];
-	}
-
-	i->p = tmp_p;
-}
-*/
 //}}}
 
 //{{{ void SV_Pair:: set_bp_interval_start_end(struct breakpoint_interval *i,
@@ -150,24 +129,24 @@ SV_Pair::
 set_bp_interval_start_end(struct breakpoint_interval *i,
 						  struct interval *target_interval,
 						  struct interval *target_pair,
-						  int back_distance,
-						  int distro_size)
+						  unsigned int back_distance,
+						  unsigned int distro_size)
 {
-#if 0
-	cerr << target_interval->start << "\t" <<
-			target_interval->end << "\t" <<
-			target_pair->start << "\t" <<
-			target_pair->end << endl;
-#endif
-			
 	i->i.chr = target_interval->chr;
 	i->i.strand = target_interval->strand;
 	if ( i->i.strand == '+' ) {
-		i->i.start = target_interval->end - back_distance;
+		if (back_distance > target_interval->end)
+			i->i.start = 0;
+		else
+			i->i.start = target_interval->end - back_distance;
 		i->i.end = i->i.start + distro_size - 1;
 	} else {
 		i->i.end = target_interval->start + back_distance;
-		i->i.start = i->i.end - distro_size + 1;
+
+		if (distro_size > i->i.end)
+			i->i.start = 0;
+		else
+			i->i.start = i->i.end - distro_size + 1;
 	}
 }
 //}}}
@@ -456,7 +435,6 @@ process_pair(const BamAlignment &curr,
 										id,
 										sample_id,
 										reader);
-
 		if ( new_pair->is_sane() &&  new_pair->is_aberrant() ) {
 			SV_BreakPoint *new_bp = new_pair->get_bp();
 
@@ -465,10 +443,48 @@ process_pair(const BamAlignment &curr,
 #endif
 			new_bp->cluster(r_bin);
 		} else {
-			free(new_pair);
+			delete(new_pair);
 		}
 
 		mapped_pairs.erase(curr.Name);
+	}
+}
+//}}}
+
+//{{{ void process_intra_chrom_pair(const BamAlignment &curr,
+void 
+SV_Pair::
+process_intra_chrom_pair(const BamAlignment &curr,
+						 const RefVector refs,
+						 BamWriter &inter_chrom_reads,
+						 map<string, BamAlignment> &mapped_pairs,
+						 UCSCBins<SV_BreakPoint*> &r_bin,
+						 int weight,
+						 int id,
+						 int sample_id,
+						 SV_PairReader *reader)
+{
+	if (curr.RefID == curr.MateRefID) {
+
+		process_pair(curr,
+					 refs,
+					 mapped_pairs,
+					 r_bin,
+					 weight,
+					 id,
+					 sample_id,
+					 reader);
+
+	} else if (curr.IsMapped() && 
+			   curr.IsMateMapped() && 
+			   (curr.RefID >= 0) &&
+			   (curr.MateRefID >= 0) ) {
+		BamAlignment al = curr;
+		//vector<string> tag_val;
+		//tag_val.push_back("xxxxxxx");
+		string x = reader->get_source_file_name();
+		al.AddTag("LS","Z",x);
+		inter_chrom_reads.SaveAlignment(al);
 	}
 }
 //}}}

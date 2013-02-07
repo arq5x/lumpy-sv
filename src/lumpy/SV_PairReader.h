@@ -22,6 +22,7 @@ using namespace std;
 #include "SV_BreakPoint.h"
 #include "SV_EvidenceReader.h"
 #include "api/BamReader.h"
+#include "api/BamWriter.h"
 #include "api/BamAux.h"
 
 #include "ucsc_bins.hpp"
@@ -78,16 +79,22 @@ class SV_PairReader : public SV_EvidenceReader
 		void initialize();
 		void set_statics();
 		void unset_statics();
-		void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
+		//void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
+		
+		void process_input( BamAlignment &_bam,
+							RefVector &_ref,
+							BamWriter &inter_chrom_reads,
+							UCSCBins<SV_BreakPoint*> &r_bin);
+
 		void process_input( BamAlignment &_bam,
 							RefVector &_ref,
 							UCSCBins<SV_BreakPoint*> &r_bin);
 
-		void process_input_chr(string chr,
-							   UCSCBins<SV_BreakPoint*> &r_bin);
-		void process_input_chr_pos(string chr,
-								   CHR_POS pos,
-								   UCSCBins<SV_BreakPoint*> &r_bin);
+		//void process_input_chr(string chr,
+							   //UCSCBins<SV_BreakPoint*> &r_bin);
+		//void process_input_chr_pos(string chr,
+								   //CHR_POS pos,
+								   //UCSCBins<SV_BreakPoint*> &r_bin);
 		void terminate();
 		string get_curr_chr();
 		CHR_POS get_curr_pos();

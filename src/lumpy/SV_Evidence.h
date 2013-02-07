@@ -33,6 +33,7 @@ class SV_Evidence
 
 	public:
 		static map<int, pair<log_space*,log_space*> > distros;
+		static map<int, int> distros_size;
 
 		int weight;
 		int id;

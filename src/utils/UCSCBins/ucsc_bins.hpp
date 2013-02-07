@@ -202,6 +202,7 @@ template <class T>
 UCSCBins<T>::UCSCBins()
 {
 	size = 0;
+	next_id = 0;
 	chrom_bins = map<string, bins, less<string> >();
 }
 //}}}
@@ -234,7 +235,6 @@ UCSCBins<T>:: add(string chr,
 	element.value = value;
 	element.id = next_id++;
 	++size;
-
 	BIN bin = getBin(start, end);
 	chrom_bins[chr][bin].push_back(element);
 }
@@ -360,7 +360,7 @@ UCSCBins<T>::remove(UCSCElement<T> e,
 }
 //}}}
 
-//{{{ 
+//{{{ template <class T> unsigned int UCSCBins<T>::num_bps()
 template <class T>
 unsigned int
 UCSCBins<T>::num_bps()
@@ -374,6 +374,8 @@ template <class T>
 vector<UCSCElement<T> >
 UCSCBins<T>::values(string target_chr)
 {
+
+	//cerr << "values:" << target_chr << "\t";
 	vector< UCSCElement<T> > values;
 
 	typename map<BIN, element_vector >::iterator bin_it;

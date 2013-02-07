@@ -71,11 +71,13 @@ unset_statics()
 }
 //}}}
 
+#if 0
 //{{{ void SV_EvidenceReader:: process_input( BamAlignment &_bam,
 void
 SV_EvidenceReader::
 process_input( BamAlignment &_bam,
 			   RefVector &_refs,
+			   string header,
 			   UCSCBins<SV_BreakPoint*> &r_bin)
 {
 }
@@ -97,6 +99,7 @@ process_input_chr(string chr,
 {
 }
 //}}}
+#endif
 
 //{{{ void SV_EvidenceReader:: process_input_chr_pos(string chr,
 void
@@ -107,6 +110,30 @@ process_input_chr_pos(string chr,
 {
 }
 //}}}
+
+//{{{void SV_EvidenceReader:: process_input( BamAlignment &_bam,
+void
+SV_EvidenceReader::
+process_input( BamAlignment &_bam,
+			   RefVector &_refs,
+			   BamWriter &inter_chrom_reads,
+			   UCSCBins<SV_BreakPoint*> &r_bin)
+{
+	abort();
+}
+//}}}
+
+//{{{void SV_EvidenceReader:: process_input( BamAlignment &_bam,
+void
+SV_EvidenceReader::
+process_input( BamAlignment &_bam,
+			   RefVector &_refs,
+			   UCSCBins<SV_BreakPoint*> &r_bin)
+{
+	abort();
+}
+//}}}
+
 
 //{{{ void SV_EvidenceReader:: terminate()
 void
@@ -125,7 +152,7 @@ get_curr_chr()
 }
 //}}}
 
-//{{{ string SV_EvidenceReader:: get_curr_chr()
+//{{{ string SV_EvidenceReader:: get_curr_pos()
 CHR_POS
 SV_EvidenceReader::
 get_curr_pos()
@@ -144,11 +171,101 @@ has_next()
 }
 //}}}
 
-//{{{ string SV_PairReader:: get_source_file_name()
+//{{{ string SV_EvidenceReader:: get_source_file_name()
 string
 SV_EvidenceReader::
 get_source_file_name()
 {
 	return "Error";
+}
+//}}}
+//
+
+//{{{ string SV_EvidenceReader:: get_curr_primary_refid()
+int32_t
+SV_EvidenceReader::
+get_curr_primary_refid()
+{
+	cerr << "Error reaching SV_EvidenceReader:: get_curr_primary_refid "
+		<<endl;
+	abort();
+	int32_t a = 1;
+	return a;
+}
+//}}}
+
+//{{{ string SV_EvidenceReader:: get_curr_secondary_refid()
+int32_t
+SV_EvidenceReader::
+get_curr_secondary_refid()
+{
+	cerr << "Error reaching SV_EvidenceReader:: get_curr_secondary_refid "
+		<<endl;
+	abort();
+	int32_t a = 1;
+	return a;
+}
+//}}}
+
+
+//{{{ string SV_EvidenceReader:: get_curr_primary_chr()
+string
+SV_EvidenceReader::
+get_curr_primary_chr()
+{
+	cerr << "Error reaching SV_EvidenceReader:: get_curr_primary_chr "
+		<<endl;
+	abort();
+	string a = "";
+	return a;
+}
+//}}}
+
+//{{{ string SV_EvidenceReader:: get_curr_secondary_chr()
+string
+SV_EvidenceReader::
+get_curr_secondary_chr()
+{
+	cerr << "Error reaching SV_EvidenceReader:: get_curr_secondary_chr "
+		<<endl;
+	abort();
+	string a = "";
+	return a;
+}
+//}}}
+
+//{{{ CHR_POS SV_EvidenceReader:: get_curr_primary_pos()
+CHR_POS
+SV_EvidenceReader::
+get_curr_primary_pos()
+{
+	abort();
+	CHR_POS a = 0;
+	return a;
+}
+//}}}
+
+//{{{ CHR_POS SV_EvidenceReader:: get_curr_primary_pos()
+CHR_POS
+SV_EvidenceReader::
+get_curr_secondary_pos()
+{
+	abort();
+	CHR_POS a = 0;
+	return a;
+}
+//}}}
+
+//{{{ void SV_EvidenceReader:: process_input_chr_pos(string chr,
+void
+SV_EvidenceReader::
+process_input_chr_pos(string primary_chr,
+					  string secondary_chr,
+					  CHR_POS pos,
+					  UCSCBins<SV_BreakPoint*> &r_bin)
+{
+	cerr << "Error reaching SV_EvidenceReader:: process_input_chr_pos "
+		<<endl;
+	abort();
 }
 //}}}

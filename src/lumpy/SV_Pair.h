@@ -38,8 +38,9 @@ class SV_Pair: public SV_Evidence
 		static void set_bp_interval_start_end(struct breakpoint_interval *i,
 											  struct interval *target_interval,
 											  struct interval *target_pair,
-											  int back_distance,
-											  int distro_size);
+											  unsigned int back_distance,
+											  unsigned int distro_size);
+
 	public:
 		//static double insert_mean;
 		//static double insert_stdev;
@@ -55,7 +56,7 @@ class SV_Pair: public SV_Evidence
 		//static int read_length;
 		//static int min_mapping_threshold;
 
-		int min_mapping_quality;
+		unsigned int min_mapping_quality;
 		struct interval read_l;
 		struct interval read_r;
 		bool read_l_is_split, read_r_is_split;
@@ -79,6 +80,17 @@ class SV_Pair: public SV_Evidence
 								int sample_id,
 								SV_PairReader *reader);
 
+		static void process_intra_chrom_pair(
+								 const BamAlignment &curr,
+								 const RefVector refs,
+								 BamWriter &inter_chrom_reads,
+								 map<string, BamAlignment> &mapped_pairs,
+								 UCSCBins<SV_BreakPoint*> &r_bin,
+								 int weight,
+								 int id,
+								 int sample_id,
+								 SV_PairReader *reader);
+
 		static log_space* get_bp_interval_probability(char strand,
 													  int distro_size,
 													  double *distro);
@@ -86,6 +98,7 @@ class SV_Pair: public SV_Evidence
 
 		bool is_aberrant();
 		bool is_sane();
+		bool is_interchromosomal();
 		void cluster( UCSCBins<SV_BreakPoint*> &r_bin);
 
 		static void set_distro_from_histo ();
