@@ -74,12 +74,8 @@ print_evidence(string pre)
 	for (it = evidence.begin(); it < evidence.end(); ++it) {
 		SV_Evidence *sv_e = *it;
 		cout << pre;
-		//sv_e->print_evidence();
 		SV_BreakPoint *tmp_bp = sv_e->get_bp();
 		tmp_bp->print_bedpe(-1);
-		//tmp_bp->init_interval_probabilities();
-		//struct breakpoint_interval i = tmp_bp->interval_l;
-		//cout <<  ascii_interval_prob(&i) << endl;
 		delete(tmp_bp);
 	}
 }
@@ -445,39 +441,6 @@ void
 SV_BreakPoint::
 trim_intervals()
 {
-#if 0
-	//cerr << "Get Matrix..." << endl;
-	boost::numeric::ublas::matrix<log_space> *m = get_matrix();
-	//cerr << "Done." << endl;
-
-	//  Get the sum of probabilities for each row/col to get the probability
-	//  for the left/right end
-	 
-	int a_v_size = m->size1(),
-		b_v_size = m->size2();
-
-	log_space *a_v = (log_space *) malloc(a_v_size * sizeof(log_space));
-	log_space *b_v = (log_space *) malloc(b_v_size * sizeof(log_space));
-
-	unsigned int a, b;
-
-	for (a = 0; a < a_v_size; ++a) 
-		a_v[a] = -INFINITY;
-
-	for (b = 0; b < b_v_size; ++b)
-		b_v[b] = -INFINITY;
-
-	//cerr<< "Get Vectors..." << endl;
-	for (unsigned int a = 0; a < a_v_size; ++a)
-		for (unsigned int b = 0; b < b_v_size; ++b)
-			a_v[a] = ls_add(a_v[a], (*m)(a,b));
-
-	for (unsigned int a = 0; a < a_v_size; ++a)
-		for (unsigned int b = 0; b < b_v_size; ++b)
-			b_v[b] = ls_add(b_v[b], (*m)(a,b));
-	//cerr << "Done" << endl;
-#endif
-
 	int a_v_size = interval_l.i.end - interval_l.i.start + 1,
 		b_v_size = interval_r.i.end - interval_r.i.start + 1;
 	log_space *a_v = (log_space *) malloc( a_v_size* sizeof(log_space));
@@ -489,10 +452,17 @@ trim_intervals()
 	for (int b = 0; b < b_v_size; ++b)
 		b_v[b] = interval_r.p[b];
 
+	for (int b = 0; b < b_v_size; ++b)
+		b_v[b] = interval_r.p[b];
+
+	//cerr << ascii_interval_prob(&interval_l) <<endl;
 	trim_interval(&interval_l, a_v, a_v_size);
+	//cerr << ascii_interval_prob(&interval_l) <<endl;
 	free(a_v);
 
+	//cerr << ascii_interval_prob(&interval_r) <<endl;
 	trim_interval(&interval_r, b_v, b_v_size);
+	//cerr << ascii_interval_prob(&interval_r) <<endl;
 	free(b_v);
 }
 //}}}
@@ -550,7 +520,9 @@ ascii_interval_prob(struct breakpoint_interval *i)
 	int j;
 	stringstream oss;
 	for (j = 0; j < size; ++j) {
-		oss << i->p[j] << " ";
+		if (j!=0)
+			oss << ",";
+		oss << get_p(i->p[j]);
 	}
 
 	return oss.str();

@@ -443,17 +443,18 @@ SV_SplitRead::
 get_bp_interval_probability(char strand,
 							unsigned int back_distance)
 {
-    double lambda = log(0.0001)/(-1 * back_distance);
+    double lambda = log(0.0001)/(-1 * (int)back_distance);
 
 	unsigned int distro_size = 2*back_distance + 1;
 	log_space *tmp_p = (log_space *) malloc( distro_size * sizeof(log_space));
 	unsigned int j;
-	for (j = 0; j < back_distance; ++j)
+	for (j = 0; j < back_distance; ++j) 
 			tmp_p[j] = get_ls( exp(-1*lambda*(back_distance - j)));
 
-	for (; j < distro_size; ++j)
+	for (; j < distro_size; ++j) 
 			tmp_p[j] = get_ls(
 					exp(-1*lambda*(back_distance - (distro_size - j - 1))));
+	
 
 	return tmp_p;
 }

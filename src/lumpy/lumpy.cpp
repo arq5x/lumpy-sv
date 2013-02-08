@@ -294,6 +294,7 @@ int main(int argc, char* argv[])
 							SV_SplitRead::
 							get_bp_interval_probability('-',
 														sr_r->back_distance));
+
 				SV_Evidence::distros_size[sr_r->sample_id] = 
 						sr_r->back_distance * 2 + 1;
 			} else {
