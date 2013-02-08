@@ -60,7 +60,12 @@ set_bp_interval_probability(struct breakpoint_interval *i)
 	// + strand or the extension of the distribution for the - strand would
 	// have caused an underrun.  In this case we need to clip the begining of
 	// the distro
-	int offset = SV_Evidence::distros_size[sample_id] - size;
+	// It is also possible that the end of this inteval was trucated because it
+	// overlapped its pair's read interval
+	// the full size is from 0 to size
+	// i->i.start_clip and i->i.end_clip tell us how much of each side of the
+	// disto to remove
+	int offset = i->i.start_clip;
 	for (j = 0; j < size; ++j) {
 		tmp_p[j] = src_p[j + offset];
 	}

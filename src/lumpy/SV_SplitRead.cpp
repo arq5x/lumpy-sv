@@ -292,22 +292,27 @@ get_bp()
 			   ( side_l.strand == '+' ) && 
 			   ( side_r.strand == '-' ) ) ) {
 
-			if ( side_l.start > reader->back_distance)
+			if ( side_l.start > reader->back_distance) {
 				new_bp->interval_l.i.start = 
 						side_l.start - reader->back_distance;
-			else
+				new_bp->interval_l.i.start_clip = 0;
+			} else {
 				new_bp->interval_l.i.start = 0;
+				new_bp->interval_l.i.start_clip = side_l.start;
+			}
 
 			new_bp->interval_l.i.end = side_l.start + reader->back_distance;
-			//new_bp->interval_l.i.end = side_l.start + 1 + reader->back_distance;
 
-			if (side_r.start > reader->back_distance)
+			if (side_r.start > reader->back_distance) {
 				new_bp->interval_r.i.start = 
 						side_r.start - reader->back_distance;
-			else
+				new_bp->interval_r.i.start_clip = 0;
+			} else {
 				new_bp->interval_r.i.start = 0;
+				new_bp->interval_r.i.start_clip = side_r.start;
+			}
 
-			new_bp->interval_r.i.end = side_r.start + 1 + reader->back_distance;
+			new_bp->interval_r.i.end = side_r.start + reader->back_distance;
 
 		} else if ( ( ( query_l.qs_pos < query_r.qs_pos ) &&
 					  ( side_l.strand == '+' ) &&
@@ -316,21 +321,25 @@ get_bp()
 					  ( side_l.strand == '-' ) &&
 					  ( side_r.strand == '+' ) ) ) {
 
-			if (side_l.end > reader->back_distance)
+			if (side_l.end > reader->back_distance) {
 				new_bp->interval_l.i.start =
 					side_l.end  - reader->back_distance;
-					//side_l.end - 1 - reader->back_distance;
-			else 
+				new_bp->interval_l.i.start_clip = 0;
+			} else {
 				new_bp->interval_l.i.start = 0;
+				new_bp->interval_l.i.start_clip = side_l.end;
+			}
 
 			new_bp->interval_l.i.end = side_l.end + reader->back_distance;
 
-			if (side_r.end > reader->back_distance)
+			if (side_r.end > reader->back_distance) {
 				new_bp->interval_r.i.start = 
 					side_r.end - reader->back_distance;
-					//side_r.end - 1 - reader->back_distance;
-			else
+				new_bp->interval_r.i.start_clip = 0;
+			} else {
 				new_bp->interval_r.i.start = 0;
+				new_bp->interval_r.i.start_clip = side_r.end;
+			}
 
 			new_bp->interval_r.i.end = side_r.end + reader->back_distance;
 		} else {
@@ -338,41 +347,85 @@ get_bp()
 		}
 	} else if (type == SV_BreakPoint::DELETION) {
 
-		if (side_l.end > reader->back_distance)
+		if (side_l.end > reader->back_distance) {
 			new_bp->interval_l.i.start = side_l.end - reader->back_distance;
-			//new_bp->interval_l.i.start = side_l.end - 1 - reader->back_distance;
-		else
+			new_bp->interval_l.i.start_clip = 0;
+		} else {
 			new_bp->interval_l.i.start = 0;
+			new_bp->interval_l.i.start_clip = side_l.end;
+		}
 
 		new_bp->interval_l.i.end = side_l.end + reader->back_distance;
 
-		if (side_r.start > reader->back_distance)
+		if (side_r.start > reader->back_distance) {
 			new_bp->interval_r.i.start = side_r.start - reader->back_distance;
-		else
+			new_bp->interval_r.i.start_clip = 0;
+		} else {
 			new_bp->interval_r.i.start = 0;
+			new_bp->interval_r.i.start_clip = side_r.start;
+		}
 
 		new_bp->interval_r.i.end = side_r.start + reader->back_distance;
-		//new_bp->interval_r.i.end = side_r.start + 1 + reader->back_distance;
 	} else if (type == SV_BreakPoint::DUPLICATION) {
 
-		if (side_l.start > reader->back_distance)
+		if (side_l.start > reader->back_distance) {
 			new_bp->interval_l.i.start = side_l.start - reader->back_distance;
-		else
+			new_bp->interval_l.i.start_clip = 0;
+		} else {
 			new_bp->interval_l.i.start = 0;
+			new_bp->interval_l.i.start_clip = side_l.start;
+		}
 
 		new_bp->interval_l.i.end = side_l.start + reader->back_distance;
-		//new_bp->interval_l.i.end = side_l.start + 1 + reader->back_distance;
 		
-		if (side_r.end > reader->back_distance)
+		if (side_r.end > reader->back_distance) {
 			new_bp->interval_r.i.start = side_r.end - reader->back_distance;
-			//new_bp->interval_r.i.start = side_r.end - 1 - reader->back_distance;
-		else 
+			new_bp->interval_r.i.start_clip = 0;
+		} else {
 			new_bp->interval_r.i.start = 0;
+			new_bp->interval_r.i.start_clip = side_r.end;
+		}
 
 		new_bp->interval_r.i.end = side_r.end + reader->back_distance;
 	}  else {
 		abort();
 	}
+
+	if ( (new_bp->interval_l.i.chr.compare(side_r.chr) == 0 ) &&
+			(new_bp->interval_l.i.end >= side_r.start) ) {
+		new_bp->interval_l.i.end_clip = 
+			new_bp->interval_l.i.end - side_r.start + 1;
+		new_bp->interval_l.i.end = side_r.start - 1;
+	}
+
+	if ( (new_bp->interval_r.i.chr.compare(side_l.chr) == 0) &&
+			(new_bp->interval_r.i.start <= side_l.end)) {
+		new_bp->interval_r.i.start_clip = 
+			side_l.end - new_bp->interval_r.i.start + 1;
+		new_bp->interval_r.i.start = side_l.end + 1;
+	}
+
+	/*
+	cerr << 
+			side_l.chr << "," <<
+			side_l.start << "," <<
+			side_l.end << "\t" <<
+			side_r.chr << "," <<
+			side_r.start << "," <<
+			side_r.end << "\t" <<
+		
+			new_bp->interval_l.i.chr << "," <<
+			new_bp->interval_l.i.start << "," <<
+			new_bp->interval_l.i.end << "\t" <<
+			new_bp->interval_r.i.chr << "," <<
+			new_bp->interval_r.i.start << "," <<
+			new_bp->interval_r.i.end << "\t" << 
+			(new_bp->interval_l.i.start < new_bp->interval_l.i.end )<< "\t" <<
+			(new_bp->interval_r.i.start < new_bp->interval_r.i.end )<< endl;
+	*/
+
+
+
 	//set_bp_interval_probability(&(new_bp->interval_l));
 	//set_bp_interval_probability(&(new_bp->interval_r));
 	new_bp->interval_r.p = NULL;
@@ -436,6 +489,8 @@ is_sane()
 	}
 
 
+	return (side_l.end < side_r.start);
+	/*
 	int side_len_l = query_l.qe_pos - query_l.qs_pos;
 	int side_len_r = query_r.qe_pos - query_r.qs_pos;
 
@@ -453,6 +508,7 @@ is_sane()
 		return true;
 	else 
 		return false;
+	*/
 }
 //}}}
 

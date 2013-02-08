@@ -645,7 +645,6 @@ void
 SV_BreakPoint::
 cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 {
-#if 1
 	vector< UCSCElement<SV_BreakPoint*> > tmp_hits_r =
 			r_bin.get(interval_r.i.chr,
 					  interval_r.i.start,
@@ -688,7 +687,11 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 			if ( bp->merge(this) ) {
 
 				UCSCElement<SV_BreakPoint*> rm = tmp_hits_r[0];
-				r_bin.remove(rm, false, false, true);
+
+				if (r_bin.remove(rm, false, false, true) != 0) {
+					cerr << "Error removing item in cluster()" << endl;
+					abort();
+				}
 
 				delete this;
 
@@ -699,119 +702,6 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 		} else {
 		}
 	}
-#endif
-
-#if 0
-	// Find matching break points
-	vector< UCSCElement<SV_BreakPoint*> > tmp_hits_l =
-			l_bin.get(interval_l.i.chr,
-					  interval_l.i.start,
-					  interval_l.i.end,
-					  interval_l.i.strand,
-					  false);		
-
-	vector< UCSCElement<SV_BreakPoint*> > tmp_hits_r =
-			r_bin.get(interval_r.i.chr,
-					  interval_r.i.start,
-					  interval_r.i.end,
-					  interval_r.i.strand,
-					  false);		
-
-	if ( ( tmp_hits_l.size() == 0 ) ||
-		 ( tmp_hits_r.size() == 0 ) ) {
-
-		//insert(l_bin, r_bin);
-		insert(l_bin, r_bin);
-
-	} else { //Each side has at least one hit
-
-		// Scan through the tmp hits to make sure the types match
-		vector< UCSCElement<SV_BreakPoint*> >::iterator it;
-
-		it = tmp_hits_l.begin();
-		while(it != tmp_hits_l.end()) {
-			if(it->value->type != type)
-				it = tmp_hits_l.erase(it);
-			else
-				++it;
-		}
-
-		it = tmp_hits_r.begin();
-		while(it != tmp_hits_r.end()) {
-			if(it->value->type != type)
-				it = tmp_hits_r.erase(it);
-			else
-				++it;
-		}
-
-		/*
-		 * tmp_hits_left contains the pointers to the break points that have an
-		 * interval overlapping the left end of the current pair,
-		 * tmp_hits_right has the same for the right end.  To find the
-		 * breakpoint(s) overlap both pairs we sort both vectors, then
-		 * intersect the two vectors.  Since the vectors contain the address to
-		 * the break point, the resulting intersection will contain a pointer
-		 * to the object that needs to be modified. 
-		 */
-
-		sort(tmp_hits_l.begin(), tmp_hits_l.end(),
-				UCSCElement<SV_BreakPoint*>::sort_ucscelement_by_value);
-
-		sort(tmp_hits_r.begin(), tmp_hits_r.end(),
-				UCSCElement<SV_BreakPoint*>::sort_ucscelement_by_value);
-
-		vector< UCSCElement<SV_BreakPoint*> >::iterator t_it;
-
-		vector< UCSCElement<SV_BreakPoint*> > 
-			r(tmp_hits_l.size() + tmp_hits_r.size());
-
-		it = set_intersection(tmp_hits_l.begin(), 
-							  tmp_hits_l.end(),
-							  tmp_hits_r.begin(),
-							  tmp_hits_r.end(),
-							  r.begin(),
-							  UCSCElement<SV_BreakPoint*>::
-									sort_ucscelement_by_value);
-
-		if (it - r.begin() < 1) { //sides don't match, so insert
-
-			insert(l_bin, r_bin);
-
-		} else if (it - r.begin() == 1) { // both sides match same breakpoint
-			// addr of the bp in both sets (and only item in the intersection)
-			SV_BreakPoint *bp = r[0].value;
-
-			vector< UCSCElement<SV_BreakPoint*> >::iterator l_it, r_it;
-
-			/* 
-			 * Merge the current break point with the one that was found to
-			 * match (located at r[0] we need to remove r[0] from UCSCBin
-			 * and re-add it with the new coordinates
-			 */
-			if ( bp->merge(this) ) {
-				// find the left side match
-				for (l_it = tmp_hits_l.begin(); l_it < tmp_hits_l.end(); ++l_it)
-					if (l_it->value == bp)
-						break;
-
-				// find the right side match
-				for (r_it = tmp_hits_r.begin(); r_it < tmp_hits_r.end(); ++r_it)
-					if (r_it->value == bp)
-						break;
-
-				//int v = l_bin.remove(*l_it, false, false, true);
-				//v = r_bin.remove(*r_it, false, false, true);
-				l_bin.remove(*l_it, false, false, true);
-				r_bin.remove(*r_it, false, false, true);
-
-				delete this;
-
-				bp->insert(l_bin, r_bin);
-			} else {
-			}
-		}
-	}
-#endif
 }
 //}}}
 
@@ -820,6 +710,7 @@ void
 SV_BreakPoint::
 insert(UCSCBins<SV_BreakPoint*> &r_bin)
 {
+	//cerr << *this << endl;
 	r_bin.add(interval_r.i.chr,
 		 	  interval_r.i.start,
 			  interval_r.i.end,

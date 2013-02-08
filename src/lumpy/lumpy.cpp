@@ -334,14 +334,14 @@ int main(int argc, char* argv[])
 			}
 		}
 
-        else if(PARAMETER_CHECK("-e", 2, parameterLength)) {
-			show_evidence = true;
-		}
-
         else if(PARAMETER_CHECK("-t", 2, parameterLength)) {
             if ((i+1) < argc) {
 				inter_chrom_file_prefix = argv[i + 1];
 			}
+		}
+
+        else if(PARAMETER_CHECK("-e", 2, parameterLength)) {
+			show_evidence = true;
 		}
 
         else {
@@ -472,7 +472,10 @@ int main(int argc, char* argv[])
 						bp->print_evidence("\t");
 				}
 
-				r_bin.remove(*it, false, false, true);
+				if (r_bin.remove(*it, false, false, true) != 0) {
+					cerr << "Error removing element" << endl;
+					abort();
+				}
 				bp->free_evidence();
 				delete bp;
 				//}
@@ -518,7 +521,10 @@ int main(int argc, char* argv[])
 				bp->print_evidence("\t");
 		}
 
-		r_bin.remove(*it, false, false, true);
+		if (r_bin.remove(*it, false, false, true) != 0) {
+			cerr << "Error removing element" << endl;
+			abort();
+		}
 		bp->free_evidence();
 		delete bp;
 	}
@@ -648,7 +654,10 @@ int main(int argc, char* argv[])
 							bp->print_evidence("\t");
 					}
 
-					r_bin.remove(*it, false, false, true);
+					if (r_bin.remove(*it, false, false, true) != 0) {
+						cerr << "Error removing element" << endl;
+						abort();
+					}
 					bp->free_evidence();
 					delete bp;
 				}
@@ -685,7 +694,10 @@ int main(int argc, char* argv[])
 					bp->print_evidence("\t");
 			}
 
-			r_bin.remove(*it, false, false, true);
+			if (r_bin.remove(*it, false, false, true) != 0) {
+				cerr << "Error removing element" << endl;
+				abort();
+			}
 			bp->free_evidence();
 			delete bp;
 		}

@@ -135,18 +135,29 @@ set_bp_interval_start_end(struct breakpoint_interval *i,
 	i->i.chr = target_interval->chr;
 	i->i.strand = target_interval->strand;
 	if ( i->i.strand == '+' ) {
-		if (back_distance > target_interval->end)
+
+		if (back_distance > target_interval->end) {
 			i->i.start = 0;
-		else
+			i->i.start_clip = target_interval->end;
+		}
+		else {
 			i->i.start = target_interval->end - back_distance;
+			i->i.start_clip = 0;
+		}
+
 		i->i.end = i->i.start + distro_size - 1;
+
 	} else {
 		i->i.end = target_interval->start + back_distance;
 
-		if (distro_size > i->i.end)
+		if (distro_size > i->i.end) {
 			i->i.start = 0;
-		else
+			i->i.start_clip = i->i.end;
+		}
+		else {
 			i->i.start = i->i.end - distro_size + 1;
+			i->i.start_clip = 0;
+		}
 	}
 }
 //}}}
@@ -169,6 +180,19 @@ get_bp()
 							  &read_l,
 							  reader->back_distance,
 							  reader->distro_size);
+
+	// test to see if the two interval intersect the reads
+	if (new_bp->interval_l.i.end >= read_r.start) {
+		new_bp->interval_l.i.end_clip = 
+			new_bp->interval_l.i.end - read_r.start + 1;
+		new_bp->interval_l.i.end = read_r.start - 1;
+	}
+
+	if (new_bp->interval_r.i.start <= read_l.end) {
+		new_bp->interval_r.i.start_clip = 
+			read_l.end - new_bp->interval_r.i.start + 1;
+		new_bp->interval_r.i.start = read_l.end + 1;
+	}
 
 	new_bp->interval_r.p = NULL;
 	new_bp->interval_l.p = NULL;

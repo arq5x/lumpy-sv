@@ -30,6 +30,7 @@ using namespace std;
 
 struct interval {
 	CHR_POS start, end;
+	CHR_POS start_clip, end_clip;
 	char strand;
 	string chr;
 };
