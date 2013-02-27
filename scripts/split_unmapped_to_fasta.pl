@@ -22,9 +22,10 @@ sub soft_clip_len {
 	my ($cigar) = @_;
 
 	my $len = 0;
-	#while ($cigar =~ m/([0-9]+)(M|I|D|N|S|H|P|X|=)+/g) {
+	#my $s = "$cigar\t";
 	while ($cigar =~ m/(\d+)(M|I|D|N|S|H|P|X|=)/g) {
-		if ($2 eq 'S') {
+		#$s = $s .  "$1,$2\t";
+		if ($2 ne 'M') {
 			$len += $1;
 		}
 	}
@@ -76,7 +77,7 @@ while ( my $l = <STDIN>) {
 		my $print_it = 0;
 
 		if ( $flag & $unmapped_flag ) {
-			$print_it = 1;
+			#$print_it = 1;
 		} elsif (soft_clip_len($cigar) > $b) {
 			$print_it = 1;
 		}
