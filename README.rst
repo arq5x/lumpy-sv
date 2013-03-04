@@ -282,7 +282,9 @@ length is 150::
 	    | samtools view -S -b - \
 	    > sample.pe.bam
 
-	samtools view sample.pe.bam \
+	bamtools sort -in sample.pe.bam -out sample.pe.sort.bam
+
+	samtools view sample.pe.sort.bam \
 	    | scripts/split_unmapped_to_fasta.pl -b 20 \
 	    > sample.um.fq
 
@@ -304,7 +306,9 @@ length is 150::
 	    | samtools view -Sb - \
 	    > sample.sr.bam
 
-	samtools view sample.pe.bam \
+	bamtools sort -in sample.sr.bam -out sample.sr.sort.bam
+
+	samtools view sample.pe.sort.bam \
 	    | scripts/pairend_distro.pl \
 	        -rl 150 \
 	        -X 4 \
@@ -318,22 +322,22 @@ length is 150::
 	    -mw 4 \
 	    -tt 1e-3 \
 	    -pe \
-	    bam_file:sample.pe.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+	    bam_file:sample.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
 	    > sample.pe.bedpe
 
 	../bin/lumpy \
 	    -mw 4 \
 	    -tt 1e-3 \
 	    -sr \
-	    bam_file:sample.sr.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
+	    bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
 	    > sample.sr.bedpe
 
 	../bin/lumpy \
 	    -mw 4 \
 	    -tt 1e-3 \
 	    -pe \
-	    bam_file:sample.pe.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+	    bam_file:sample.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
 	    -sr \
-	    bam_file:sample.sr.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
+	    bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
 	    > sample.pesr.bedpe
 
