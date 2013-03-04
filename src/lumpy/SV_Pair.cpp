@@ -182,13 +182,15 @@ get_bp()
 							  reader->distro_size);
 
 	// test to see if the two interval intersect the reads
-	if (new_bp->interval_l.i.end >= read_r.start) {
+	if ( (new_bp->interval_l.i.chr.compare(read_r.chr) == 0 ) &&
+		 (new_bp->interval_l.i.end >= read_r.start) ) {
 		new_bp->interval_l.i.end_clip = 
 			new_bp->interval_l.i.end - read_r.start + 1;
 		new_bp->interval_l.i.end = read_r.start - 1;
 	}
 
-	if (new_bp->interval_r.i.start <= read_l.end) {
+	if ( (new_bp->interval_r.i.chr.compare(read_l.chr) == 0 ) &&
+	     (new_bp->interval_r.i.start <= read_l.end) ) {
 		new_bp->interval_r.i.start_clip = 
 			read_l.end - new_bp->interval_r.i.start + 1;
 		new_bp->interval_r.i.start = read_l.end + 1;

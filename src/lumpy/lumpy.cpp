@@ -364,8 +364,8 @@ int main(int argc, char* argv[])
 
 	if (has_bams) {
 		SV_BamReader *bam_r = new SV_BamReader(&bam_evidence_readers);
-		bam_r->initialize();
 		bam_r->set_inter_chrom_file_name(inter_chrom_file_prefix + ".bam");
+		bam_r->initialize();
 		evidence_readers.push_back(bam_r);
 	}
 
