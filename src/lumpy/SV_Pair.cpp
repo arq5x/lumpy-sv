@@ -303,46 +303,6 @@ print_evidence()
 }
 //}}}
 
-#if 0
-//{{{ void SV_Pair:: update_matrix(boost::numeric::ublas::matrix<log_space> *m)
-void
-SV_Pair::
-update_matrix(boost::numeric::ublas::matrix<log_space> *m)
-{
-	for (unsigned int a = 0; a < m->size1 (); ++ a) {
-		for (unsigned int b = 0; b < m->size2 (); ++ b) {
-			unsigned int test_break_a, test_break_b, a_d, b_d;
-
-			// Get the distance from left tag to left break and break to
-			// right tag, then test the likelyhood of that distance given 
-			// the known distribution (mean, stdev)
-			test_break_a = read_l.start + a;
-			test_break_b = read_r.start + b;
-
-			if (read_l.strand == '+')
-				a_d = test_break_a - read_l.start;
-			else
-				a_d = read_l.end - test_break_a;
-
-
-			if (read_r.strand == '+')
-				b_d = test_break_b - read_r.start;
-			else
-				b_d = read_r.end - test_break_b;
-
-			double dist = (a_d + b_d);
-			double z_dist = ((a_d + b_d) - insert_mean);
-
-			double p = gsl_ran_gaussian_pdf(z_dist, insert_stdev);
-			log_space lp = get_ls(p);
-
-			(*m)(a, b) = ls_multiply((*m)(a, b), lp);
-		}
-	}
-}
-//}}}
-#endif 
-
 //{{{ void BreakPoint:: print_bedpe()
 void
 SV_Pair::
@@ -366,41 +326,6 @@ print_bedpe(int score)
 		endl;
 }
 //}}}
-
-#if 0
-//{{{void set_sv_pair_distro()
-// We will assume that the distrobution to upsstream will follow the histogram
-// and downstream will be follow an exponetial decay distribution based on the
-// back_distance
-void
-SV_Pair::
-set_distro_from_histo ()
-{
-    double lambda = log(0.0001)/(-1 * SV_Pair::back_distance);
-    // the bp distribution begins SV_Pair::back_distance base pairs back
-    // from the end of the read (or begining for the negative strand), then
-    // extends for SV_Pair::histo_end base pairs, so the total size is
-    // SV_Pair::back_distance + SV_Pair::histo_end
-	SV_Pair::distro_size = SV_Pair::back_distance + SV_Pair::histo_end;
-    //SV_Pair::distro = (double *)
-	SV_Pair::distro = (double *)
-            malloc(SV_Pair::distro_size * sizeof(double));
-
-    for (int i = 0; i < SV_Pair::back_distance; ++i)
-        SV_Pair::distro[i] = exp(-1*lambda*(SV_Pair::back_distance - i));
-
-    for (int i = SV_Pair::back_distance; i < SV_Pair::histo_start; ++i)
-        SV_Pair::distro[i] = 1;
-
-    double last = 0;
-    for (int i = SV_Pair::histo_end - 1; i >= SV_Pair::histo_start; --i) {
-		SV_Pair::distro[i + SV_Pair::back_distance] =
-            SV_Pair::histo[i - SV_Pair::histo_start] + last;
-        last = SV_Pair::distro[i + SV_Pair::back_distance];
-    }
-}
-//}}}
-#endif
 
 //{{{void set_sv_pair_distro()
 // We will assume that the distrobution to upsstream will follow the histogram
@@ -506,11 +431,83 @@ process_intra_chrom_pair(const BamAlignment &curr,
 			   (curr.RefID >= 0) &&
 			   (curr.MateRefID >= 0) ) {
 		BamAlignment al = curr;
-		//vector<string> tag_val;
-		//tag_val.push_back("xxxxxxx");
 		string x = reader->get_source_file_name();
 		al.AddTag("LS","Z",x);
 		inter_chrom_reads.SaveAlignment(al);
 	}
 }
 //}}}
+
+#if 0
+//{{{ void SV_Pair:: update_matrix(boost::numeric::ublas::matrix<log_space> *m)
+void
+SV_Pair::
+update_matrix(boost::numeric::ublas::matrix<log_space> *m)
+{
+	for (unsigned int a = 0; a < m->size1 (); ++ a) {
+		for (unsigned int b = 0; b < m->size2 (); ++ b) {
+			unsigned int test_break_a, test_break_b, a_d, b_d;
+
+			// Get the distance from left tag to left break and break to
+			// right tag, then test the likelyhood of that distance given 
+			// the known distribution (mean, stdev)
+			test_break_a = read_l.start + a;
+			test_break_b = read_r.start + b;
+
+			if (read_l.strand == '+')
+				a_d = test_break_a - read_l.start;
+			else
+				a_d = read_l.end - test_break_a;
+
+
+			if (read_r.strand == '+')
+				b_d = test_break_b - read_r.start;
+			else
+				b_d = read_r.end - test_break_b;
+
+			double dist = (a_d + b_d);
+			double z_dist = ((a_d + b_d) - insert_mean);
+
+			double p = gsl_ran_gaussian_pdf(z_dist, insert_stdev);
+			log_space lp = get_ls(p);
+
+			(*m)(a, b) = ls_multiply((*m)(a, b), lp);
+		}
+	}
+}
+//}}}
+//{{{void set_sv_pair_distro()
+// We will assume that the distrobution to upsstream will follow the histogram
+// and downstream will be follow an exponetial decay distribution based on the
+// back_distance
+void
+SV_Pair::
+set_distro_from_histo ()
+{
+    double lambda = log(0.0001)/(-1 * SV_Pair::back_distance);
+    // the bp distribution begins SV_Pair::back_distance base pairs back
+    // from the end of the read (or begining for the negative strand), then
+    // extends for SV_Pair::histo_end base pairs, so the total size is
+    // SV_Pair::back_distance + SV_Pair::histo_end
+	SV_Pair::distro_size = SV_Pair::back_distance + SV_Pair::histo_end;
+    //SV_Pair::distro = (double *)
+	SV_Pair::distro = (double *)
+            malloc(SV_Pair::distro_size * sizeof(double));
+
+    for (int i = 0; i < SV_Pair::back_distance; ++i)
+        SV_Pair::distro[i] = exp(-1*lambda*(SV_Pair::back_distance - i));
+
+    for (int i = SV_Pair::back_distance; i < SV_Pair::histo_start; ++i)
+        SV_Pair::distro[i] = 1;
+
+    double last = 0;
+    for (int i = SV_Pair::histo_end - 1; i >= SV_Pair::histo_start; --i) {
+		SV_Pair::distro[i + SV_Pair::back_distance] =
+            SV_Pair::histo[i - SV_Pair::histo_start] + last;
+        last = SV_Pair::distro[i + SV_Pair::back_distance];
+    }
+}
+//}}}
+#endif
+
+
