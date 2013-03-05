@@ -202,26 +202,6 @@ initialize()
 }
 //}}}
 
-#if 0
-//{{{ void SV_PairReader:: process_input()
-void
-SV_PairReader::
-process_input( UCSCBins<SV_BreakPoint*> &r_bin)
-{
-	while (reader.GetNextAlignment(bam)) 
-		if (bam.IsMapped() && bam.IsMateMapped())  //Paired read
-			SV_Pair::process_pair(bam,
-								  refs,
-								  mapped_pairs,
-								  r_bin,
-								  weight,
-								  id,
-								  sample_id,
-								  this);
-}
-//}}}
-#endif
-
 //{{{ void SV_PairReader:: process_input(
 void
 SV_PairReader::
@@ -282,64 +262,6 @@ get_curr_pos()
 }
 //}}}
 
-#if 0
-//{{{ void SV_PairReader:: process_input_chr(string chr,
-void
-SV_PairReader::
-process_input_chr(string chr,
-				  UCSCBins<SV_BreakPoint*> &r_bin)
-{
-	// Process this chr, or the next chr 
-	while ( have_next_alignment &&
-			( chr.compare( refs.at(bam.RefID).RefName) == 0 ) ) {
-		if (bam.IsMapped() && bam.IsMateMapped())  //Paired read
-			SV_Pair::process_pair(bam,
-								  refs,
-								  reader.GetHeader().ToString(),
-								  mapped_pairs,
-								  r_bin,
-								  weight,
-								  id,
-								  sample_id,
-								  this);
-		have_next_alignment = reader.GetNextAlignment(bam);
-		if ( bam.RefID < 0 )
-			have_next_alignment = false;
-	}
-}
-//}}}
-#endif
-
-#if 0
-//{{{ void SV_PairReader:: process_input_chr(string chr,
-void
-SV_PairReader::
-process_input_chr_pos(string chr,
-					  CHR_POS pos,
-					  UCSCBins<SV_BreakPoint*> &r_bin)
-{
-	// Process this chr, or the next chr 
-	while ( have_next_alignment &&
-			( chr.compare( refs.at(bam.RefID).RefName) == 0 ) &&
-			( bam.Position < pos ) ) {
-		if (bam.IsMapped() && bam.IsMateMapped())  //Paired read
-			SV_Pair::process_pair(bam,
-								  refs,
-								  N
-								  mapped_pairs,
-								  r_bin,
-								  weight,
-								  id,
-								  sample_id,
-								  this);
-		have_next_alignment = reader.GetNextAlignment(bam);
-		if ( bam.RefID < 0 )
-			have_next_alignment = false;
-	}
-}
-//}}}
-#endif
-
 //{{{ void SV_PairReader:: terminate()
 void 
 SV_PairReader::
@@ -368,3 +290,77 @@ get_source_file_name()
 	return bam_file;
 }
 //}}}
+
+#if 0
+//{{{ void SV_PairReader:: process_input_chr(string chr,
+void
+SV_PairReader::
+process_input_chr(string chr,
+				  UCSCBins<SV_BreakPoint*> &r_bin)
+{
+	// Process this chr, or the next chr 
+	while ( have_next_alignment &&
+			( chr.compare( refs.at(bam.RefID).RefName) == 0 ) ) {
+		if (bam.IsMapped() && bam.IsMateMapped())  //Paired read
+			SV_Pair::process_pair(bam,
+								  refs,
+								  reader.GetHeader().ToString(),
+								  mapped_pairs,
+								  r_bin,
+								  weight,
+								  id,
+								  sample_id,
+								  this);
+		have_next_alignment = reader.GetNextAlignment(bam);
+		if ( bam.RefID < 0 )
+			have_next_alignment = false;
+	}
+}
+//}}}
+//{{{ void SV_PairReader:: process_input_chr(string chr,
+void
+SV_PairReader::
+process_input_chr_pos(string chr,
+					  CHR_POS pos,
+					  UCSCBins<SV_BreakPoint*> &r_bin)
+{
+	// Process this chr, or the next chr 
+	while ( have_next_alignment &&
+			( chr.compare( refs.at(bam.RefID).RefName) == 0 ) &&
+			( bam.Position < pos ) ) {
+		if (bam.IsMapped() && bam.IsMateMapped())  //Paired read
+			SV_Pair::process_pair(bam,
+								  refs,
+								  N
+								  mapped_pairs,
+								  r_bin,
+								  weight,
+								  id,
+								  sample_id,
+								  this);
+		have_next_alignment = reader.GetNextAlignment(bam);
+		if ( bam.RefID < 0 )
+			have_next_alignment = false;
+	}
+}
+//}}}
+//{{{ void SV_PairReader:: process_input()
+void
+SV_PairReader::
+process_input( UCSCBins<SV_BreakPoint*> &r_bin)
+{
+	while (reader.GetNextAlignment(bam)) 
+		if (bam.IsMapped() && bam.IsMateMapped())  //Paired read
+			SV_Pair::process_pair(bam,
+								  refs,
+								  mapped_pairs,
+								  r_bin,
+								  weight,
+								  id,
+								  sample_id,
+								  this);
+}
+//}}}
+#endif
+
+
