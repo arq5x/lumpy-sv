@@ -661,6 +661,11 @@ process_intra_chrom_split(const BamAlignment &curr,
 			al1.MatePosition = al2.Position;
 			al2.MatePosition = al1.Position;
 
+			string x = reader->get_source_file_name();
+
+			al1.AddTag("LS","Z",x);
+			al2.AddTag("LS","Z",x);
+
 			inter_chrom_reads.SaveAlignment(al1);
 			inter_chrom_reads.SaveAlignment(al2);
 		}
