@@ -140,8 +140,8 @@ SV_BreakPoint::
 merge(SV_BreakPoint *p)
 {
 	//at this point malloc that space for the arrays in both this and in p
-	init_interval_probabilities();
-	p->init_interval_probabilities();
+	//init_interval_probabilities();
+	//p->init_interval_probabilities();
 
 
 	// p->a may not overlap a, so we need to check
@@ -202,6 +202,32 @@ merge(SV_BreakPoint *p)
 		
 	}
 
+#if 1
+	// just put everything together and keep the first breakpoint position
+
+	vector<SV_Evidence*>::iterator ev_it;
+
+	for (ev_it = p->evidence.begin(); ev_it < p->evidence.end(); ++ev_it)
+		evidence.push_back(*ev_it);
+
+	map<int, int>::iterator id_it;
+
+	for (id_it = p->ids.begin(); id_it != p->ids.end(); ++id_it) {
+		if ( ids.find( id_it->first ) == ids.end() )
+			ids[id_it->first] = 0;
+
+		ids[id_it->first] += id_it->second;
+	}
+
+	this->weight += p->weight;
+
+	return true;
+
+#endif
+
+#if 0
+	// merge thow read and shrink the vector to be the rejoins common to both
+	// end points
 	CHR_POS a_merged_start, 
 			a_merged_end, 
 			b_merged_start, 
@@ -288,6 +314,7 @@ merge(SV_BreakPoint *p)
 
 		return false;
 	}
+#endif
 }
 //}}}
 
@@ -625,10 +652,8 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 					  false);		
 
 	if (tmp_hits_r.size() == 0) {
-		//insert(l_bin,r_bin);
 		insert(r_bin);
 	} else { 
-
 		vector< UCSCElement<SV_BreakPoint*> >::iterator it;
 
 		it = tmp_hits_r.begin();
@@ -650,14 +675,12 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 		// non left to match against
 		if (tmp_hits_r.size() < 1)
 			insert(r_bin);
-		//	insert(l_bin,r_bin);
 		// one match so merge
 		else if  (tmp_hits_r.size() == 1) {
 			// addr of the bp in both sets (and only item in the intersection)
 
 			SV_BreakPoint *bp = tmp_hits_r[0].value;
 			if ( bp->merge(this) ) {
-
 				UCSCElement<SV_BreakPoint*> rm = tmp_hits_r[0];
 
 				if (r_bin.remove(rm, false, false, true) != 0) {
@@ -666,12 +689,10 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 				}
 
 				delete this;
-
-				//bp->insert(l_bin,r_bin);
 				bp->insert(r_bin);
-
 			}
 		} else {
+			cerr << "hits two:\t" << *this << endl;
 		}
 	}
 }
