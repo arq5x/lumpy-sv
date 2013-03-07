@@ -710,9 +710,9 @@ int main(int argc, char* argv[])
 	//{{{ free up stuff
 	
 	string s = inter_chrom_file_prefix + ".bam";
-	//remove(s.c_str());
+	remove(s.c_str());
 	s = inter_chrom_file_prefix + ".sort.bam";
-	//remove(s.c_str());
+	remove(s.c_str());
 	map<int, pair<log_space*,log_space*> >::iterator e_it;
 	for(e_it =  SV_Evidence::distros.begin();
 		e_it !=  SV_Evidence::distros.end();
