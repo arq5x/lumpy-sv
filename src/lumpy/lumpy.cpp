@@ -339,6 +339,7 @@ int main(int argc, char* argv[])
         else if(PARAMETER_CHECK("-t", 2, parameterLength)) {
             if ((i+1) < argc) {
 				inter_chrom_file_prefix = argv[i + 1];
+                i++;
 			}
 		}
 
