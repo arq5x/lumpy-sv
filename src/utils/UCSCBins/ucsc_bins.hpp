@@ -148,7 +148,7 @@ template <class T>
 int
 UCSCElement<T>::overlap(UCSCElement<T> e)
 {
-	return min(end, e.end) - max(start, e.start);
+	return min(end, e.end) - max(start, e.start) + 1;
 }      
 //}}}
 
@@ -160,7 +160,7 @@ UCSCElement<T>::overlap(CHR_POS as,
 						CHR_POS bs,
 						CHR_POS be)
 {
-	return min(ae, be) - max(as, bs);
+	return min(ae, be) - max(as, bs) + 1;
 }      
 //}}}
 
@@ -349,7 +349,7 @@ UCSCBins<T>::remove(UCSCElement<T> e,
 						chrom_bins[e.chr][j].erase(elementItr);
 						--size;
 						return 0;
-					}
+					} 
 				}
 			}
 		}

@@ -468,6 +468,7 @@ int main(int argc, char* argv[])
 				// current chrom
 				if ( bp->weight >= min_weight ) {
 					 
+					bp->do_it();
 					//bp->trim_intervals();
 					bp->print_bedpe(-1);
 					if (show_evidence)
@@ -475,7 +476,7 @@ int main(int argc, char* argv[])
 				}
 
 				if (r_bin.remove(*it, false, false, true) != 0) {
-					cerr << "Error removing element" << endl;
+					cerr << "Error removing element:" << *bp << endl;
 					abort();
 				}
 				bp->free_evidence();
@@ -517,6 +518,7 @@ int main(int argc, char* argv[])
 
 		if ( bp->weight >= min_weight ) {
 			 
+			bp->do_it();
 			//bp->trim_intervals();
 			bp->print_bedpe(-1);
 			if (show_evidence)
@@ -650,6 +652,7 @@ int main(int argc, char* argv[])
 					SV_BreakPoint *bp = it->value;
 					//cerr << *bp << endl;
 					if ( bp->weight >= min_weight ) {
+						bp->do_it();
 						//bp->trim_intervals();
 						bp->print_bedpe(-1);
 						if (show_evidence)
@@ -690,6 +693,7 @@ int main(int argc, char* argv[])
 
 			if ( bp->weight >= min_weight ) {
 				 
+				bp->do_it();
 				//bp->trim_intervals();
 				bp->print_bedpe(-1);
 				if (show_evidence)

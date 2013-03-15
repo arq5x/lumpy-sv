@@ -673,3 +673,12 @@ process_intra_chrom_split(const BamAlignment &curr,
 	}
 }
 //}}}
+
+//{{{string SV_SplitRead:: evidence_type()
+string
+SV_SplitRead::
+evidence_type()
+{
+	return "split read";
+}
+//}}}

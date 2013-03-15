@@ -438,6 +438,13 @@ process_intra_chrom_pair(const BamAlignment &curr,
 }
 //}}}
 
+string
+SV_Pair::
+evidence_type()
+{
+	    return "Pair";
+}
+
 #if 0
 //{{{ void SV_Pair:: update_matrix(boost::numeric::ublas::matrix<log_space> *m)
 void

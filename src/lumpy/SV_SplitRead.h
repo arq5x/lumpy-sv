@@ -114,6 +114,7 @@ class SV_SplitRead: public SV_Evidence
 									int sample_id,
 									SV_SplitReadReader *reader);
 
+		string evidence_type();
 };
 
 #endif

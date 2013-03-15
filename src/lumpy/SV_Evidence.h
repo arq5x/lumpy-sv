@@ -42,10 +42,11 @@ class SV_Evidence
 
 		virtual void set_bp_interval_probability(struct breakpoint_interval *i);
 
+		virtual string evidence_type();
+
 		virtual void print_evidence();
 		virtual ~SV_Evidence();
 		virtual SV_BreakPoint* get_bp();
-		//virtual log_space* get_bp_interval_probability(char strand);
 
 };
 #endif

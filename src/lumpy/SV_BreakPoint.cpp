@@ -16,6 +16,10 @@
 #include "SV_BreakPoint.h"
 #include "SV_Evidence.h"
 #include <sstream>
+#include <algorithm>
+#include <utility>
+#include <vector>
+#include <climits>
 
 
 double SV_BreakPoint::p_trim_threshold = 1;;
@@ -33,6 +37,94 @@ SV_BreakPoint(SV_Evidence *e)
 	evidence.push_back(e);
 
 	ids[e->id] = 1;
+}
+//}}}
+
+//{{{ SV_BreakPoint:: SV_BreakPoint(SV_BreakPoint *a, SV_BreakPoint *b)
+SV_BreakPoint::
+SV_BreakPoint(SV_BreakPoint *a, SV_BreakPoint *b)
+{
+	a->init_interval_probabilities();
+	b->init_interval_probabilities();
+
+	// a may not overlap b, so we need to check
+	// after this ar_overlap_intr will point to the interval in a that
+	// overlaps the right interval in b, and al_overlap_intr will point to the
+	// interval in a that overlaps the left interval in b
+	struct breakpoint_interval *al_overlap_intr = NULL, 
+							   *ar_overlap_intr = NULL;
+
+	if ( does_intersect(&(a->interval_l), &(b->interval_l), false) &&
+		 does_intersect(&(a->interval_r), &(b->interval_r), false) ) {
+		al_overlap_intr = &(a->interval_l);
+		ar_overlap_intr = &(a->interval_r);
+	} else if ( does_intersect(&(a->interval_r), &(b->interval_l), false) &&
+				does_intersect(&(a->interval_l), &(b->interval_r), false) ) {
+		ar_overlap_intr = &(a->interval_l);
+		al_overlap_intr = &(a->interval_r);
+	} else {
+		throw 0;
+	}
+
+	if ( (al_overlap_intr != NULL) && (ar_overlap_intr != NULL) ) {
+		CHR_POS r_merged_start, 
+				r_merged_end, 
+				l_merged_start, 
+				l_merged_end;
+
+		log_space *r_merged_prob, *l_merged_prob;
+
+		bool l_merges = test_interval_merge(&(b->interval_l),
+											al_overlap_intr,
+											&l_merged_start,
+											&l_merged_end,
+											&l_merged_prob);
+
+
+		bool r_merges = test_interval_merge(&(b->interval_r),
+											ar_overlap_intr,
+											&r_merged_start,
+											&r_merged_end,
+											&r_merged_prob);
+
+		weight = 0;
+
+		if (r_merges && l_merges) {
+
+			interval_l.i.start = l_merged_start;
+			interval_l.i.end = l_merged_end;
+			interval_l.p = l_merged_prob;
+
+			interval_r.i.start = r_merged_start;
+			interval_r.i.end = r_merged_end;
+			interval_r.p = r_merged_prob;
+
+			vector<SV_Evidence*>::iterator ev_it;
+
+			for (ev_it = a->evidence.begin(); ev_it < a->evidence.end(); ++ev_it)
+				evidence.push_back(*ev_it);
+
+			for (ev_it = b->evidence.begin(); ev_it < b->evidence.end(); ++ev_it)
+				evidence.push_back(*ev_it);
+
+			map<int, int>::iterator id_it;
+
+			for (id_it = a->ids.begin(); id_it != a->ids.end(); ++id_it) {
+				if ( ids.find( id_it->first ) == ids.end() )
+					ids[id_it->first] = 0;
+				ids[id_it->first] += id_it->second;
+			}
+
+			for (id_it = a->ids.begin(); id_it != a->ids.end(); ++id_it) {
+				if ( ids.find( id_it->first ) == ids.end() )
+					ids[id_it->first] = 0;
+				ids[id_it->first] += id_it->second;
+			}
+
+			weight += a->weight;
+			weight += b->weight;
+		} 
+	}
 }
 //}}}
 
@@ -134,6 +226,24 @@ init_interval_probabilities()
 }
 //}}}
 
+//{{{ void SV_BreakPoint:: free_interval_probabilities()
+void
+SV_BreakPoint::
+free_interval_probabilities()
+{
+	// skip if they have been initialized
+	if ( (interval_l.p != NULL) || (interval_r.p != NULL) ) {
+
+		// take the first piece of evidence from the list
+		SV_Evidence *e = evidence[0];
+		free(interval_l.p);
+		free(interval_r.p);
+		interval_l.p = NULL;
+		interval_r.p = NULL;
+	}
+}
+//}}}
+
 //{{{ void BreakPoint:: merge(BreakPoint *p)
 bool
 SV_BreakPoint::
@@ -203,8 +313,64 @@ merge(SV_BreakPoint *p)
 	}
 
 #if 1
-	// just put everything together and keep the first breakpoint position
+	// just put everything together and refine the breakpoint boundaries to be
+	// the mean of the evidence set
+//{{{
 
+	vector<SV_Evidence*>::iterator ev_it;
+
+	// copy all of the evidence and ids from the incomming breakpoint to the
+	// current breakpoint 
+	for (ev_it = p->evidence.begin(); ev_it < p->evidence.end(); ++ev_it)
+		evidence.push_back(*ev_it);
+
+	map<int, int>::iterator id_it;
+
+	for (id_it = p->ids.begin(); id_it != p->ids.end(); ++id_it) {
+		if ( ids.find( id_it->first ) == ids.end() )
+			ids[id_it->first] = 0;
+
+		ids[id_it->first] += id_it->second;
+	}
+
+	// find the mean start and end points for the current bp
+	CHR_POS l_start_sum = 0, 
+			l_end_sum = 0, 
+			r_start_sum = 0, 
+			r_end_sum = 0;
+	for (ev_it = evidence.begin(); ev_it < evidence.end(); ++ev_it) {
+		SV_Evidence *sv_e = *ev_it;
+		SV_BreakPoint *tmp_bp = sv_e->get_bp();
+
+		l_start_sum+=tmp_bp->interval_l.i.start;
+		l_end_sum+=tmp_bp->interval_l.i.end;
+		r_start_sum+=tmp_bp->interval_r.i.start;
+		r_end_sum+=tmp_bp->interval_r.i.end;
+	}
+
+	CHR_POS l_merged_start, l_merged_end, r_merged_start, r_merged_end;
+
+	l_merged_start = l_start_sum / evidence.size();
+	l_merged_end = l_end_sum / evidence.size();
+	r_merged_start = r_start_sum / evidence.size();
+	r_merged_end = r_end_sum / evidence.size();
+
+	interval_l.i.start = l_merged_start;
+	interval_l.i.end = l_merged_end;
+
+	interval_r.i.start = r_merged_start;
+	interval_r.i.end = r_merged_end;
+
+	this->weight += p->weight;
+
+	return true;
+//}}}
+#endif
+
+
+#if 0
+	// just put everything together and keep the first breakpoint position
+//{{{
 	vector<SV_Evidence*>::iterator ev_it;
 
 	for (ev_it = p->evidence.begin(); ev_it < p->evidence.end(); ++ev_it)
@@ -222,12 +388,13 @@ merge(SV_BreakPoint *p)
 	this->weight += p->weight;
 
 	return true;
-
+//}}}
 #endif
 
 #if 0
 	// merge thow read and shrink the vector to be the rejoins common to both
 	// end points
+//{{{
 	CHR_POS a_merged_start, 
 			a_merged_end, 
 			b_merged_start, 
@@ -314,6 +481,7 @@ merge(SV_BreakPoint *p)
 
 		return false;
 	}
+//}}}
 #endif
 }
 //}}}
@@ -400,68 +568,6 @@ test_interval_merge(struct breakpoint_interval *curr_intr,
 	
 }
 //}}}
-
-#if 0
-//{{{ boost::numeric::ublas::matrix<double>* BreakPoint::get_matrix(double
-//  number of rows equals the lenght of the a interval
-//  number of cols equals the lenght of the b interval
-//  m(a,b)
-boost::numeric::ublas::matrix<log_space>*
-SV_BreakPoint::
-get_matrix()
-{
-	// initialize the matrix
-	boost::numeric::ublas::matrix<log_space> *m  = 
-		new boost::numeric::ublas::matrix<log_space>(
-				interval_l.i.end - interval_l.i.start + 1,
-				interval_r.i.end - interval_r.i.start + 1);
-
-	// Print the interval vectors that will be used to set the martix priors
-	// set the matrix priors to be the probability based on the left and right
-	// intervals
-	for (unsigned int a = 0; a < m->size1 (); ++a)
-		for (unsigned int b = 0; b < m->size2 (); ++b) 
-			(*m)(a, b) = ls_multiply(interval_l.p[a], interval_r.p[b]);
-
-	// Print the matrix priors
-	#if 0
-	cerr << m->size1() << "," << m->size2() << endl;
-	for (unsigned int l = 0; l < m->size1 (); ++l)
-		for (unsigned int r = 0; r < m->size2 (); ++r)
-			cout << (*m)(l,r) << endl;
-	#endif
-
-	// For each pair in this breakpoint, we need to update the matrix
-	// probabilities based on the template length of the pair given 
-	// breakpoint
-	// Use log-space probabilities to avoid underflow
-	vector<SV_Evidence*>::iterator it; 
-
-	for (it = evidence.begin(); it < evidence.end(); ++it) 
-		(*it)->update_matrix(m);
-
-	log_space ls_sum = -INFINITY;
-
-	for (unsigned int a = 0; a < m->size1 (); ++ a)
-		for (unsigned int b = 0; b < m->size2 (); ++ b) 
-			ls_sum = ls_add(ls_sum, (*m)(a, b));
-
-
-	for (unsigned int a = 0; a < m->size1 (); ++ a)
-		for (unsigned int b = 0; b < m->size2 (); ++ b)
-			(*m)(a, b) = ls_divide( (*m)(a, b), ls_sum );
-
-	// Print the matrix 
-	#if 0
-	cerr << m->size1() << "," << m->size2() << endl;
-	for (unsigned int l = 0; l < m->size1 (); ++l)
-		for (unsigned int r = 0; r < m->size2 (); ++r)
-			cout << (*m)(l,r) << endl;
-	#endif
-	return m;
-}
-///}}}
-#endif
 
 //{{{ void BreakPoint::trim_intervals(double mean, double stdev, double
 void
@@ -756,3 +862,286 @@ get_evidence_ids()
 	return ids;
 }
 //}}}
+
+//{{{ void SV_BreakPoint:: do_it()
+void
+SV_BreakPoint::
+do_it()
+{
+	vector< vector< pair<CHR_POS,CHR_POS> > > m;
+
+	// make the adjacency matrix of peak distance and overlap
+	vector<SV_Evidence*>::iterator it;
+	for (it = evidence.begin(); it < evidence.end(); ++it) {
+		SV_Evidence *e = *it;
+		SV_BreakPoint *tmp_bp = e->get_bp();
+		//cerr << e->evidence_type() << " " << *tmp_bp <<  endl;
+
+		vector< pair<CHR_POS, CHR_POS> > row;
+
+			vector<SV_Evidence*>::iterator it2;
+		for (it2= evidence.begin(); it2 < evidence.end(); ++it2) {
+			SV_Evidence *e2 = *it2;
+			SV_BreakPoint *tmp_bp2 = e2->get_bp();
+			CHR_POS dist, overlap;
+			tmp_bp->peak_distance(tmp_bp2, &dist, &overlap);
+			row.push_back(pair<CHR_POS,CHR_POS>(dist,overlap));
+
+			//try {
+				//SV_BreakPoint test = SV_BreakPoint(tmp_bp, tmp_bp2);
+			//} catch (int e){
+				//cerr << "oops" << endl;
+			//}
+		}
+		m.push_back(row);
+	}
+
+	vector< vector< pair<CHR_POS,CHR_POS> > >::iterator row_it;
+	for (row_it = m.begin(); row_it < m.end(); ++row_it) {
+		vector< pair<CHR_POS,CHR_POS> >::iterator col_it;
+		for (col_it = row_it->begin(); col_it < row_it->end(); ++col_it) {
+			cerr << col_it->first << "," << col_it->second << " ";
+		}
+		cerr << endl;
+	}
+
+	pair<CHR_POS,CHR_POS> next_to_merge = min_pair(m);
+
+	cerr << next_to_merge.first << "," << next_to_merge.second << endl << endl;
+
+}
+//}}}
+
+//{{{pair<int,int> SV_BreakPoint:: min_pair( vector< vector<
+pair<CHR_POS,CHR_POS>
+SV_BreakPoint::
+min_pair( vector< vector< pair<CHR_POS,CHR_POS> > > &m)
+{
+	CHR_POS min_dist = UINT_MAX;	
+	CHR_POS max_overlap = 0;
+	CHR_POS min_row = 0, min_col = 0;
+	CHR_POS curr_dist, curr_overlap;
+
+	int r, c;
+	for (r = 0; r < m.size(); ++r) {
+		vector< pair<CHR_POS,CHR_POS> > row = m[r];
+		for (c = r + 1; c < row.size(); ++c) {
+			curr_dist = row[c].first;
+			curr_overlap = row[c].second;
+			if (min_dist > curr_dist) {
+				min_dist = curr_dist;
+				max_overlap = curr_overlap;
+				min_row = r;
+				min_col = c;
+			} else if ( (min_dist == curr_dist) && (max_overlap < curr_overlap)){
+				min_dist = curr_dist;
+				max_overlap = curr_overlap;
+				min_row = r;
+				min_col = c;
+			}
+		}
+	}
+
+	pair<CHR_POS,CHR_POS> min_index;
+	min_index.first = min_row;
+	min_index.second = min_col;
+
+	return min_index;
+}
+//}}}
+
+//{{{void SV_BreakPoint:: get_max_range(struct breakpoint_interval *b,
+void 
+SV_BreakPoint::
+get_max_range(struct breakpoint_interval *b,
+			  CHR_POS *max_start,
+			  CHR_POS *max_end,
+			  log_space *max_value)
+{
+	// find the range of values that are in the max position for each bp
+	CHR_POS i;
+	*max_start = 0;
+	*max_end = 0;
+	*max_value = -INFINITY;
+	for (i = 0; i < b->i.end - b->i.start; ++i) {
+		if ( b->p[i] > *max_value ) {
+			*max_value = b->p[i]; 
+			*max_start = i;
+		} else if ( b->p[i] == *max_value ) {
+			*max_end = i;
+		}
+	}
+
+	if (*max_end < *max_start)
+		*max_end = *max_start;
+
+	*max_end = b->i.start + *max_end;
+	*max_start = b->i.start + *max_start;
+}
+//}}}
+
+//{{{bool SV_BreakPoint:: peak_distance(struct breakpoint_interval
+void
+SV_BreakPoint::
+peak_distance(SV_BreakPoint *e,
+		 CHR_POS *dist,
+		 CHR_POS *overlap)
+{
+	init_interval_probabilities();
+	e->init_interval_probabilities();
+
+	CHR_POS a_max_start, a_max_end, b_max_start, b_max_end;
+	log_space a_max, b_max;
+	get_max_range(&interval_l, &a_max_start, &a_max_end, &a_max);
+	get_max_range(&(e->interval_l), &b_max_start, &b_max_end, &b_max);
+
+	free_interval_probabilities();
+	e->free_interval_probabilities();
+
+	if ( (a_max_end >= b_max_start) && (a_max_start <= b_max_end) ) {
+		*dist = 0;
+		*overlap = min(a_max_end,b_max_end) - max(a_max_start,b_max_start) + 1;
+	} else if (a_max_start > b_max_end) {
+		*dist = a_max_start - b_max_end; 
+		*overlap = 0;
+	} else {
+		*dist = b_max_start - a_max_end;
+		*overlap = 0;
+	}
+#if 0
+	log_space ls_threshold = get_ls(p_merge_threshold);
+
+	// Find how much to clip from the start of the current break point (this)
+	// or the new break point (p)
+	// Case 1:
+	// curr:   |---------------...
+	// new:        |-----------... 
+	// c_clip  ||||
+	// Case 2:
+	// curr:       |-------...
+	// new:    |-----------... 
+	// n_clip  ||||
+	
+
+	CHR_POS curr_clip_start = 0;
+	CHR_POS new_clip_start = 0;
+	if (curr_intr->i.start < new_intr->i.start) // Case 1
+		curr_clip_start = new_intr->i.start - curr_intr->i.start;
+	else if (curr_intr->i.start > new_intr->i.start) // Case 2
+		new_clip_start = curr_intr->i.start - new_intr->i.start;
+
+	// Find how much to clip from the end of the current break point (this)
+	// or the new bre ak point (p)
+	// Case 1:
+	// curr:   ...--------|
+	// new:    ...----|
+	// c_clip          ||||
+	// Case 2:
+	// curr:   ...----|
+	// new:    ...--------|
+	// n_clip          ||||
+	CHR_POS curr_clip_end = 0;
+	//CHR_POS new_clip_end = 0;
+	if (curr_intr->i.end > new_intr->i.end) // Case 1
+		curr_clip_end = curr_intr->i.end - new_intr->i.end;
+	//else if (curr_intr->i.end < new_intr->i.end) // Case 2
+		//new_clip_end = new_intr->i.end - curr_intr->i.end;
+
+
+	// Length of the new break point interval
+	unsigned int new_len = (curr_intr->i.end - curr_clip_end) -
+						   (curr_intr->i.start + curr_clip_start) + 1;
+
+	// Before we acutally merge these two breakpoints, we need to test if the
+	// merged probability is greater than zero, if it is not, then we should
+	// not merge the two
+	unsigned int i = 0;
+
+	*merged_start = curr_intr->i.start + curr_clip_start;
+	*merged_end = curr_intr->i.end - curr_clip_end;
+
+	*merged_prob = (log_space *) malloc(new_len * sizeof(log_space));
+
+	log_space ls_max = -INFINITY;
+
+	for (i = 0; i < new_len; ++i) {
+		(*merged_prob)[i] = ls_multiply(curr_intr->p[i + curr_clip_start],
+										new_intr->p[i + new_clip_start]);
+	}
+
+
+	for (i = 0; i < new_len; ++i)
+		if ( (*merged_prob)[i] > ls_max )
+			ls_max = (*merged_prob)[i]; 
+
+	if (ls_max < ls_threshold )
+		return false;
+	else 
+		return true;
+	
+#endif
+}
+//}}}
+
+#if 0
+//{{{ boost::numeric::ublas::matrix<double>* BreakPoint::get_matrix(double
+//  number of rows equals the lenght of the a interval
+//  number of cols equals the lenght of the b interval
+//  m(a,b)
+boost::numeric::ublas::matrix<log_space>*
+SV_BreakPoint::
+get_matrix()
+{
+	// initialize the matrix
+	boost::numeric::ublas::matrix<log_space> *m  = 
+		new boost::numeric::ublas::matrix<log_space>(
+				interval_l.i.end - interval_l.i.start + 1,
+				interval_r.i.end - interval_r.i.start + 1);
+
+	// Print the interval vectors that will be used to set the martix priors
+	// set the matrix priors to be the probability based on the left and right
+	// intervals
+	for (unsigned int a = 0; a < m->size1 (); ++a)
+		for (unsigned int b = 0; b < m->size2 (); ++b) 
+			(*m)(a, b) = ls_multiply(interval_l.p[a], interval_r.p[b]);
+
+	// Print the matrix priors
+	#if 0
+	cerr << m->size1() << "," << m->size2() << endl;
+	for (unsigned int l = 0; l < m->size1 (); ++l)
+		for (unsigned int r = 0; r < m->size2 (); ++r)
+			cout << (*m)(l,r) << endl;
+	#endif
+
+	// For each pair in this breakpoint, we need to update the matrix
+	// probabilities based on the template length of the pair given 
+	// breakpoint
+	// Use log-space probabilities to avoid underflow
+	vector<SV_Evidence*>::iterator it; 
+
+	for (it = evidence.begin(); it < evidence.end(); ++it) 
+		(*it)->update_matrix(m);
+
+	log_space ls_sum = -INFINITY;
+
+	for (unsigned int a = 0; a < m->size1 (); ++ a)
+		for (unsigned int b = 0; b < m->size2 (); ++ b) 
+			ls_sum = ls_add(ls_sum, (*m)(a, b));
+
+
+	for (unsigned int a = 0; a < m->size1 (); ++ a)
+		for (unsigned int b = 0; b < m->size2 (); ++ b)
+			(*m)(a, b) = ls_divide( (*m)(a, b), ls_sum );
+
+	// Print the matrix 
+	#if 0
+	cerr << m->size1() << "," << m->size2() << endl;
+	for (unsigned int l = 0; l < m->size1 (); ++l)
+		for (unsigned int r = 0; r < m->size2 (); ++r)
+			cout << (*m)(l,r) << endl;
+	#endif
+	return m;
+}
+///}}}
+#endif
+
