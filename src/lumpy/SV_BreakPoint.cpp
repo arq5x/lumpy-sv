@@ -15,6 +15,7 @@
 
 #include "SV_BreakPoint.h"
 #include "SV_Evidence.h"
+#include "SV_Tools.h"
 #include <sstream>
 #include <algorithm>
 #include <utility>
@@ -876,12 +877,10 @@ do_it()
         bps.push_back(tmp_bp);
     }
 
+    // find boundaries
     vector<SV_BreakPoint *>::iterator bp_it;
-	//for (it = evidence.begin(); it < evidence.end(); ++it) {
 	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-		//SV_Evidence *e = *it;
 		SV_BreakPoint *tmp_bp = *bp_it;
-	    //tmp_bp->init_interval_probabilities();
 
         if (tmp_bp->interval_l.i.start < start_l)
             start_l = tmp_bp->interval_l.i.start;
@@ -896,9 +895,7 @@ do_it()
             end_r = tmp_bp->interval_r.i.end;
     }
 
-    cerr << start_l << "," << end_l << "\t" <<
-            start_r << "," << end_r << endl;
-
+    // initialize the distribution
     log_space *l = (log_space *)malloc((end_l-start_l+1)*sizeof(log_space));
     for (CHR_POS i = 0; i <  end_l - start_l + 1; ++ i)
         l[i] = get_ls(1);
@@ -907,43 +904,48 @@ do_it()
     for (CHR_POS i = 0; i <  end_r - start_r + 1; ++ i)
         r[i] = get_ls(1);
 
-	//for (it = evidence.begin(); it < evidence.end(); ++it) {
+    // find joint distribution
 	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-		//SV_Evidence *e = *it;
-		//SV_BreakPoint *tmp_bp = e->get_bp();
 		SV_BreakPoint *tmp_bp = *bp_it;
 
         CHR_POS l_offset = tmp_bp->interval_l.i.start - start_l;
-        for (CHR_POS i = 0; 
-             i < tmp_bp->interval_l.i.end - tmp_bp->interval_l.i.start;
-             ++i) {
-            l[i+l_offset] = ls_multiply(l[i+l_offset], tmp_bp->interval_l.p[i]);
+        CHR_POS l_size = tmp_bp->interval_l.i.end - 
+                tmp_bp->interval_l.i.start + 1;
+
+        log_space *t = (log_space *) malloc(l_size * sizeof(log_space));
+        normalize_ls(l_size, tmp_bp->interval_l.p, t);
+
+        for (CHR_POS i = 0; i < l_size; ++i) {
+            l[i+l_offset] = ls_multiply(l[i+l_offset], t[i]);
         }
+
+        free(t);
 
         CHR_POS r_offset = tmp_bp->interval_r.i.start - start_r;
-        for (CHR_POS i = 0; 
-             i < tmp_bp->interval_r.i.end - tmp_bp->interval_r.i.start;
-             ++i) {
-            r[i+r_offset] = ls_multiply(r[i+r_offset], tmp_bp->interval_r.p[i]);
+        CHR_POS r_size = tmp_bp->interval_r.i.end - 
+                tmp_bp->interval_r.i.start + 1;
+
+        t = (log_space *) malloc(r_size * sizeof(log_space));
+        normalize_ls(r_size, tmp_bp->interval_r.p, t);
+
+        for (CHR_POS i = 0; i < r_size; ++i) {
+            r[i+r_offset] = ls_multiply(r[i+r_offset], t[i]);
         }
+
+        free(t);
     }
 
-    log_space l_sum = -INFINITY, r_sum = -INFINITY;
+    log_space *t = (log_space *)malloc((end_l-start_l+1)*sizeof(log_space));
+    normalize_ls(end_l-start_l+1, l, t);
+    free(l);
+    l = t;
 
-    // Normalize the l and r distribution
-    for (CHR_POS i = 0; i < (end_l - start_l); ++ i)
-        l_sum = ls_add(l_sum, l[i]);
+    t = (log_space *)malloc((end_r-start_r+1)*sizeof(log_space));
+    normalize_ls(end_r-start_r+1, r, t);
+    free(r);
+    r = t;
 
-    for (CHR_POS i = 0; i < (end_l - start_l); ++ i)
-        l[i] = ls_divide(l[i],l_sum);
-
-    for (CHR_POS i = 0; i < (end_r - start_r); ++ i)
-        r_sum = ls_add(r_sum, r[i]);
-
-    for (CHR_POS i = 0; i < (end_l - start_l); ++ i)
-        r[i] = ls_divide(r[i],r_sum);
-
-	for (bp_it = bp_vector.begin(); bp_it < bp_vector.end(); ++bp_it) {
+	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
 	//for (it = evidence.begin(); it < evidence.end(); ++it) {
 		//SV_Evidence *e = *it;
 		SV_BreakPoint *tmp_bp = *bp_it;
@@ -967,13 +969,13 @@ do_it()
             r_r = ls_add(l_r,v);
         }
 
-        cerr << "\t" << get_p(l_r) << "\t" << get_p(r_r) << endl;
+        cout << "\t" << get_p(l_r) << "\t" << get_p(r_r) << endl;
     }
 
 	//vector<SV_BreakPoint*>::iterator bp_it;
-	for (bp_it = bp_vector.begin(); bp_it < bp_vector.end(); ++bp_it) {
+	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
 		SV_BreakPoint *tmp_bp = *bp_it;
-        //delete tmp_bp->free_
+        delete tmp_bp;
     }
 
 

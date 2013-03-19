@@ -403,3 +403,17 @@ bool merge_sorted_files(string out_file_name,
 	return true;
 }
 //}}}
+
+
+//{{{void normalize_ls(CHR_POS size, log_space *o, log_space *r)
+void normalize_ls(CHR_POS size, log_space *o, log_space *r)
+{
+    log_space sum = -INFINITY;
+
+    for (CHR_POS i = 0; i < size; ++ i)
+        sum = ls_add(sum, o[i]);
+
+    for (CHR_POS i = 0; i < size; ++ i)
+        r[i] = ls_divide(o[i],sum);
+}
+//}}}
