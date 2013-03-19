@@ -132,8 +132,11 @@ SV_BreakPoint(SV_BreakPoint *a, SV_BreakPoint *b)
 SV_BreakPoint::
 ~SV_BreakPoint()
 {
-	free(interval_l.p);
-	free(interval_r.p);
+    if (interval_l.p != NULL)
+	    free(interval_l.p);
+
+    if (interval_r.p != NULL)
+	    free(interval_r.p);
 }
 //}}}
 
@@ -249,11 +252,6 @@ bool
 SV_BreakPoint::
 merge(SV_BreakPoint *p)
 {
-	//at this point malloc that space for the arrays in both this and in p
-	//init_interval_probabilities();
-	//p->init_interval_probabilities();
-
-
 	// p->a may not overlap a, so we need to check
 	// after this a_overlap_intr will point to the interval in p that
 	// overlaps the current a interval and bt_overlap_intr overlaps the
@@ -273,7 +271,6 @@ merge(SV_BreakPoint *p)
 		a_overlap_intr = &(p->interval_r);
 		b_overlap_intr = &(p->interval_l);
 	} else {
-
 		//{{{ Give error and abort
 		cerr << "Error in merge(): no correct overlap" << endl <<
 				"t:" <<
@@ -309,14 +306,11 @@ merge(SV_BreakPoint *p)
 		//abort();
 		return false;
 		//}}}
-		
 	}
 
 #if 1
 	// just put everything together and refine the breakpoint boundaries to be
 	// the mean of the evidence set
-//{{{
-
 	vector<SV_Evidence*>::iterator ev_it;
 
 	// copy all of the evidence and ids from the incomming breakpoint to the
@@ -364,7 +358,6 @@ merge(SV_BreakPoint *p)
 	this->weight += p->weight;
 
 	return true;
-//}}}
 #endif
 
 
@@ -868,6 +861,140 @@ void
 SV_BreakPoint::
 do_it()
 {
+	vector<SV_Evidence*>::iterator it;
+    CHR_POS start_l = UINT_MAX, 
+            start_r = UINT_MAX, 
+            end_l = 0, 
+            end_r = 0;
+
+    vector<SV_BreakPoint *> bps;
+	for (it = evidence.begin(); it < evidence.end(); ++it) {
+    	SV_Evidence *e = *it;
+		SV_BreakPoint *tmp_bp = e->get_bp();
+	    tmp_bp->init_interval_probabilities();
+
+        bps.push_back(tmp_bp);
+    }
+
+    vector<SV_BreakPoint *>::iterator bp_it;
+	//for (it = evidence.begin(); it < evidence.end(); ++it) {
+	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+		//SV_Evidence *e = *it;
+		SV_BreakPoint *tmp_bp = *bp_it;
+	    //tmp_bp->init_interval_probabilities();
+
+        if (tmp_bp->interval_l.i.start < start_l)
+            start_l = tmp_bp->interval_l.i.start;
+
+        if (tmp_bp->interval_r.i.start < start_r)
+            start_r = tmp_bp->interval_r.i.start;
+
+        if (tmp_bp->interval_l.i.end > end_l)
+            end_l = tmp_bp->interval_l.i.end;
+
+        if (tmp_bp->interval_r.i.end > end_r)
+            end_r = tmp_bp->interval_r.i.end;
+    }
+
+    cerr << start_l << "," << end_l << "\t" <<
+            start_r << "," << end_r << endl;
+
+    log_space *l = (log_space *)malloc((end_l-start_l+1)*sizeof(log_space));
+    for (CHR_POS i = 0; i <  end_l - start_l + 1; ++ i)
+        l[i] = get_ls(1);
+
+    log_space *r = (log_space *)malloc((end_r-start_r+1)*sizeof(log_space));
+    for (CHR_POS i = 0; i <  end_r - start_r + 1; ++ i)
+        r[i] = get_ls(1);
+
+	//for (it = evidence.begin(); it < evidence.end(); ++it) {
+	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+		//SV_Evidence *e = *it;
+		//SV_BreakPoint *tmp_bp = e->get_bp();
+		SV_BreakPoint *tmp_bp = *bp_it;
+
+        CHR_POS l_offset = tmp_bp->interval_l.i.start - start_l;
+        for (CHR_POS i = 0; 
+             i < tmp_bp->interval_l.i.end - tmp_bp->interval_l.i.start;
+             ++i) {
+            l[i+l_offset] = ls_multiply(l[i+l_offset], tmp_bp->interval_l.p[i]);
+        }
+
+        CHR_POS r_offset = tmp_bp->interval_r.i.start - start_r;
+        for (CHR_POS i = 0; 
+             i < tmp_bp->interval_r.i.end - tmp_bp->interval_r.i.start;
+             ++i) {
+            r[i+r_offset] = ls_multiply(r[i+r_offset], tmp_bp->interval_r.p[i]);
+        }
+    }
+
+    log_space l_sum = -INFINITY, r_sum = -INFINITY;
+
+    // Normalize the l and r distribution
+    for (CHR_POS i = 0; i < (end_l - start_l); ++ i)
+        l_sum = ls_add(l_sum, l[i]);
+
+    for (CHR_POS i = 0; i < (end_l - start_l); ++ i)
+        l[i] = ls_divide(l[i],l_sum);
+
+    for (CHR_POS i = 0; i < (end_r - start_r); ++ i)
+        r_sum = ls_add(r_sum, r[i]);
+
+    for (CHR_POS i = 0; i < (end_l - start_l); ++ i)
+        r[i] = ls_divide(r[i],r_sum);
+
+	for (bp_it = bp_vector.begin(); bp_it < bp_vector.end(); ++bp_it) {
+	//for (it = evidence.begin(); it < evidence.end(); ++it) {
+		//SV_Evidence *e = *it;
+		SV_BreakPoint *tmp_bp = *bp_it;
+	    //tmp_bp->init_interval_probabilities();
+
+        CHR_POS l_offset = tmp_bp->interval_l.i.start - start_l;
+        log_space l_r = -INFINITY;
+        for (CHR_POS i = 0; 
+             i < tmp_bp->interval_l.i.end - tmp_bp->interval_l.i.start;
+             ++i) {
+            log_space v = ls_multiply(l[i+l_offset], tmp_bp->interval_l.p[i]);
+            l_r = ls_add(l_r,v);
+        }
+
+        CHR_POS r_offset = tmp_bp->interval_r.i.start - start_r;
+        log_space r_r = -INFINITY;
+        for (CHR_POS i = 0; 
+             i < tmp_bp->interval_r.i.end - tmp_bp->interval_r.i.start;
+             ++i) {
+            log_space v = ls_multiply(r[i+r_offset], tmp_bp->interval_r.p[i]);
+            r_r = ls_add(l_r,v);
+        }
+
+        cerr << "\t" << get_p(l_r) << "\t" << get_p(r_r) << endl;
+    }
+
+	//vector<SV_BreakPoint*>::iterator bp_it;
+	for (bp_it = bp_vector.begin(); bp_it < bp_vector.end(); ++bp_it) {
+		SV_BreakPoint *tmp_bp = *bp_it;
+        //delete tmp_bp->free_
+    }
+
+
+    /*
+    for (int i = 0; i < (end_l - start_l); ++ i) {
+        if (i != 0)
+            cerr <<"\t";
+        cerr << l[i];
+    }
+    cerr << endl;
+
+
+    cerr << start_l << "," << end_l << "\t" <<
+            start_r << "," << end_r << endl;
+    */
+
+    free(l);
+    free(r);
+
+
+    /*
 	vector< vector< pair<CHR_POS,CHR_POS> > > m;
 
 	// make the adjacency matrix of peak distance and overlap
@@ -908,7 +1035,7 @@ do_it()
 	pair<CHR_POS,CHR_POS> next_to_merge = min_pair(m);
 
 	cerr << next_to_merge.first << "," << next_to_merge.second << endl << endl;
-
+    */
 }
 //}}}
 
