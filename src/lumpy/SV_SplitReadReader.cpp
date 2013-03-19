@@ -29,6 +29,7 @@ SV_SplitReadReader()
 	id = -1;
 	sample_id = SV_EvidenceReader::counter;
 	SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
+    min_clip = 20;
 }
 //}}}
 
@@ -69,6 +70,8 @@ add_param(char *param, char *val)
 		id = atoi(val);
 	else if ( strcmp("min_mapping_threshold", param) == 0 )
 		min_mapping_threshold = atoi(val);
+	else if ( strcmp("min_clip", param) == 0 )
+		min_clip = atoi(val);
 	else 
 		return false;
 

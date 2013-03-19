@@ -32,6 +32,24 @@ using namespace BamTools;
 
 using namespace std;
 
+//{{{int SV_SplitRead:: count_clipped(vector< CigarOp > cigar_data)
+uint32_t
+SV_SplitRead::
+count_clipped(vector< CigarOp > cigar_data)
+{
+    uint32_t clipped_count = 0;
+    vector< CigarOp >::iterator i;
+    for (i = cigar_data.begin(); i != cigar_data.end(); ++i) {
+        if ( (i->Type == 'H') || (i->Type == 'S') ) {
+            uint32_t l = i->Length;
+            clipped_count += l;
+        }
+    }
+
+    return clipped_count;
+}
+//}}}
+
 //{{{ void SV_SplitRead:: update_cigar_query(CigarOp op,
 void
 SV_SplitRead::
@@ -491,25 +509,6 @@ is_sane()
 
 
 	return (side_l.end < side_r.start);
-	/*
-	int side_len_l = query_l.qe_pos - query_l.qs_pos;
-	int side_len_r = query_r.qe_pos - query_r.qs_pos;
-
-	int overlap = 1 + min(query_l.qe_pos, query_r.qe_pos) - 
-						  max(query_l.qs_pos, query_r.qs_pos);
-	overlap = max(0, overlap);
-	//int non_overlap = min(read_len_a, read_len_b) - overlap;
-	// how much does not overlap // overlap is at most read_len
-	int non_overlap_l = 1 + side_len_l - overlap;
-	int non_overlap_r = 1 + side_len_r - overlap;
-
-	int curr_min_non_overlap = min(non_overlap_l, non_overlap_r);
-
-	if ( curr_min_non_overlap >= reader->min_non_overlap )
-		return true;
-	else 
-		return false;
-	*/
 }
 //}}}
 
@@ -577,9 +576,11 @@ process_split(const BamAlignment &curr,
 			  SV_SplitReadReader *_reader)
 {
 
-	if (mapped_splits.find(curr.Name) == mapped_splits.end())
-		mapped_splits[curr.Name] = curr;
-	else {
+	if (mapped_splits.find(curr.Name) == mapped_splits.end()) {
+        uint32_t clipped = count_clipped(curr.CigarData);
+        if (clipped >= _reader->min_clip)
+		    mapped_splits[curr.Name] = curr;
+    } else {
 		try {
 			SV_SplitRead *new_split_read = 
 				new SV_SplitRead(mapped_splits[curr.Name],
@@ -620,12 +621,14 @@ process_intra_chrom_split(const BamAlignment &curr,
 						  int weight,
 						  int id,
 						  int sample_id,
-						  SV_SplitReadReader *reader)
+						  SV_SplitReadReader *_reader)
 {
 
-	if (mapped_splits.find(curr.Name) == mapped_splits.end())
-		mapped_splits[curr.Name] = curr;
-	else {
+	if (mapped_splits.find(curr.Name) == mapped_splits.end()) {
+        uint32_t clipped = count_clipped(curr.CigarData);
+        if (clipped >= _reader->min_clip)
+		    mapped_splits[curr.Name] = curr;
+    } else {
 		if ( mapped_splits[curr.Name].RefID == curr.RefID ) {
 			try {
 				SV_SplitRead *new_split_read = 
@@ -635,7 +638,7 @@ process_intra_chrom_split(const BamAlignment &curr,
 									 weight,
 									 id,
 									 sample_id,
-									 reader);
+									 _reader);
 
 				SV_BreakPoint *new_bp = NULL;
 				if (new_split_read->is_sane()) {
@@ -661,7 +664,7 @@ process_intra_chrom_split(const BamAlignment &curr,
 			al1.MatePosition = al2.Position;
 			al2.MatePosition = al1.Position;
 
-			string x = reader->get_source_file_name();
+			string x = _reader->get_source_file_name();
 
 			al1.AddTag("LS","Z",x);
 			al2.AddTag("LS","Z",x);

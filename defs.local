@@ -1,3 +1,5 @@
-GSL_INCLUDE=-I$HOME/src/gsl/gsl
-#GSL_LINK=-L/sw/lib/
-GSL_LINK=-L$HOME/rl6sf/src/gsl
+#GSL_INCLUDE=-I/home/rl6sf/src/gsl/gsl
+#GSL_LINK=-L/home/rl6sf/src/gsl
+GSL_INCLUDE=-I/usr/local/include\
+            -I/usr/local/include/gsl
+GSL_LINK=-L/usr/local/lib
