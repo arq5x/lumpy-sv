@@ -91,6 +91,7 @@ void ShowHelp(void)
 					"\t\tmin_mapping_threshold:<mapping quality>" << endl << 
 					"\t\tweight:<sample weight>" << endl << 
 					"\t\tid:<sample id>" << endl << 
+					"\t\tmin_clip:<minimum clip length>" << endl << 
 					endl <<
 		"\t-pe"		"\tbam_file:<file name>," << endl <<
 					"\t\thisto_file:<file name>," << endl <<
