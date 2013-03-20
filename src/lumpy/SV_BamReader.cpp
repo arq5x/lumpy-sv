@@ -191,7 +191,19 @@ process_input_chr_pos(string chr,
 			( bam.Position < pos ) ) {
 		curr_reader = (*bam_evidence_readers)[bam.Filename];
 		last_file = bam.Filename;
-		curr_reader->process_input(bam,refs,inter_chrom_reads,r_bin);
+
+        /*
+         * IsMapped     IsPaired    IsMateMapped   F            R    
+         * T            T           T              T&!(T&!T)    T
+         * T            T           F              T&!(T&!F)    F
+         * T            F           T              T&!(F&!T)    T
+         * T            F           F              T&!(F&!F)    T
+         * F            .           .              F&!(.&!.)    F
+         *
+         */
+        if ( bam.IsMapped() &&
+             !(bam.IsPaired() && !(bam.IsMateMapped())) )
+		    curr_reader->process_input(bam,refs,inter_chrom_reads,r_bin);
 		last_reader = curr_reader;
 
 		has_next_alignment = bam_reader.GetNextAlignment(bam);
