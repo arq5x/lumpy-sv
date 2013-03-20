@@ -945,11 +945,9 @@ do_it()
     free(r);
     r = t;
 
+    // Find the intersection of the join curve and each evidnece curve
 	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-	//for (it = evidence.begin(); it < evidence.end(); ++it) {
-		//SV_Evidence *e = *it;
 		SV_BreakPoint *tmp_bp = *bp_it;
-	    //tmp_bp->init_interval_probabilities();
 
         CHR_POS l_offset = tmp_bp->interval_l.i.start - start_l;
         log_space l_r = -INFINITY;
@@ -972,25 +970,10 @@ do_it()
         cout << "\t" << get_p(l_r) << "\t" << get_p(r_r) << endl;
     }
 
-	//vector<SV_BreakPoint*>::iterator bp_it;
 	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
 		SV_BreakPoint *tmp_bp = *bp_it;
         delete tmp_bp;
     }
-
-
-    /*
-    for (int i = 0; i < (end_l - start_l); ++ i) {
-        if (i != 0)
-            cerr <<"\t";
-        cerr << l[i];
-    }
-    cerr << endl;
-
-
-    cerr << start_l << "," << end_l << "\t" <<
-            start_r << "," << end_r << endl;
-    */
 
     free(l);
     free(r);
