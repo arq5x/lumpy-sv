@@ -898,13 +898,13 @@ do_it()
     // initialize the distribution
     log_space *l = (log_space *)malloc((end_l-start_l+1)*sizeof(log_space));
     for (CHR_POS i = 0; i <  end_l - start_l + 1; ++ i)
-        l[i] = get_ls(1);
+        l[i] = get_ls(0);
 
     log_space *r = (log_space *)malloc((end_r-start_r+1)*sizeof(log_space));
     for (CHR_POS i = 0; i <  end_r - start_r + 1; ++ i)
-        r[i] = get_ls(1);
+        r[i] = get_ls(0);
 
-    // find joint distribution
+    // find mixture distribution
 	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
 		SV_BreakPoint *tmp_bp = *bp_it;
 
@@ -915,9 +915,15 @@ do_it()
         log_space *t = (log_space *) malloc(l_size * sizeof(log_space));
         normalize_ls(l_size, tmp_bp->interval_l.p, t);
 
+        //cout << "+\t" << tmp_bp->interval_l.i.start << "\t";
         for (CHR_POS i = 0; i < l_size; ++i) {
-            l[i+l_offset] = ls_multiply(l[i+l_offset], t[i]);
+            //l[i+l_offset] = ls_multiply(l[i+l_offset], t[i]);
+            l[i+l_offset] = ls_add(l[i+l_offset], t[i]);
+            //if (i !=0)
+                //cout << "\t";
+            //cout << t[i];
         }
+        //cout << endl;
 
         free(t);
 
@@ -929,21 +935,33 @@ do_it()
         normalize_ls(r_size, tmp_bp->interval_r.p, t);
 
         for (CHR_POS i = 0; i < r_size; ++i) {
-            r[i+r_offset] = ls_multiply(r[i+r_offset], t[i]);
+            r[i+r_offset] = ls_add(r[i+r_offset], t[i]);
         }
 
         free(t);
     }
 
+    /*
     log_space *t = (log_space *)malloc((end_l-start_l+1)*sizeof(log_space));
     normalize_ls(end_l-start_l+1, l, t);
     free(l);
     l = t;
+    */
 
+    //cout << "+\t" << start_l << "\t";
+    //for (CHR_POS j = 0; j < end_l-start_l+1; ++j) {
+        //if (j !=0)
+            //cout << "\t";
+        //cout << l[j];
+    //}
+    //cout << endl;
+
+    /*
     t = (log_space *)malloc((end_r-start_r+1)*sizeof(log_space));
     normalize_ls(end_r-start_r+1, r, t);
     free(r);
     r = t;
+    */
 
     // Find the intersection of the join curve and each evidnece curve
 	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
@@ -967,7 +985,7 @@ do_it()
             r_r = ls_add(l_r,v);
         }
 
-        cout << "\t" << get_p(l_r) << "\t" << get_p(r_r) << endl;
+        //cout << "\t" << get_p(l_r) << "\t" << get_p(r_r) << endl;
     }
 
 	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
