@@ -112,5 +112,16 @@ class SV_BreakPoint
 
 		static pair<CHR_POS,CHR_POS>
 			min_pair( vector< vector< pair<CHR_POS,CHR_POS> > > &m);
+
+        void get_distances(vector< SV_BreakPoint*> &new_v);
+
+        static void interval_product(struct breakpoint_interval *a_intr,
+					                 struct breakpoint_interval *b_intr,
+					                 CHR_POS *product_len,
+					                 CHR_POS *product_start,
+					                 CHR_POS *product_end,
+					                 log_space **product_prob);
+        void get_mixture(struct breakpoint_interval **l_mixture,
+                         struct breakpoint_interval **r_mixture);
 };
 #endif

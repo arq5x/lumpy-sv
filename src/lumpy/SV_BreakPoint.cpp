@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 #include <climits>
+#include <sstream>
 
 
 double SV_BreakPoint::p_trim_threshold = 1;;
@@ -480,6 +481,99 @@ merge(SV_BreakPoint *p)
 }
 //}}}
 
+//{{{void interval_product(struct interval *curr_intr,
+void
+SV_BreakPoint::
+interval_product(struct breakpoint_interval *a_intr,
+				 struct breakpoint_interval *b_intr,
+				 CHR_POS *product_len,
+				 CHR_POS *product_start,
+				 CHR_POS *product_end,
+				 log_space **product_prob)
+{
+
+    // if the those intervals do not intersect, then set the len to zero and
+    // return
+    if ( (a_intr->i.end < b_intr->i.start) ||
+         (a_intr->i.start > b_intr->i.end) ) {
+        *product_len = 0;
+        return;
+    }
+
+
+	// Find how much to clip from the start of the current break point (this)
+	// or the new break point (p)
+	// Case 1:
+	// curr:   |---------------...
+	// new:        |-----------... 
+	// c_clip  ||||
+	// Case 2:
+	// curr:       |-------...
+	// new:    |-----------... 
+	// n_clip  ||||
+	
+
+	CHR_POS curr_clip_start = 0;
+	CHR_POS new_clip_start = 0;
+	if (a_intr->i.start < b_intr->i.start) // Case 1
+		curr_clip_start = b_intr->i.start - a_intr->i.start;
+	else if (a_intr->i.start > b_intr->i.start) // Case 2
+		new_clip_start = a_intr->i.start - b_intr->i.start;
+
+	// Find how much to clip from the end of the current break point (this)
+	// or the new bre ak point (p)
+	// Case 1:
+	// curr:   ...--------|
+	// new:    ...----|
+	// c_clip          ||||
+	// Case 2:
+	// curr:   ...----|
+	// new:    ...--------|
+	// n_clip          ||||
+	CHR_POS curr_clip_end = 0;
+	if (a_intr->i.end > b_intr->i.end) // Case 1
+		curr_clip_end = a_intr->i.end - b_intr->i.end;
+
+
+	// Length of the new break point interval
+	unsigned int new_len = (a_intr->i.end - curr_clip_end) -
+						   (a_intr->i.start + curr_clip_start) + 1;
+
+	// Before we acutally merge these two breakpoints, we need to test if the
+	// merged probability is greater than zero, if it is not, then we should
+	// not merge the two
+	unsigned int i = 0;
+
+	*product_start = a_intr->i.start + curr_clip_start;
+	*product_end = a_intr->i.end - curr_clip_end;
+
+    log_space *curr_p = (log_space *)
+            malloc( (a_intr->i.end - a_intr->i.start + 1) * 
+                    sizeof(log_space));
+    normalize_ls((a_intr->i.end - a_intr->i.start + 1),
+                  a_intr->p,
+                  curr_p);
+
+    log_space *new_p = (log_space *)
+            malloc( (b_intr->i.end - b_intr->i.start + 1) * 
+                    sizeof(log_space));
+    normalize_ls((b_intr->i.end - b_intr->i.start + 1),
+                  b_intr->p,
+                  new_p);
+
+	*product_prob = (log_space *) malloc(new_len * sizeof(log_space));
+
+	for (i = 0; i < new_len; ++i)
+		(*product_prob)[i] = ls_multiply(a_intr->p[i + curr_clip_start],
+										b_intr->p[i + new_clip_start]);
+
+    *product_len = new_len;
+
+    free(curr_p);
+    free(new_p);
+}
+//}}}
+
 //{{{bool test_interval_merge(struct interval *curr_intr,
 bool
 SV_BreakPoint::
@@ -739,6 +833,51 @@ print_bedpe(int score)
 }
 //}}}
 
+
+void 
+SV_BreakPoint::
+get_distances(vector< SV_BreakPoint*> &new_v)
+{
+    vector<SV_BreakPoint*>::iterator it;
+    for (it = new_v.begin(); it != new_v.end(); ++it) {
+        SV_BreakPoint *b = *it;
+        b->init_interval_probabilities();
+    }
+
+    for (it = new_v.begin(); it != new_v.end(); ++it) {
+        vector<SV_BreakPoint*>::iterator jt;
+        SV_BreakPoint *b_i = *it;
+        ostringstream oss;
+        for (jt = new_v.begin(); jt != new_v.end(); ++jt) {
+            CHR_POS product_len, product_start, product_end;
+            log_space *product_prob;
+            SV_BreakPoint *b_j = *jt;
+            interval_product(&(b_i->interval_l),
+                             &(b_j->interval_l),
+					         &product_len,
+					         &product_start,
+					         &product_end,
+					         &product_prob);
+            if (product_len > 0) {
+                log_space distance = -INFINITY;
+                for (int i = 0; i < product_len; ++i)
+                    distance = ls_add(distance,product_prob[i]);
+                oss << get_p(distance) << "\t";
+                free(product_prob);
+            }
+        }
+        cerr << oss.str() << endl;
+    }
+
+    for (it = new_v.begin(); it != new_v.end(); ++it) {
+        SV_BreakPoint *b = *it;
+        b->free_interval_probabilities();
+    }
+
+
+}
+
+
 //{{{void SV_BreakPoint:: cluster(UCSCBins<SV_BreakPoint*> &bins);
 void
 SV_BreakPoint::
@@ -778,9 +917,8 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 		// one match so merge
 		else if  (tmp_hits_r.size() == 1) {
 			// addr of the bp in both sets (and only item in the intersection)
-
 			SV_BreakPoint *bp = tmp_hits_r[0].value;
-			if ( bp->merge(this) ) {
+			if ( this->merge(bp) ) {
 				UCSCElement<SV_BreakPoint*> rm = tmp_hits_r[0];
 
 				if (r_bin.remove(rm, false, false, true) != 0) {
@@ -788,15 +926,90 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 					abort();
 				}
 
-				delete this;
-				bp->insert(r_bin);
+				delete bp;
+				this->insert(r_bin);
 			}
+        // more than one match
 		} else {
-			cerr << "hits two:\t" << *this << endl;
+            int top_hit = -1;
+            int curr = 0;
+            double top_score = -1;
+	        this->init_interval_probabilities();
+
+            vector< UCSCElement<SV_BreakPoint*> >::iterator m_it;
+		    for(m_it = tmp_hits_r.begin(); m_it != tmp_hits_r.end(); ++m_it) {
+                SV_BreakPoint *bp = m_it->value;
+
+                struct breakpoint_interval *r_mixture, *l_mixture;
+
+                bp->get_mixture(&l_mixture,&r_mixture);
+
+                CHR_POS l_product_len, l_product_start, l_product_end;
+                log_space *l_product_prob;
+
+                interval_product(&interval_l,
+                                 l_mixture, 
+                                 &l_product_len,
+                                 &l_product_start,
+                                 &l_product_end,
+                                 &l_product_prob);
+
+                log_space l_sum = get_ls(0);
+                for (int i = 0; i < l_product_len; ++i)
+                    l_sum = ls_add(l_sum, l_product_prob[i]);
+
+                CHR_POS r_product_len, r_product_start, r_product_end;
+                log_space *r_product_prob;
+
+                interval_product(&interval_r,
+                                 r_mixture, 
+                                 &r_product_len,
+                                 &r_product_start,
+                                 &r_product_end,
+                                 &r_product_prob);
+
+                log_space r_sum = get_ls(0);
+                for (int i = 0; i < r_product_len; ++i)
+                    r_sum = ls_add(r_sum, r_product_prob[i]);
+
+                double score = (get_p(l_sum)+get_p(r_sum))/2;
+
+                if (score > top_score) {
+                    top_score = score;
+                    top_hit = curr;
+                }
+
+                free(l_product_prob);
+
+                free(r_mixture->p);
+                free(l_mixture->p);
+                free(r_mixture);
+                free(l_mixture);
+                
+                ++curr;
+            }
+
+	        this->free_interval_probabilities();
+
+			SV_BreakPoint *bp = tmp_hits_r[top_hit].value;
+			if ( this->merge(bp) ) {
+				UCSCElement<SV_BreakPoint*> rm = tmp_hits_r[0];
+
+				if (r_bin.remove(rm, false, false, true) != 0) {
+					cerr << "Error removing item in cluster()" << endl;
+					abort();
+				}
+
+				delete bp;
+				this->insert(r_bin);
+			}
+
 		}
 	}
 }
 //}}}
+
+
 
 //{{{ void SV_BreakPoint:: insert(UCSCBins<SV_BreakPoint*> &r_bin,
 void
@@ -854,6 +1067,112 @@ get_evidence_ids()
 	ids.resize( it_id - ids.begin() );
 
 	return ids;
+}
+//}}}
+
+//{{{ void SV_BreakPoint:: get_mixture()
+void
+SV_BreakPoint::
+get_mixture(struct breakpoint_interval **l_mixture,
+            struct breakpoint_interval **r_mixture)
+{
+	vector<SV_Evidence*>::iterator it;
+    CHR_POS start_l = UINT_MAX, 
+            start_r = UINT_MAX, 
+            end_l = 0, 
+            end_r = 0;
+
+    vector<SV_BreakPoint *> bps;
+	for (it = evidence.begin(); it < evidence.end(); ++it) {
+    	SV_Evidence *e = *it;
+		SV_BreakPoint *tmp_bp = e->get_bp();
+	    tmp_bp->init_interval_probabilities();
+
+        bps.push_back(tmp_bp);
+    }
+
+    // find boundaries
+    vector<SV_BreakPoint *>::iterator bp_it;
+	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+		SV_BreakPoint *tmp_bp = *bp_it;
+
+        if (tmp_bp->interval_l.i.start < start_l)
+            start_l = tmp_bp->interval_l.i.start;
+
+        if (tmp_bp->interval_r.i.start < start_r)
+            start_r = tmp_bp->interval_r.i.start;
+
+        if (tmp_bp->interval_l.i.end > end_l)
+            end_l = tmp_bp->interval_l.i.end;
+
+        if (tmp_bp->interval_r.i.end > end_r)
+            end_r = tmp_bp->interval_r.i.end;
+    }
+
+    // initialize the distribution
+    log_space *l = (log_space *)malloc((end_l-start_l+1)*sizeof(log_space));
+    for (CHR_POS i = 0; i <  end_l - start_l + 1; ++ i)
+        l[i] = get_ls(0);
+
+    log_space *r = (log_space *)malloc((end_r-start_r+1)*sizeof(log_space));
+    for (CHR_POS i = 0; i <  end_r - start_r + 1; ++ i)
+        r[i] = get_ls(0);
+
+    // find mixture distribution
+	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+		SV_BreakPoint *tmp_bp = *bp_it;
+
+        CHR_POS l_offset = tmp_bp->interval_l.i.start - start_l;
+        CHR_POS l_size = tmp_bp->interval_l.i.end - 
+                tmp_bp->interval_l.i.start + 1;
+
+        log_space *t = (log_space *) malloc(l_size * sizeof(log_space));
+        normalize_ls(l_size, tmp_bp->interval_l.p, t);
+
+        for (CHR_POS i = 0; i < l_size; ++i)
+            l[i+l_offset] = ls_add(l[i+l_offset], t[i]);
+
+        free(t);
+
+        CHR_POS r_offset = tmp_bp->interval_r.i.start - start_r;
+        CHR_POS r_size = tmp_bp->interval_r.i.end - 
+                tmp_bp->interval_r.i.start + 1;
+
+        t = (log_space *) malloc(r_size * sizeof(log_space));
+        normalize_ls(r_size, tmp_bp->interval_r.p, t);
+
+        for (CHR_POS i = 0; i < r_size; ++i) 
+            r[i+r_offset] = ls_add(r[i+r_offset], t[i]);
+
+        free(t);
+    }
+
+    log_space *t = (log_space *)malloc((end_l-start_l+1)*sizeof(log_space));
+    normalize_ls(end_l-start_l+1, l, t);
+    free(l);
+    l = t;
+
+    t = (log_space *)malloc((end_r-start_r+1)*sizeof(log_space));
+    normalize_ls(end_r-start_r+1, r, t);
+    free(r);
+    r = t;
+
+	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+		SV_BreakPoint *tmp_bp = *bp_it;
+        delete tmp_bp;
+    }
+
+    *l_mixture = (struct breakpoint_interval *) malloc (
+            sizeof( struct breakpoint_interval));
+    (*l_mixture)->i.start = start_l;
+    (*l_mixture)->i.end = end_l;
+    (*l_mixture)->p = l;
+
+    *r_mixture = (struct breakpoint_interval *) malloc (
+            sizeof( struct breakpoint_interval));
+    (*r_mixture)->i.start = start_r;
+    (*r_mixture)->i.end = end_r;
+    (*r_mixture)->p = r;
 }
 //}}}
 
