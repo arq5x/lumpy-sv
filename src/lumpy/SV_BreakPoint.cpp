@@ -902,7 +902,8 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 		while(it != tmp_hits_r.end()) {
 			if(it->value->type != type)
 				it = tmp_hits_r.erase(it);
-			else if ( it->value->interval_l.i.chr != interval_l.i.chr )
+			//else if ( it->value->interval_l.i.chr != interval_l.i.chr )
+			else if(it->value->interval_l.i.chr.compare(interval_l.i.chr) != 0)
 				it = tmp_hits_r.erase(it);
 			else if (!((it->value->interval_l.i.start < interval_l.i.end) &&
 					   (it->value->interval_l.i.end > interval_l.i.start) ) )
@@ -931,6 +932,8 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 			}
         // more than one match
 		} else {
+        #if 0
+            cerr << "X" << endl;
             int top_hit = -1;
             int curr = 0;
             double top_score = -1;
@@ -1003,7 +1006,7 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 				delete bp;
 				this->insert(r_bin);
 			}
-
+        #endif
 		}
 	}
 }
