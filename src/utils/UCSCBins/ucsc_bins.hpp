@@ -11,7 +11,7 @@
 
 using namespace std;
 
-typedef uint32_t CHR_POS;
+typedef uint64_t CHR_POS;
 typedef uint16_t BIN_LEVEL;
 typedef uint32_t BIN;
 typedef uint16_t USHORT;
