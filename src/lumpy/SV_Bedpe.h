@@ -65,6 +65,7 @@ class SV_Bedpe: public SV_Evidence
 
 		void print_bedpe(int score);
 		void print_evidence();
+		string evidence_type();
 };
 
 #endif

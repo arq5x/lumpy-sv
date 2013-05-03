@@ -40,6 +40,12 @@ get_bp()
 	return NULL;
 }
 
+string
+SV_Evidence::
+evidence_type()
+{
+	return "";
+}
 //{{{ void SV_Pair:: set_interval_probability()
 void
 SV_Evidence::

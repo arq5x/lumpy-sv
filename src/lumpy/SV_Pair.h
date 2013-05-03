@@ -111,6 +111,7 @@ class SV_Pair: public SV_Evidence
 		void print_evidence();
 
 		void print_bedpe(int score);
+		string evidence_type();
 };
 
 #endif

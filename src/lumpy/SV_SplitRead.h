@@ -113,6 +113,8 @@ class SV_SplitRead: public SV_Evidence
 									int id,
 									int sample_id,
 									SV_SplitReadReader *reader);
+
+		string evidence_type();
         static uint32_t count_clipped(vector< CigarOp > cigar_data);
 };
 
