@@ -16,6 +16,9 @@
 #define __SV_TOOLS_H__
 
 #include <string>
+#include "ucsc_bins.hpp"
+
+#include "log_space.h"
 using namespace std;
 
 //static inline int strnum_cmp(const char *a, const char *b);
@@ -48,5 +51,9 @@ bool write_temp_file(vector<BamAlignment>& buffer,
 					 string temp_file_name,
 					 string header_text,
     				 RefVector &ref);
+
+
+void normalize_ls(CHR_POS size, log_space *o, log_space *r);
+
 
 #endif

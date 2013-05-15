@@ -247,3 +247,12 @@ process_bedpe(const BEDPE *bedpeEntry,
 	new_bp->cluster(r_bin);
 }
 //}}}
+
+//{{{ string SV_Bedpe:: evidence_type()
+string
+SV_Bedpe::
+evidence_type()
+{
+	return "bedpe";
+}
+//}}}

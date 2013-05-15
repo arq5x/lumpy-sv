@@ -77,7 +77,7 @@ while ( my $l = <STDIN>) {
 		my $print_it = 0;
 
 		if ( $flag & $unmapped_flag ) {
-			#$print_it = 1;
+			$print_it = 1;
 		} elsif (soft_clip_len($cigar) > $b) {
 			$print_it = 1;
 		}

@@ -75,6 +75,7 @@ class SV_BedpeReader : public SV_EvidenceReader
 	string get_curr_chr();
 	CHR_POS get_curr_pos();
 	bool has_next();
+
 };
 
 #endif
