@@ -84,7 +84,8 @@ initialize()
 		bam_files.push_back(it->first);
 
 	if ( !bam_reader.Open(bam_files) ) {
-		cerr << "Could not open input BAM files." << endl;
+        cerr << "Could not open input BAM files: " <<
+            bam_reader.GetErrorString() << endl;
 		exit(1);
 	}    
 	refs = bam_reader.GetReferenceData();
