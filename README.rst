@@ -138,7 +138,7 @@ Weight of each piece of evidence from this sample.
 
 Sample id.
 
-Split-read options
+Paired-end options
 ::
 
     -pe 
