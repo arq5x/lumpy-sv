@@ -397,3 +397,12 @@ length is 150::
 	    bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
 	    > sample.pesr.bedpe
 
+    # run lumpy with paired-end data from a matched tumor/normal samples
+	../bin/lumpy \
+	    -mw 4 \
+	    -tt 1e-3 \
+	    -pe \
+	    bam_file:tumor.pe.sort.bam,histo_file:tumor.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+	    -pe \
+	    bam_file:normal.pe.sort.bam,histo_file:normal.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+	    > tumor_v_normal.pe.bedpe
