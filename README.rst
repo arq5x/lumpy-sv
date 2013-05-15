@@ -7,9 +7,12 @@ University of Virginia.
 
 Installation
 ============
-Lumpy installation requires the GNU Scientific Library (GSL). Below is a
-step-by-step tutorial for how to install and use Lumpy. If you have questions,
-email me.
+Lumpy installation requires the GNU Scientific Library (GSL). We also recommend
+installing samtools, bedtools, bamtools, novoalign (or bwa), yaha, and
+Statistics::Descriptive.  Below is a step-by-step tutorial for how to install
+and use Lumpy. This guide assumes that `/usr/local/bin` is writable and in your
+path.  If either is not true, use another directory that is both writable and
+in your path, or contact your administrator.  If you have questions, email me.
 
 Install the GNU Scientific Libraries (GSL).
 
@@ -17,26 +20,72 @@ Install the GNU Scientific Libraries (GSL).
         - e.g., for OS X using Homebrew: `brew install gsl`
         - e.g., for Ubuntu: `apt-get install gsl`
 
+Install samtools
+::
+    git clone git://github.com/samtools/samtools.git
+    cd samtools
+    make
+    cp samtools /usr/local/bin/.
+
+Install bedtools
+::
+    git clone git@github.com:arq5x/bedtools.git    
+    cd bedtools
+    make
+    cp bin/bedtools /usr/local/bin/.
+
+Install bamtools
+::
+    git clone git://github.com/pezmaster31/bamtools.git
+    cd bamtools
+    mkdir build
+    cd build
+    cmake ..
+    make
+    cd ..
+    cp bin/bamtools /usr/local/bin/.
+
+Install novoalign
+
+    - Novoalign is closed-source, commercial software that can be freely used
+      by any not-for-profit projects within not-for-profit organizations.
+      Visit the 'Downloads' page at http://www.novocraft.com/ 
+
+Install yaha
+::
+    wget http://faculty.virginia.edu/irahall/support/yaha/YAHA.0.1.72.tar.gz
+    tar zxvf YAHA.0.1.72.tar.gz
+    cp yaha /usr/local/bin/.
+
+Install bwa
+::
+    wget http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.4.tar.bz2
+    bunzip2 bwa-0.7.4.tar.bz2
+    tar xvf bwa-0.7.4.tar
+    cd bwa-0.7.4
+    make
+    cp bwa /usr/local/bin/.
+
 Clone the Lumpy repository
 ::
 
-        git clone git://github.com/arq5x/lumpy-sv.git
+   git clone git://github.com/arq5x/lumpy-sv.git
 
 Navigate into the lumpy directory
 ::
 
-        cd lumpy-sv
+  cd lumpy-sv
 
 Edit the `defs.local` file in accordance with your configuration.
     - Edit the `GSL_INCLUDE` environment variable.
         * This path depends on where gsl was installed.  The path should
-          contain the "gsl_statistics_int.h" file.  Possibilties are:
+          contain the "gsl_statistics_int.h" file.  Possibilities are:
         * if OSX,   set GSL_INCLUDE=-I/usr/local/include/ -I/usr/local/include/gsl
         * if Linux, set GSL_INCLUDE=-I/usr/include/gsl/
         * if Windows, sorry this is unsupported.
     - Edit the `GSL_LINK` environment variable.
         * This path depends on where gsl was installed.  The path should
-          contain the "libgsl.so.0" file.  Possibilties are:
+          contain the "libgsl.so.0" file.  Possibilities are:
         * if OSX,   set GSL_LINK=-L/usr/local/lib/
         * if Linux, set GSL_LINK=-L/usr/lib/
         * if Windows, sorry this is unsupported.
@@ -61,30 +110,12 @@ to run each of the lumpy version
 If all works well, and you have bedtools installed in your path you should see
 the following
 ::
-
-	Testing lumpy paired-end
-	Pair:chr10
-	Simulated:    1000  Predicted:      40  True:      40   False:       0
-	Testing lumpy split-read
-	SplitRead:chr10
-	Simulated:    1000  Predicted:      32  True:      32   False:       0
-	Testing lumpy paired-end and split-read
-	SplitRead:chr10
-	Pair:chr10
-	Simulated:    1000  Predicted:     255  True:     255   False:      
-
-If all works well, and you do not have bedtools installed in your path you
-should see the following
-::
-
-	Testing lumpy paired-end
-	Pair:chr10
-	Testing lumpy split-read
-	SplitRead:chr10
-	Testing lumpy paired-end and split-read
-	SplitRead:chr10
-	Pair:chr10
-
+    Testing lumpy paired-end
+    Simulated:1000  Predicted:40    True:40 False:0
+    Testing lumpy split-read
+    Simulated:1000  Predicted:44    True:44 False:0
+    Testing lumpy paired-end and split-read
+    Simulated:1000  Predicted:95    True:93 False:0
 
 Usage
 =====
@@ -213,7 +244,7 @@ Sample id.
 BEDPE (general interface) options
 ::
 
-    -pe 
+    -bedpe 
         bedpe_file:<bedpe file>,
 
 Position sorted bedpe file containing the breakpoint intervals for this sample.
@@ -268,34 +299,49 @@ and compares the results to the known correct result.  The sample data sets are
 not part of the lumpy code base, and can be found at
 `http://www.cs.virginia.edu/~rl6sf/lumpy/data.tar.gz`.  This tar ball should be
 extracted into the top-level lumpy directory.  The script `test/test.sh` checks
-for the the existance of this directory before running lumpy.
+for the the existence of this directory before running lumpy.
 
-Example Single Sample PE and SR Workflow
+Example Single Sample PE and SR Work flow
 ========================================
 
 Assuming that the input files are "sample.1.fq" and "sample.2.fq", and the read
 length is 150::
 
+    # we prefer novoalign for paired-end reads
+    novoalign \
+        -d hg19.ndx \
+        -o SAM \
+        -r Random \
+        -i PE 500,50 -e 1 -c 20 \
+        -f sample.1.fq sample.2.fq \
+        | samtools view -Sb - > sample.pe.bam
+
+    # bwa is another option
 	bwa aln hg19.fa sample.1.fq > sample.1.sai
-
 	bwa aln hg19.fa sample.2.fq > sample.2.sai
-
 	bwa sampe hg19.fa \
 	    sample.1.sai sample.2.sai \
 	    sample.1.fq sample.2.fq \
 	    | samtools view -S -b - \
 	    > sample.pe.bam
 
+    # use bamtools to sort since samtools does not correctly flag the 
+    # resulting bam as coordinate sorted
 	bamtools sort -in sample.pe.bam -out sample.pe.sort.bam
 
+    # extract the reads in sample.pe.sort.bam that are either unmapped 
+    # have a soft clipped portion of at least 20 base pairs
 	samtools view sample.pe.sort.bam \
 	    | scripts/split_unmapped_to_fasta.pl -b 20 \
 	    > sample.um.fq
 
+    # use a split-read aligner on the unmapped/soft clipped reads
+    # we prefer yaha
 	# using yaha (index first)
 	yaha -g hg19.fa  -L 11
-
+    # using 20 threads
 	yaha \
+        -t 20 \
 	    -x hg19.X11_01_65525S
 	    -q sample.um.fq \
 	    -osh stdout \
@@ -305,13 +351,16 @@ length is 150::
 	    | samtools view -Sb - \
 	    > sample.sr.bam
 
-	# using bwa
-	bwa bwasw -H sample.um.fq \
+	# bwasw is another option
+	bwa bwasw -H -t 20 hg19.fa sample.um.fq \
 	    | samtools view -Sb - \
 	    > sample.sr.bam
 
+    # sort the split-read alignments
 	bamtools sort -in sample.sr.bam -out sample.sr.sort.bam
 
+    # empirically define the paired-end distribution from 10000 proper
+    # alignments
 	samtools view sample.pe.sort.bam \
 	    | scripts/pairend_distro.pl \
 	        -rl 150 \
@@ -322,6 +371,7 @@ length is 150::
 	# scripts/pairend_distro.pl will display mean and stdev to screen, we will
 	# assume the mean=500 and stdev=50
 
+    # run lumpy with just the paired-end data
 	../bin/lumpy \
 	    -mw 4 \
 	    -tt 1e-3 \
@@ -329,6 +379,7 @@ length is 150::
 	    bam_file:sample.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
 	    > sample.pe.bedpe
 
+    # run lumpy with just the split-read data
 	../bin/lumpy \
 	    -mw 4 \
 	    -tt 1e-3 \
@@ -336,6 +387,7 @@ length is 150::
 	    bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
 	    > sample.sr.bedpe
 
+    # run lumpy with both the paired-end and split-read data
 	../bin/lumpy \
 	    -mw 4 \
 	    -tt 1e-3 \
