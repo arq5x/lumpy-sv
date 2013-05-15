@@ -31,15 +31,19 @@ Edit the `defs.local` file in accordance with your configuration.
     - Edit the `GSL_INCLUDE` environment variable.
         * This path depends on where gsl was installed.  The path should
           contain the "gsl_statistics_int.h" file.  Possibilties are:
-        * if OSX,   set GSL_INCLUDE=-I/sw/include/ -I/sw/include/gsl
+        * if OSX,   set GSL_INCLUDE=-I/usr/local/include/ -I/usr/local/include/gsl
         * if Linux, set GSL_INCLUDE=-I/usr/include/gsl/
         * if Windows, sorry this is unsupported.
     - Edit the `GSL_LINK` environment variable.
         * This path depends on where gsl was installed.  The path should
           contain the "libgsl.so.0" file.  Possibilties are:
-        * if OSX,   set GSL_LINK=-L/sw/lib/
+        * if OSX,   set GSL_LINK=-L/usr/local/lib/
         * if Linux, set GSL_LINK=-L/usr/lib/
         * if Windows, sorry this is unsupported.
+        
+Finally make sure you have the Statistics::Descriptive CPAN package installed for Perl
+::
+	sudo cpan Statistics::Descriptive
 
 At this point, you should be ready to compile lumpy
 ::
@@ -138,7 +142,7 @@ Weight of each piece of evidence from this sample.
 
 Sample id.
 
-Split-read options
+Paired-end options
 ::
 
     -pe 
@@ -260,7 +264,7 @@ Example::
 Test data sets
 ==============
 The `test/test.sh` script executes lumpy against several simulated data sets
-and compares the results to the known correct reslut.  The sample data sets are
+and compares the results to the known correct result.  The sample data sets are
 not part of the lumpy code base, and can be found at
 `http://www.cs.virginia.edu/~rl6sf/lumpy/data.tar.gz`.  This tar ball should be
 extracted into the top-level lumpy directory.  The script `test/test.sh` checks
