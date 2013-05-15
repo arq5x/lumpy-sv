@@ -40,6 +40,10 @@ Edit the `defs.local` file in accordance with your configuration.
         * if OSX,   set GSL_LINK=-L/usr/local/lib/
         * if Linux, set GSL_LINK=-L/usr/lib/
         * if Windows, sorry this is unsupported.
+        
+Finally make sure you have the Statistics::Descriptive CPAN package installed for Perl
+::
+	sudo cpan Statistics::Descriptive
 
 At this point, you should be ready to compile lumpy
 ::
