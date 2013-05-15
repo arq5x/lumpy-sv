@@ -31,7 +31,7 @@ Edit the `defs.local` file in accordance with your configuration.
     - Edit the `GSL_INCLUDE` environment variable.
         * This path depends on where gsl was installed.  The path should
           contain the "gsl_statistics_int.h" file.  Possibilties are:
-        * if OSX,   set GSL_INCLUDE=-I/sw/include/ -I/sw/include/gsl
+        * if OSX,   set GSL_INCLUDE=-I/usr/local/include/ -I/usr/local/include/gsl
         * if Linux, set GSL_INCLUDE=-I/usr/include/gsl/
         * if Windows, sorry this is unsupported.
     - Edit the `GSL_LINK` environment variable.
