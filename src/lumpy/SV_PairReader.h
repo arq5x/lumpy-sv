@@ -22,6 +22,7 @@ using namespace std;
 #include "SV_BreakPoint.h"
 #include "SV_EvidenceReader.h"
 #include "api/BamReader.h"
+#include "api/BamWriter.h"
 #include "api/BamAux.h"
 
 #include "ucsc_bins.hpp"
@@ -45,7 +46,7 @@ struct pair_end_parameters {
 
 class SV_PairReader : public SV_EvidenceReader
 {
-	private:
+	public:
 		string bam_file,
 			   histo_file;
 		double mean, stdev;
@@ -58,8 +59,11 @@ class SV_PairReader : public SV_EvidenceReader
 		int id;
 		bool is_open,
 			 have_next_alignment;
+		double *histo;
+		double *distro;
+		unsigned int histo_start,histo_end;
+		int distro_size;
 
-	public:
 		BamAlignment bam;
 		BamReader reader;
 		map<string, BamAlignment> mapped_pairs;
@@ -72,19 +76,30 @@ class SV_PairReader : public SV_EvidenceReader
 		bool add_param(char *param, char *val);
 		string check_params();
 		struct pair_end_parameters get_pair_end_parameters();
-		static log_space* get_bp_interval_probability(char strand);
 		void initialize();
 		void set_statics();
-		void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
-		void process_input_chr(string chr,
-							   UCSCBins<SV_BreakPoint*> &r_bin);
-		void process_input_chr_pos(string chr,
-								   CHR_POS pos,
-								   UCSCBins<SV_BreakPoint*> &r_bin);
+		void unset_statics();
+		//void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
+		
+		void process_input( BamAlignment &_bam,
+							RefVector &_ref,
+							BamWriter &inter_chrom_reads,
+							UCSCBins<SV_BreakPoint*> &r_bin);
+
+		void process_input( BamAlignment &_bam,
+							RefVector &_ref,
+							UCSCBins<SV_BreakPoint*> &r_bin);
+
+		//void process_input_chr(string chr,
+							   //UCSCBins<SV_BreakPoint*> &r_bin);
+		//void process_input_chr_pos(string chr,
+								   //CHR_POS pos,
+								   //UCSCBins<SV_BreakPoint*> &r_bin);
 		void terminate();
 		string get_curr_chr();
 		CHR_POS get_curr_pos();
 		bool has_next();
+		string get_source_file_name();
 };
 
 #endif

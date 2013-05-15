@@ -16,6 +16,7 @@
 using namespace BamTools;
 
 #include <exception>
+#include "SV_SplitReadReader.h"
 #include "SV_BreakPoint.h"
 #include "SV_SplitRead.h"
 #include "log_space.h"
@@ -31,12 +32,22 @@ using namespace BamTools;
 
 using namespace std;
 
-//{{{ statics
-int     SV_SplitRead:: back_distance = 0;
-int     SV_SplitRead:: min_non_overlap = 0;
-int     SV_SplitRead:: min_split_size = 20;
-int     SV_SplitRead:: read_length = 76;
-int     SV_SplitRead:: min_mapping_threshold = 10;
+//{{{int SV_SplitRead:: count_clipped(vector< CigarOp > cigar_data)
+uint32_t
+SV_SplitRead::
+count_clipped(vector< CigarOp > cigar_data)
+{
+    uint32_t clipped_count = 0;
+    vector< CigarOp >::iterator i;
+    for (i = cigar_data.begin(); i != cigar_data.end(); ++i) {
+        if ( (i->Type == 'H') || (i->Type == 'S') ) {
+            uint32_t l = i->Length;
+            clipped_count += l;
+        }
+    }
+
+    return clipped_count;
+}
 //}}}
 
 //{{{ void SV_SplitRead:: update_cigar_query(CigarOp op,
@@ -96,8 +107,10 @@ SV_SplitRead(vector< BamAlignment > &block,
 			 const RefVector &refs,
 			 int _weight,
 			 int _id,
-			 int _sample_id)
+			 int _sample_id,
+			 SV_SplitReadReader *_reader)
 {
+	reader = _reader;
 	sample_id = _sample_id;
 
 	if ( block.at(0).MapQuality < block.at(1).MapQuality )
@@ -131,9 +144,9 @@ SV_SplitRead(vector< BamAlignment > &block,
     tmp_b.end = block.at(1).GetEndPosition();
 
 
-	if ( ( tmp_a.chr.compare(tmp_b.chr) > 0 ) ||
-		 ( ( tmp_a.chr.compare(tmp_b.chr) == 0 ) && 
-		   ( tmp_a.start > tmp_b.start ) ) ) {
+	if ( (block.at(0).RefID > block.at(1).RefID) ||
+			( (block.at(0).RefID == block.at(1).RefID) &&
+			  (tmp_a.start > tmp_b.start ) ) ) {
 		side_r = tmp_a;
 		side_l = tmp_b;
 		query_r = query_a;
@@ -144,26 +157,6 @@ SV_SplitRead(vector< BamAlignment > &block,
 		query_l = query_a;
 		query_r = query_b;
 	}
-
-#if 0
-	cerr << "tmp:" <<
-			tmp_a.chr << "," <<
-			tmp_a.start << "," <<
-			tmp_a.end << "," <<
-			tmp_a.strand << "\t" <<
-			tmp_b.chr << "," <<
-			tmp_b.start << "," <<
-			tmp_b.end << "," <<
-			tmp_b.strand << endl;
-
-
-	cerr << "set:" <<
-			side_l.strand << "," <<
-			query_l.qs_pos << "\t" <<
-			side_r.strand << "," <<
-			query_r.qs_pos << "\t" <<
-			endl;
-#endif
 
     if (side_l.strand != side_r.strand)
 		type = SV_BreakPoint::INVERSION;
@@ -206,8 +199,10 @@ SV_SplitRead(const BamAlignment &bam_a,
 			 const RefVector &refs,
 			 int _weight,
 			 int _id,
-			 int _sample_id)
+			 int _sample_id,
+			 SV_SplitReadReader *_reader)
 {
+	reader = _reader;
 	sample_id = _sample_id;
 
 	if ( bam_a.MapQuality < bam_b.MapQuality )
@@ -239,9 +234,13 @@ SV_SplitRead(const BamAlignment &bam_a,
     tmp_b.end = bam_b.GetEndPosition();
 
 
-	if ( ( tmp_a.chr.compare(tmp_b.chr) > 0 ) ||
-		 ( ( tmp_a.chr.compare(tmp_b.chr) == 0 ) && 
-		   ( tmp_a.start > tmp_b.start ) ) ) {
+	//if ( ( tmp_a.chr.compare(tmp_b.chr) > 0 ) ||
+		 //( ( tmp_a.chr.compare(tmp_b.chr) == 0 ) && 
+		   //( tmp_a.start > tmp_b.start ) ) ) {
+
+	if ( (bam_a.RefID > bam_b.RefID) ||
+			( (bam_a.RefID == bam_b.RefID) &&
+			  (tmp_a.start > tmp_b.start ) ) ) {
 		side_r = tmp_a;
 		side_l = tmp_b;
 		query_r = query_a;
@@ -270,7 +269,6 @@ SV_SplitRead(const BamAlignment &bam_a,
 				( query_l.qs_pos < query_r.qs_pos) ) )
 		type = SV_BreakPoint::DUPLICATION;
     else {
-		/*
 		cerr << "ERROR IN BAM FILE.  " << 
 				"TYPE not detected (DELETION,DUPLICATION,INVERSION)" <<
 				endl;
@@ -281,7 +279,6 @@ SV_SplitRead(const BamAlignment &bam_a,
 			endl;
 
 		throw(1);
-		*/
 	}
 
 	weight = _weight;
@@ -299,15 +296,6 @@ get_bp()
 
 	new_bp->type = type;
 
-/*
-    vector<SV_Evidence*>::iterator it;
-    for (it = new_bp->evidence.begin(); it < new_bp->evidence.end(); ++it) {
-        SV_Evidence *sv_e = *it;
-        cout << "+\t";
-        sv_e->print_evidence();
-    }
-*/
-
 	new_bp->interval_l.i.chr = side_l.chr;
 	new_bp->interval_l.i.strand = side_l.strand;
 
@@ -322,10 +310,27 @@ get_bp()
 			   ( side_l.strand == '+' ) && 
 			   ( side_r.strand == '-' ) ) ) {
 
-			new_bp->interval_l.i.start = side_l.start - back_distance;
-			new_bp->interval_l.i.end = side_l.start + 1 + back_distance;
-			new_bp->interval_r.i.start = side_r.start - back_distance;
-			new_bp->interval_r.i.end = side_r.start + 1 + back_distance;
+			if ( side_l.start > reader->back_distance) {
+				new_bp->interval_l.i.start = 
+						side_l.start - reader->back_distance;
+				new_bp->interval_l.i.start_clip = 0;
+			} else {
+				new_bp->interval_l.i.start = 0;
+				new_bp->interval_l.i.start_clip = side_l.start;
+			}
+
+			new_bp->interval_l.i.end = side_l.start + reader->back_distance;
+
+			if (side_r.start > reader->back_distance) {
+				new_bp->interval_r.i.start = 
+						side_r.start - reader->back_distance;
+				new_bp->interval_r.i.start_clip = 0;
+			} else {
+				new_bp->interval_r.i.start = 0;
+				new_bp->interval_r.i.start_clip = side_r.start;
+			}
+
+			new_bp->interval_r.i.end = side_r.start + reader->back_distance;
 
 		} else if ( ( ( query_l.qs_pos < query_r.qs_pos ) &&
 					  ( side_l.strand == '+' ) &&
@@ -334,28 +339,111 @@ get_bp()
 					  ( side_l.strand == '-' ) &&
 					  ( side_r.strand == '+' ) ) ) {
 
-			new_bp->interval_l.i.start = side_l.end - 1 - back_distance;
-			new_bp->interval_l.i.end = side_l.end + back_distance;
-			new_bp->interval_r.i.start = side_r.end - 1 - back_distance;
-			new_bp->interval_r.i.end = side_r.end + back_distance;
+			if (side_l.end > reader->back_distance) {
+				new_bp->interval_l.i.start =
+					side_l.end  - reader->back_distance;
+				new_bp->interval_l.i.start_clip = 0;
+			} else {
+				new_bp->interval_l.i.start = 0;
+				new_bp->interval_l.i.start_clip = side_l.end;
+			}
+
+			new_bp->interval_l.i.end = side_l.end + reader->back_distance;
+
+			if (side_r.end > reader->back_distance) {
+				new_bp->interval_r.i.start = 
+					side_r.end - reader->back_distance;
+				new_bp->interval_r.i.start_clip = 0;
+			} else {
+				new_bp->interval_r.i.start = 0;
+				new_bp->interval_r.i.start_clip = side_r.end;
+			}
+
+			new_bp->interval_r.i.end = side_r.end + reader->back_distance;
 		} else {
 			abort();
 		}
 	} else if (type == SV_BreakPoint::DELETION) {
 
-		new_bp->interval_l.i.start = side_l.end - 1 - back_distance;
-		new_bp->interval_l.i.end = side_l.end + back_distance;
-		new_bp->interval_r.i.start = side_r.start - back_distance;
-		new_bp->interval_r.i.end = side_r.start + 1 + back_distance;
+		if (side_l.end > reader->back_distance) {
+			new_bp->interval_l.i.start = side_l.end - reader->back_distance;
+			new_bp->interval_l.i.start_clip = 0;
+		} else {
+			new_bp->interval_l.i.start = 0;
+			new_bp->interval_l.i.start_clip = side_l.end;
+		}
+
+		new_bp->interval_l.i.end = side_l.end + reader->back_distance;
+
+		if (side_r.start > reader->back_distance) {
+			new_bp->interval_r.i.start = side_r.start - reader->back_distance;
+			new_bp->interval_r.i.start_clip = 0;
+		} else {
+			new_bp->interval_r.i.start = 0;
+			new_bp->interval_r.i.start_clip = side_r.start;
+		}
+
+		new_bp->interval_r.i.end = side_r.start + reader->back_distance;
 	} else if (type == SV_BreakPoint::DUPLICATION) {
 
-		new_bp->interval_l.i.start = side_l.start - back_distance;
-		new_bp->interval_l.i.end = side_l.start + 1 + back_distance;
-		new_bp->interval_r.i.start = side_r.end - 1 - back_distance;
-		new_bp->interval_r.i.end = side_r.end + back_distance;
+		if (side_l.start > reader->back_distance) {
+			new_bp->interval_l.i.start = side_l.start - reader->back_distance;
+			new_bp->interval_l.i.start_clip = 0;
+		} else {
+			new_bp->interval_l.i.start = 0;
+			new_bp->interval_l.i.start_clip = side_l.start;
+		}
+
+		new_bp->interval_l.i.end = side_l.start + reader->back_distance;
+		
+		if (side_r.end > reader->back_distance) {
+			new_bp->interval_r.i.start = side_r.end - reader->back_distance;
+			new_bp->interval_r.i.start_clip = 0;
+		} else {
+			new_bp->interval_r.i.start = 0;
+			new_bp->interval_r.i.start_clip = side_r.end;
+		}
+
+		new_bp->interval_r.i.end = side_r.end + reader->back_distance;
 	}  else {
 		abort();
 	}
+
+	if ( (new_bp->interval_l.i.chr.compare(side_r.chr) == 0 ) &&
+			(new_bp->interval_l.i.end >= side_r.start) ) {
+		new_bp->interval_l.i.end_clip = 
+			new_bp->interval_l.i.end - side_r.start + 1;
+		new_bp->interval_l.i.end = side_r.start - 1;
+	}
+
+	if ( (new_bp->interval_r.i.chr.compare(side_l.chr) == 0) &&
+			(new_bp->interval_r.i.start <= side_l.end)) {
+		new_bp->interval_r.i.start_clip = 
+			side_l.end - new_bp->interval_r.i.start + 1;
+		new_bp->interval_r.i.start = side_l.end + 1;
+	}
+
+	/*
+	cerr << 
+			side_l.chr << "," <<
+			side_l.start << "," <<
+			side_l.end << "\t" <<
+			side_r.chr << "," <<
+			side_r.start << "," <<
+			side_r.end << "\t" <<
+		
+			new_bp->interval_l.i.chr << "," <<
+			new_bp->interval_l.i.start << "," <<
+			new_bp->interval_l.i.end << "\t" <<
+			new_bp->interval_r.i.chr << "," <<
+			new_bp->interval_r.i.start << "," <<
+			new_bp->interval_r.i.end << "\t" << 
+			(new_bp->interval_l.i.start < new_bp->interval_l.i.end )<< "\t" <<
+			(new_bp->interval_r.i.start < new_bp->interval_r.i.end )<< endl;
+	*/
+
+
+
 	//set_bp_interval_probability(&(new_bp->interval_l));
 	//set_bp_interval_probability(&(new_bp->interval_r));
 	new_bp->interval_r.p = NULL;
@@ -370,19 +458,21 @@ get_bp()
 //{{{ log_space* SV_SplitRead:: get_bp_interval_probability(char strand)
 log_space*
 SV_SplitRead::
-get_bp_interval_probability(char strand)
+get_bp_interval_probability(char strand,
+							unsigned int back_distance)
 {
-    double lambda = log(0.0001)/(-1 * back_distance);
+    double lambda = log(0.0001)/(-1 * (int)back_distance);
 
-	unsigned int distro_size = 2*back_distance;
+	unsigned int distro_size = 2*back_distance + 1;
 	log_space *tmp_p = (log_space *) malloc( distro_size * sizeof(log_space));
-	int j;
-	for (j = 0; j < back_distance; ++j)
+	unsigned int j;
+	for (j = 0; j < back_distance; ++j) 
 			tmp_p[j] = get_ls( exp(-1*lambda*(back_distance - j)));
 
-	for (; j < distro_size; ++j)
+	for (; j < distro_size; ++j) 
 			tmp_p[j] = get_ls(
 					exp(-1*lambda*(back_distance - (distro_size - j - 1))));
+	
 
 	return tmp_p;
 }
@@ -393,7 +483,7 @@ bool
 SV_SplitRead::
 is_sane()
 {
-	if ( min_mapping_quality < min_mapping_threshold )
+	if ( min_mapping_quality < reader->min_mapping_threshold )
 		return false;
 
 
@@ -418,23 +508,7 @@ is_sane()
 	}
 
 
-	int side_len_l = query_l.qe_pos - query_l.qs_pos;
-	int side_len_r = query_r.qe_pos - query_r.qs_pos;
-
-	int overlap = 1 + min(query_l.qe_pos, query_r.qe_pos) - 
-						  max(query_l.qs_pos, query_r.qs_pos);
-	overlap = max(0, overlap);
-	//int non_overlap = min(read_len_a, read_len_b) - overlap;
-	// how much does not overlap // overlap is at most read_len
-	int non_overlap_l = 1 + side_len_l - overlap;
-	int non_overlap_r = 1 + side_len_r - overlap;
-
-	int curr_min_non_overlap = min(non_overlap_l, non_overlap_r);
-
-	if ( curr_min_non_overlap >= min_non_overlap )
-		return true;
-	else 
-		return false;
+	return (side_l.end < side_r.start);
 }
 //}}}
 
@@ -498,19 +572,25 @@ process_split(const BamAlignment &curr,
 			  UCSCBins<SV_BreakPoint*> &r_bin,
 			  int weight,
 			  int id,
-			  int sample_id)
+			  int sample_id,
+			  SV_SplitReadReader *_reader)
 {
 
-	if (mapped_splits.find(curr.Name) == mapped_splits.end())
-		mapped_splits[curr.Name] = curr;
-	else {
+	if (mapped_splits.find(curr.Name) == mapped_splits.end()) {
+        uint32_t clipped = count_clipped(curr.CigarData);
+        if (clipped >= _reader->min_clip)
+		    mapped_splits[curr.Name] = curr;
+    } else {
 		try {
-			SV_SplitRead *new_split_read = new SV_SplitRead(mapped_splits[curr.Name],
-															curr,
-															refs,
-															weight,
-															id,
-															sample_id);
+			SV_SplitRead *new_split_read = 
+				new SV_SplitRead(mapped_splits[curr.Name],
+								 curr,
+								 refs,
+								 weight,
+								 id,
+								 sample_id,
+								 _reader);
+
 			SV_BreakPoint *new_bp = NULL;
 			if (new_split_read->is_sane()) {
 				new_bp = new_split_read->get_bp();
@@ -527,5 +607,81 @@ process_split(const BamAlignment &curr,
 
 		mapped_splits.erase(curr.Name);
 	}
+}
+//}}}
+
+//{{{ void process_intra_chrom_split(const BamAlignment &curr,
+void
+SV_SplitRead::
+process_intra_chrom_split(const BamAlignment &curr,
+						  const RefVector refs,
+						  BamWriter &inter_chrom_reads,
+						  map<string, BamAlignment> &mapped_splits,
+						  UCSCBins<SV_BreakPoint*> &r_bin,
+						  int weight,
+						  int id,
+						  int sample_id,
+						  SV_SplitReadReader *_reader)
+{
+
+	if (mapped_splits.find(curr.Name) == mapped_splits.end()) {
+        uint32_t clipped = count_clipped(curr.CigarData);
+        if (clipped >= _reader->min_clip)
+		    mapped_splits[curr.Name] = curr;
+    } else {
+		if ( mapped_splits[curr.Name].RefID == curr.RefID ) {
+			try {
+				SV_SplitRead *new_split_read = 
+					new SV_SplitRead(mapped_splits[curr.Name],
+									 curr,
+									 refs,
+									 weight,
+									 id,
+									 sample_id,
+									 _reader);
+
+				SV_BreakPoint *new_bp = NULL;
+				if (new_split_read->is_sane()) {
+					new_bp = new_split_read->get_bp();
+
+					vector<SV_Evidence*>::iterator it;
+
+					new_bp->cluster(r_bin);
+				} else
+					free(new_split_read);
+
+			} catch (int) {
+				cerr << "Error creating split read: " << endl;
+			}
+
+		} else {
+			BamAlignment al1 = curr;
+			BamAlignment al2 = mapped_splits[curr.Name];
+
+			al1.MateRefID = al2.RefID;
+			al2.MateRefID = al1.RefID;
+
+			al1.MatePosition = al2.Position;
+			al2.MatePosition = al1.Position;
+
+			string x = _reader->get_source_file_name();
+
+			al1.AddTag("LS","Z",x);
+			al2.AddTag("LS","Z",x);
+
+			inter_chrom_reads.SaveAlignment(al1);
+			inter_chrom_reads.SaveAlignment(al2);
+		}
+		mapped_splits.erase(curr.Name);
+	}
+}
+//}}}
+
+//{{{string SV_SplitRead:: evidence_type()
+string
+SV_SplitRead::
+evidence_type()
+{
+	return "split read";
 }
 //}}}

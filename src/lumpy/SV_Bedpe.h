@@ -16,6 +16,7 @@
 #define __SV_BEDPE_H__
 
 #include "SV_Evidence.h"
+#include "SV_BedpeReader.h"
 #include "SV_BreakPoint.h"
 #include "ucsc_bins.hpp"
 #include "log_space.h"
@@ -33,35 +34,38 @@ class SV_Bedpe: public SV_Evidence
 		//void set_bp_interval_probability(struct breakpoint_interval *i);
 		static void set_bp_interval_start_end(struct breakpoint_interval *i,
 											  struct interval *target_interval,
-											  struct interval *target_pair);
+											  struct interval *target_pair,
+											  int back_distance,
+											  int distro_size);
 	public:
 		SV_Bedpe(const BEDPE *bedpeEntry,
 				 int weight,
 				 int id,
-				 int sample_id);
+				 int sample_id,
+				 SV_BedpeReader *reader);
 
 		static void process_bedpe(const BEDPE *bedpeEntry,
 								  UCSCBins<SV_BreakPoint*> &r_bin,
 								  int weight,
 								  int id,
-								  int sample_id);
+								  int sample_id,
+								  SV_BedpeReader *reader);
 
 
-		static log_space* get_bp_interval_probability(char strand);
-
-		static double *distro;
-		static int distro_size;
-		static int distro_start;
-		static int distro_end;
-		static int back_distance;
-
+		static log_space* get_bp_interval_probability(char strand,
+													  int distro_size,
+													  double *distro);
 		struct interval side_l;
 		struct interval side_r;
+		SV_BedpeReader *reader;
+
+		bool is_interchromosomal();
 
 		SV_BreakPoint* get_bp();
 
 		void print_bedpe(int score);
 		void print_evidence();
+		string evidence_type();
 };
 
 #endif

@@ -12,6 +12,7 @@
  * Licenced under the GNU General Public License 2.0 license.
  * ***************************************************************************/
 
+class SV_Evidence;
 #ifndef __SV_BREAKPOINT_H__
 #define __SV_BREAKPOINT_H__
 
@@ -29,6 +30,7 @@ using namespace std;
 
 struct interval {
 	CHR_POS start, end;
+	CHR_POS start_clip, end_clip;
 	char strand;
 	string chr;
 };
@@ -67,15 +69,23 @@ class SV_BreakPoint
 		int weight;
 		vector<SV_Evidence*> evidence;
 		map<int, int> ids;
+
 		struct breakpoint_interval interval_l, interval_r;
+
 
 		SV_BreakPoint(SV_Evidence *e);
 		SV_BreakPoint();
+		SV_BreakPoint(SV_BreakPoint *a, SV_BreakPoint *b);
 		~SV_BreakPoint();
 		void free_evidence();
 		static bool does_intersect(struct breakpoint_interval *a,
 								   struct breakpoint_interval *b,
 								   bool check_strand);
+		static void get_max_range(struct breakpoint_interval *b,
+								  CHR_POS *max_start,
+								  CHR_POS *max_end,
+								  log_space *max_value);
+
 		bool merge(SV_BreakPoint *p);
 		static bool test_interval_merge(struct breakpoint_interval *curr_intr,
 					                    struct breakpoint_interval *new_intr,
@@ -85,6 +95,7 @@ class SV_BreakPoint
 		void print_evidence(string pre);
 		void trim_intervals();
 		void init_interval_probabilities();
+		void free_interval_probabilities();
 		void print_bedpe(int score);
 		//void cluster(UCSCBins<SV_BreakPoint*> &l_bin,
 					 //UCSCBins<SV_BreakPoint*> &r_bin);
@@ -94,6 +105,23 @@ class SV_BreakPoint
 		void insert(UCSCBins<SV_BreakPoint*> &r_bin);
 		vector<int> get_evidence_ids();
 
-};
+		void do_it();
+		void peak_distance(SV_BreakPoint *e,
+						   CHR_POS *dist,
+						   CHR_POS *overlap);
 
+		static pair<CHR_POS,CHR_POS>
+			min_pair( vector< vector< pair<CHR_POS,CHR_POS> > > &m);
+
+        void get_distances(vector< SV_BreakPoint*> &new_v);
+
+        static void interval_product(struct breakpoint_interval *a_intr,
+					                 struct breakpoint_interval *b_intr,
+					                 CHR_POS *product_len,
+					                 CHR_POS *product_start,
+					                 CHR_POS *product_end,
+					                 log_space **product_prob);
+        void get_mixture(struct breakpoint_interval **l_mixture,
+                         struct breakpoint_interval **r_mixture);
+};
 #endif

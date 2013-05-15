@@ -22,6 +22,7 @@ using namespace std;
 #include "SV_BreakPoint.h"
 #include "SV_EvidenceReader.h"
 #include "api/BamReader.h"
+#include "api/BamWriter.h"
 #include "api/BamAux.h"
 
 #include "ucsc_bins.hpp"
@@ -33,7 +34,8 @@ struct split_read_parameters {
 	string bam_file;
 	unsigned int min_non_overlap,
 				 back_distance,
-				 min_mapping_threshold;
+				 min_mapping_threshold,
+                 min_clip;
 	int weight;
 	int id;
 };
@@ -41,17 +43,17 @@ struct split_read_parameters {
 
 class SV_SplitReadReader : public SV_EvidenceReader
 {
-	private:
+	public:
 		string bam_file;
 		unsigned int min_non_overlap,
 					 back_distance,
-					 min_mapping_threshold;
+					 min_mapping_threshold,
+                     min_clip;
 		int weight;
 		int id;
 		bool is_open,
 			 have_next_alignment;
 
-	public:
 		BamAlignment bam;
 		BamReader reader;
 		map<string, BamAlignment> mapped_splits;
@@ -64,16 +66,28 @@ class SV_SplitReadReader : public SV_EvidenceReader
 		string check_params();
 		void initialize();
 		void set_statics();
-		void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
-		void process_input_chr(string chr,
-							   UCSCBins<SV_BreakPoint*> &r_bin);
-		void process_input_chr_pos(string chr,
-								   CHR_POS pos,
-								   UCSCBins<SV_BreakPoint*> &r_bin);
+		void unset_statics();
+		//void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
+		
+		void process_input( BamAlignment &_bam,
+							RefVector &_ref,
+							UCSCBins<SV_BreakPoint*> &r_bin);
+
+		void process_input( BamAlignment &_bam,
+							RefVector &_ref,
+							BamWriter &inter_chrom_reads,
+							UCSCBins<SV_BreakPoint*> &r_bin);
+
+		//void process_input_chr(string chr,
+							   //UCSCBins<SV_BreakPoint*> &r_bin);
+		//void process_input_chr_pos(string chr,
+								   //CHR_POS pos,
+								   //UCSCBins<SV_BreakPoint*> &r_bin);
 		void terminate();
 		string get_curr_chr();
 		CHR_POS get_curr_pos();
 		bool has_next();
+		string get_source_file_name();
 };
 
 #endif

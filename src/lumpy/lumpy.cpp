@@ -15,6 +15,7 @@
 //{{{ includes
 #include "version.h"
 #include "api/BamReader.h"
+#include "api/BamMultiReader.h"
 #include "api/BamAux.h"
 #include "BamAncillary.h"
 #include "bedFile.h"
@@ -28,6 +29,8 @@
 #include "SV_SplitReadReader.h"
 #include "SV_PairReader.h"
 #include "SV_BedpeReader.h"
+#include "SV_BamReader.h"
+#include "SV_InterChromBamReader.h"
 #include "SV_Tools.h"
 
 #include "ucsc_bins.hpp"
@@ -45,6 +48,10 @@ using namespace BamTools;
 #include <string>
 #include <limits.h>
 #include <math.h>
+#include <cstdio>
+#include <cstdlib>
+#include <time.h>
+
 
 #include <gsl_statistics_int.h>
 
@@ -61,8 +68,6 @@ using namespace std;
 
 //{{{ forward declarations
 void ShowHelp(void);
-
-static inline int strnum_cmp(const char *a, const char *b);
 //}}}
 
 //{{{ void ShowHelp(void)
@@ -79,11 +84,14 @@ void ShowHelp(void)
 		"\t-w"		"\tFile read windows size (default 1000000)" << endl <<
 		"\t-mw"		"\tminimum weight for a call" << endl <<
 		"\t-tt"		"\ttrim threshold" << endl <<
+		"\t-t"		"\ttemp file prefix, must be to a writeable directory" << 
+					endl <<
 		"\t-sr"		"\tbam_file:<file name>," << endl <<
 					"\t\tback_distance:<distance>" << endl << 
 					"\t\tmin_mapping_threshold:<mapping quality>" << endl << 
 					"\t\tweight:<sample weight>" << endl << 
 					"\t\tid:<sample id>" << endl << 
+					"\t\tmin_clip:<minimum clip length>" << endl << 
 					endl <<
 		"\t-pe"		"\tbam_file:<file name>," << endl <<
 					"\t\thisto_file:<file name>," << endl <<
@@ -108,73 +116,6 @@ void ShowHelp(void)
 }
 //}}}
 
-//{{{ static inline int strnum_cmp(const char *a, const char *b)
-//read name str cmp
-static inline int strnum_cmp(const char *a, const char *b)
-{
-	char *pa, *pb;
-	pa = (char*)a; pb = (char*)b;
-	while (*pa && *pb) {
-		if (isdigit(*pa) && isdigit(*pb)) {
-			long ai, bi;
-			ai = strtol(pa, &pa, 10);
-			bi = strtol(pb, &pb, 10);
-			if (ai != bi) return ai<bi? -1 : ai>bi? 1 : 0;
-		} else {
-			if (*pa != *pb) break;
-			++pa; ++pb;
-		}
-	}
-	if (*pa == *pb)
-		return (pa-a) < (pb-b)? -1 : (pa-a) > (pb-b)? 1 : 0;
-	return *pa<*pb? -1 : *pa>*pb? 1 : 0;
-}
-//}}}
-
-//{{{ void parse_cmd_line_args(int *i,
-void
-parse_cmd_line_args(int *i,
-					int argc,
-					char **argv,
-					SV_EvidenceReader *e_r,
-					vector<SV_EvidenceReader*> &evidence_readers,
-					string e_name)
-{
-	if ((*i+1) < argc) {
-		char *params = argv[*i + 1];
-		char *param_val, *brka, *brkb;
-
-		for (	param_val = strtok_r(params, ",", &brka);
-				param_val;
-				param_val = strtok_r(NULL, ",", &brka)) {   
-			char *param = strtok_r(param_val, ":", &brkb);
-			char *val = strtok_r(NULL, ":", &brkb);
-
-			if (val == NULL) {
-				cerr << "Parameter requied for " << param << endl;
-				ShowHelp();
-			}
-
-			if ( ! e_r->add_param(param, val) ) {
-				cerr << "Unknown pair end parameter:" << param << endl;
-				ShowHelp();
-			}
-		}
-	}
-
-	string msg = e_r->check_params();
-	if ( msg.compare("") == 0 ) {
-		evidence_readers.push_back(e_r);
-	} else {
-		cerr << "missing " << e_name << " parameters:" << msg << endl;
-		ShowHelp();
-	}
-
-	i++;
-
-}
-//}}}
-
 //{{{ int main(int argc, char* argv[]) {
 int main(int argc, char* argv[])
 {
@@ -184,7 +125,10 @@ int main(int argc, char* argv[])
 	double merge_threshold = 1e-10;
 	int min_weight = 0;
 	bool show_evidence = false;
+	bool has_bams = false, has_bedpes = false;
 	CHR_POS window_size = 1000000;
+	string inter_chrom_file_prefix = "./";
+	//vector<string> bam_files;
 	//}}}
 
     //{{{ check to see if we should print out some help
@@ -202,24 +146,18 @@ int main(int argc, char* argv[])
 	//}}}
 
 	//{{{ do some parsing (all of these parameters require 2 strings)
+	//vector<SV_EvidenceReader*> bam_evidence_readers;
 	vector<SV_EvidenceReader*> evidence_readers;
+	map<string, SV_EvidenceReader*> bam_evidence_readers;
 
     for(int i = 1; i < argc; i++) {
         int parameterLength = (int)strlen(argv[i]);
 
 		if(PARAMETER_CHECK("-pe", 3, parameterLength)) {
 			//{{{
-
+			has_bams = true;
 			SV_PairReader *pe_r = new SV_PairReader();
 
-			/*
-			parse_cmd_line_args(&i,
-								argc,
-								argv,
-								pe_r,
-								evidence_readers,
-								"pair-end");
-			*/
 			if ((i+1) < argc) {
 				char *params = argv[i + 1];
 				char *param_val, *brka, *brkb;
@@ -245,17 +183,24 @@ int main(int argc, char* argv[])
 			string msg = pe_r->check_params();
 			if ( msg.compare("") == 0 ) {
 				// Add to list of readers
-				evidence_readers.push_back(pe_r);
 				// Set the ditro map
-				pe_r->set_statics();
+				
+				pe_r->initialize();
 				SV_Evidence::distros[pe_r->sample_id] = 
 					pair<log_space*,log_space*>(
-							SV_Pair::get_bp_interval_probability('+'),
-							SV_Pair::get_bp_interval_probability('-'));
+						SV_Pair::get_bp_interval_probability('+',
+															 pe_r->distro_size,
+															 pe_r->distro),
+						SV_Pair::get_bp_interval_probability('-',
+															 pe_r->distro_size,
+															 pe_r->distro));
+				SV_Evidence::distros_size[pe_r->sample_id] = pe_r->distro_size;
 			} else {
 				cerr << "missing pair end parameters:" << msg << endl;
 				ShowHelp();
 			}
+
+			bam_evidence_readers[pe_r->get_source_file_name()] = pe_r;
 
 			i++;
 			//}}}
@@ -264,7 +209,7 @@ int main(int argc, char* argv[])
 
 		else if(PARAMETER_CHECK("-bedpe", 6, parameterLength)) {
 			//{{{
-			
+			has_bedpes = true;	
 			SV_BedpeReader *be_r = new SV_BedpeReader();
 
 			if ((i+1) < argc) {
@@ -291,14 +236,21 @@ int main(int argc, char* argv[])
 
 			string msg = be_r->check_params();
 			if ( msg.compare("") == 0 ) {
-				evidence_readers.push_back(be_r);
+				be_r->initialize();
 				SV_Evidence::distros[be_r->sample_id] = 
 					pair<log_space*,log_space*>(
-							SV_Bedpe::get_bp_interval_probability('+'),
-							SV_Bedpe::get_bp_interval_probability('-'));
-
+						SV_Bedpe::
+						get_bp_interval_probability('+',
+												    be_r->distro_size,
+												    be_r->distro),
+						SV_Bedpe::
+						get_bp_interval_probability('-',
+												    be_r->distro_size,
+												    be_r->distro));
+				SV_Evidence::distros_size[be_r->sample_id] = be_r->distro_size;
+				evidence_readers.push_back(be_r);
 			} else {
-				cerr << "missing pair end parameters:" << msg << endl;
+				cerr << "missing bedpe parameters:" << msg << endl;
 				ShowHelp();
 			}
 
@@ -308,6 +260,7 @@ int main(int argc, char* argv[])
 
 		else if(PARAMETER_CHECK("-sr", 3, parameterLength)) {
 			//{{{
+			has_bams = true;
 			SV_SplitReadReader *sr_r = new SV_SplitReadReader();
 
 			if ((i+1) < argc) {
@@ -334,16 +287,25 @@ int main(int argc, char* argv[])
 
 			string msg = sr_r->check_params();
 			if ( msg.compare("") == 0 ) {
-				evidence_readers.push_back(sr_r);
+				sr_r->initialize();
 				SV_Evidence::distros[sr_r->sample_id] = 
 					pair<log_space*,log_space*>(
-							SV_SplitRead::get_bp_interval_probability('+'),
-							SV_SplitRead::get_bp_interval_probability('-'));
+							SV_SplitRead::
+							get_bp_interval_probability('+',
+														sr_r->back_distance),
+							SV_SplitRead::
+							get_bp_interval_probability('-',
+														sr_r->back_distance));
 
+				SV_Evidence::distros_size[sr_r->sample_id] = 
+						sr_r->back_distance * 2 + 1;
 			} else {
-				cerr << "missing pair end parameters:" << msg << endl;
+				cerr << "missing split read parameters:" << msg << endl;
 				ShowHelp();
 			}
+
+			//bam_files.push_back(sr_r->get_source_file_name());
+			bam_evidence_readers[sr_r->get_source_file_name()] = sr_r;
 
 			i++;
 			//}}}
@@ -375,19 +337,16 @@ int main(int argc, char* argv[])
 			}
 		}
 
+        else if(PARAMETER_CHECK("-t", 2, parameterLength)) {
+            if ((i+1) < argc) {
+				inter_chrom_file_prefix = argv[i + 1];
+                i++;
+			}
+		}
+
         else if(PARAMETER_CHECK("-e", 2, parameterLength)) {
 			show_evidence = true;
 		}
-
-		/*
-        else if(PARAMETER_CHECK("-s", 2, parameterLength)) {
-            if ((i+1) < argc) {
-				store_evidence = true;
-                evidence_db = argv[i + 1];
-				i++;
-			}
-		}
-		*/
 
         else {
             cerr << endl << "*****ERROR: Unrecognized parameter: " <<
@@ -403,6 +362,15 @@ int main(int argc, char* argv[])
 
 
 	//}}}
+	srand (time(NULL));
+	inter_chrom_file_prefix = inter_chrom_file_prefix + ToString(rand());
+
+	if (has_bams) {
+		SV_BamReader *bam_r = new SV_BamReader(&bam_evidence_readers);
+		bam_r->set_inter_chrom_file_name(inter_chrom_file_prefix + ".bam");
+		bam_r->initialize();
+		evidence_readers.push_back(bam_r);
+	}
 
 	UCSCBins<SV_BreakPoint*> r_bin;
 
@@ -412,12 +380,14 @@ int main(int argc, char* argv[])
 	vector<SV_EvidenceReader*>::iterator i_er;
 
 	//{{{ initialize all input files
+	/*
 	for (	i_er = evidence_readers.begin();
 			i_er != evidence_readers.end();
 			++i_er) {
 		SV_EvidenceReader *er = *i_er;
 		er->initialize();
 	}
+	*/
 	//}}}
 	
 	bool has_next = false;
@@ -431,6 +401,9 @@ int main(int argc, char* argv[])
 	}
 	//}}}
 
+	//{{{ process the intra-chrom events that were saved to a file
+	CHR_POS max_pos = 0;
+	string last_min_chr = "";
 	while ( has_next ) {
 		string min_chr = "";
 		//{{{ find min_chr among all input files
@@ -450,7 +423,12 @@ int main(int argc, char* argv[])
 		}
 		//}}}
 
-		CHR_POS max_pos = window_size;
+		// if the chrome switches, reset the max_pos
+		if (last_min_chr.compare(min_chr) != 0) {
+			max_pos = window_size;
+			last_min_chr = min_chr;
+		}
+
 		bool input_processed = true;
 
 		while (input_processed) {
@@ -468,16 +446,14 @@ int main(int argc, char* argv[])
 					CHR_POS curr_pos = er->get_curr_pos();
 					if ( ( curr_chr.compare(min_chr) <= 0 ) &&
 						 ( curr_pos < max_pos) )	{
-						er->set_statics();
-						//er->process_input_chr(curr_chr, r_bin);
-						er->process_input_chr_pos(curr_chr, max_pos, r_bin);
+						er->process_input_chr_pos(curr_chr,
+												  max_pos,
+												  r_bin);
 						input_processed = true;
-						//cerr << r_bin.num_bps() << endl;
 					} 
 				}
 			}
 			//}}}
-
 
 			//{{{ get breakpoints
 			vector< UCSCElement<SV_BreakPoint*> > values = 
@@ -490,28 +466,27 @@ int main(int argc, char* argv[])
 			for (it = values.begin(); it < values.end(); ++it) {
 				SV_BreakPoint *bp = it->value;
 
-				// Make sure both ends of the bp match the current chrom
-				if ( ( bp->interval_l.i.chr.compare(min_chr) == 0 ) &&
-					 ( bp->interval_r.i.chr.compare(min_chr) == 0 ) &&
-					 ( bp->interval_l.i.start < max_pos ) &&
-					 ( bp->interval_r.i.start < max_pos ) ) {
-
-					if ( bp->weight >= min_weight ) {
-						 
-						bp->trim_intervals();
-						bp->print_bedpe(-1);
-						if (show_evidence)
-							bp->print_evidence("\t");
-					}
-
-					r_bin.remove(*it, false, false, true);
-					bp->free_evidence();
-					delete bp;
+				// Make sure both ends of the bp are less than or equal to the
+				// current chrom
+				if ( bp->weight >= min_weight ) {
+					 
+					bp->do_it();
+					//bp->trim_intervals();
+					bp->print_bedpe(-1);
+					if (show_evidence)
+						bp->print_evidence("\t");
 				}
+
+				if (r_bin.remove(*it, false, false, true) != 0) {
+					cerr << "Error removing element:" << *bp << endl;
+					abort();
+				}
+				bp->free_evidence();
+				delete bp;
+				//}
 			}
 			//}}}
 
-			//cerr << r_bin.num_bps() << endl;
 			max_pos = max_pos *2;
 		}
 
@@ -525,6 +500,7 @@ int main(int argc, char* argv[])
 		}
 		//}}}
 	}
+	//}}}
 	
 	//{{{ terminate input files
 	for (	i_er = evidence_readers.begin();
@@ -535,27 +511,227 @@ int main(int argc, char* argv[])
 	}
 	//}}}
 	
-	//cerr << "Done with input files" << endl;
-
-	//{{{ Call break points
+	//{{{ Call remaining intra breakpoints
 	vector< UCSCElement<SV_BreakPoint*> > values = r_bin.values();
 	vector< UCSCElement<SV_BreakPoint*> >::iterator it;
+
+	for (it = values.begin(); it != values.end(); ++it) {
+		SV_BreakPoint *bp = it->value;
+
+		if ( bp->weight >= min_weight ) {
+			 
+			bp->do_it();
+			//bp->trim_intervals();
+			bp->print_bedpe(-1);
+			if (show_evidence)
+				bp->print_evidence("\t");
+		}
+
+		if (r_bin.remove(*it, false, false, true) != 0) {
+			cerr << "Error removing element" << endl;
+			abort();
+		}
+		bp->free_evidence();
+		delete bp;
+	}
+	//}}}
+	
+	string intra_bam_file_name = inter_chrom_file_prefix + ".bam";
+	ifstream intra_bam_file( intra_bam_file_name.c_str() );
+	if (intra_bam_file.good()) {
+		intra_bam_file.close();
+
+		sort_inter_chrom_bam( inter_chrom_file_prefix + ".bam",
+							  inter_chrom_file_prefix + ".sort.bam");
+
+		//{{{ process the inter-chrom events that were saved to a file
+		SV_InterChromBamReader *ic_r = new SV_InterChromBamReader(
+				inter_chrom_file_prefix + ".sort.bam",
+				&bam_evidence_readers);
+		ic_r->initialize();
+
+		vector<SV_EvidenceReader*> inter_chrom_evidence_readers;
+		inter_chrom_evidence_readers.push_back(ic_r);
+
+		// There are two files containg all of the inter-chrom events,
+		// one bam and one bedpe, each line in the file corresponds to the
+		// properies set in one of the readers.  Each line has a "LS" (lumpy
+		// source) property that gives its source file name.  Using that entry, the
+		// line will be sent to the reader for processing.
+		
+		// get new evidence readers for both bedpe and bam inter-chrom readers
+		has_next = true;	
+
+		int32_t last_min_primary_refid = -1;
+		int32_t last_min_secondary_refid = -1;
+		max_pos = 0;
+		while ( has_next ) {
+			string min_primary_chr = "";
+			string min_secondary_chr = "";
+			int32_t min_primary_refid = -1;
+			int32_t min_secondary_refid = -1;
+
+			//{{{ find min_chr pair among all input files
+			for (	i_er = inter_chrom_evidence_readers.begin();
+					i_er != inter_chrom_evidence_readers.end();
+					++i_er) {
+				SV_EvidenceReader *er = *i_er;
+
+				if ( er->has_next() ) {
+					int32_t curr_primary_refid = er->get_curr_primary_refid();
+					int32_t curr_secondary_refid = er->get_curr_secondary_refid();
+
+					if ( (( min_primary_refid == -1 ) &&
+						  ( min_secondary_refid == -1 )) ||
+						 (( curr_primary_refid < min_primary_refid)  && 
+						  ( curr_secondary_refid < min_secondary_refid)) ){
+						min_primary_refid = curr_primary_refid;
+						min_secondary_refid = curr_secondary_refid;
+						min_secondary_chr = er->get_curr_secondary_chr();
+						min_primary_chr = er->get_curr_primary_chr();
+					}
+
+				}
+			}
+			//}}}
+
+			// if the chrome pair switches, reset the max_pos
+			if ( (last_min_primary_refid != min_primary_refid) ||
+				 (last_min_secondary_refid != min_secondary_refid) ) {
+				max_pos = window_size;
+				last_min_primary_refid = min_primary_refid;
+				last_min_secondary_refid = min_secondary_refid;
+			}
+
+			bool input_processed = true;
+
+			while (input_processed) {
+				input_processed = false;
+					
+				//{{{ read the files, process anything in frame
+				for (	i_er = inter_chrom_evidence_readers.begin();
+						i_er != inter_chrom_evidence_readers.end();
+						++i_er) {
+
+					SV_EvidenceReader *er = *i_er;
+
+					if ( er->has_next() ) {
+						//string curr_primary_chr = er->get_curr_primary_chr();
+						//string curr_secondary_chr = er->get_curr_secondary_chr();
+						int32_t curr_primary_refid = er->get_curr_primary_refid();
+						int32_t curr_secondary_refid = 
+								er->get_curr_secondary_refid();
+						CHR_POS curr_pos = er->get_curr_primary_pos();
+
+	/*
+						if ( (curr_primary_chr.compare(min_primary_chr) <= 0)&&
+							 (curr_secondary_chr.compare(min_secondary_chr) <= 0)&&
+							 (curr_pos < max_pos) )	{
+	*/
+						if ( (curr_primary_refid <= min_primary_refid) &&
+							 (curr_secondary_refid <= min_secondary_refid) &&
+							 (curr_pos < max_pos) )	{
+
+							er->process_input_chr_pos(er->get_curr_primary_chr(),
+													  er->get_curr_secondary_chr(),
+													  max_pos,
+													  r_bin);
+							input_processed = true;
+						} 
+					}
+				}
+				//}}}
+				
+
+				//{{{ get breakpoints
+				// get anything that has ends in both chroms
+				vector< UCSCElement<SV_BreakPoint*> > values = 
+						r_bin.values(min_secondary_chr);
+
+				vector< UCSCElement<SV_BreakPoint*> >::iterator it;
+
+				for (it = values.begin(); it < values.end(); ++it) {
+					SV_BreakPoint *bp = it->value;
+					//cerr << *bp << endl;
+					if ( bp->weight >= min_weight ) {
+						bp->do_it();
+						//bp->trim_intervals();
+						bp->print_bedpe(-1);
+						if (show_evidence)
+							bp->print_evidence("\t");
+					}
+
+					if (r_bin.remove(*it, false, false, true) != 0) {
+						cerr << "Error removing element" << endl;
+						abort();
+					}
+					bp->free_evidence();
+					delete bp;
+				}
+				//}}}
+
+				max_pos = max_pos * 2;
+			}
+
+			has_next = false;
+			//{{{ Test if there is still input lines
+			for (	i_er = inter_chrom_evidence_readers.begin();
+					i_er != inter_chrom_evidence_readers.end();
+					++i_er) {
+				SV_EvidenceReader *er = *i_er;
+				has_next = has_next || er->has_next();
+			}
+			//}}}
+		
+		}
+
+		//}}}
+		
+		//{{{ Call remaining break points
+		values = r_bin.values();
 
 		for (it = values.begin(); it != values.end(); ++it) {
 			SV_BreakPoint *bp = it->value;
 
 			if ( bp->weight >= min_weight ) {
 				 
-				bp->trim_intervals();
+				bp->do_it();
+				//bp->trim_intervals();
 				bp->print_bedpe(-1);
 				if (show_evidence)
 					bp->print_evidence("\t");
 			}
 
+			if (r_bin.remove(*it, false, false, true) != 0) {
+				cerr << "Error removing element" << endl;
+				abort();
+			}
 			bp->free_evidence();
 			delete bp;
 		}
 
+		//}}}
+	}
+
+	//{{{ free up stuff
+	
+	string s = inter_chrom_file_prefix + ".bam";
+	remove(s.c_str());
+	s = inter_chrom_file_prefix + ".sort.bam";
+	remove(s.c_str());
+	map<int, pair<log_space*,log_space*> >::iterator e_it;
+	for(e_it =  SV_Evidence::distros.begin();
+		e_it !=  SV_Evidence::distros.end();
+		++e_it) {
+		free(e_it->second.first);
+		free(e_it->second.second);
+	}
+	for (	i_er = evidence_readers.begin();
+			i_er != evidence_readers.end();
+			++i_er) {
+		delete(*i_er);
+	}
 	//}}}
-	return 1;
+
+	return 0;
 }

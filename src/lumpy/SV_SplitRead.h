@@ -16,8 +16,10 @@
 #define __SV_SPLIT_READ_H__
 
 //#include "BamAncillary.h"
+#include "api/BamWriter.h"
 using namespace BamTools;
 
+#include "SV_SplitReadReader.h"
 #include "SV_Evidence.h"
 #include "SV_BreakPoint.h"
 #include "ucsc_bins.hpp"
@@ -56,26 +58,33 @@ class SV_SplitRead: public SV_Evidence
 					 const RefVector &refs,
 					 int weight,
 					 int id,
-					 int sample_id);
+					 int sample_id,
+					 SV_SplitReadReader *reader);
 
 		SV_SplitRead(const BamAlignment &bam_a,
 					 const BamAlignment &bam_b,
 					 const RefVector &refs,
 					 int _weight,
 					 int _id,
-					 int _sample_id);
+					 int _sample_id,
+					 SV_SplitReadReader *reader);
 
+		/*
 		static int back_distance;
 		static int min_non_overlap;
 		static int min_mapping_threshold;
 		static int min_split_size;
 		static int read_length;
+		*/
 
 		struct interval side_l, side_r;
 		struct cigar_query query_l, query_r;
 		int min_mapping_quality;
+		SV_SplitReadReader *reader;
 
-		static log_space* get_bp_interval_probability(char strand);
+		static log_space* 
+				get_bp_interval_probability(char strand,
+											unsigned int back_distance);
 
 		SV_BreakPoint* get_bp();
 
@@ -83,6 +92,7 @@ class SV_SplitRead: public SV_Evidence
 		void print_bedpe(int score);
 
 		bool is_sane();
+		bool is_interchromosomal();
 
 		static void process_split(const BamAlignment &curr,
 								  const RefVector refs,
@@ -90,7 +100,22 @@ class SV_SplitRead: public SV_Evidence
 								  UCSCBins<SV_BreakPoint*> &r_bin,
 								  int weight,
 								  int id,
-								  int sample_id);
+								  int sample_id,
+								  SV_SplitReadReader *reader);
+
+		static void process_intra_chrom_split(
+									const BamAlignment &curr,
+									const RefVector refs,
+									BamWriter &inter_chrom_reads,
+									map<string, BamAlignment> &mapped_splits,
+									UCSCBins<SV_BreakPoint*> &r_bin,
+									int weight,
+									int id,
+									int sample_id,
+									SV_SplitReadReader *reader);
+
+		string evidence_type();
+        static uint32_t count_clipped(vector< CigarOp > cigar_data);
 };
 
 #endif

@@ -100,12 +100,23 @@ void
 SV_BedpeReader::
 set_statics()
 {
+#if 0
 	SV_Bedpe::distro_size = read_distro_file(distro_file,
 											 &(SV_Bedpe::distro),
 											 &(SV_Bedpe::distro_start),
 											 &(SV_Bedpe::distro_end));
 
 	SV_Bedpe::back_distance = back_distance;
+#endif
+}
+//}}}
+
+//{{{ void SV_BedpeReader:: unset_statics()
+void
+SV_BedpeReader::
+unset_statics()
+{
+	//free(SV_Bedpe::distro);
 }
 //}}}
 
@@ -114,6 +125,11 @@ void
 SV_BedpeReader::
 initialize()
 {
+	distro_size = read_distro_file(distro_file,
+								   &distro,
+								   &distro_start,
+								   &distro_end);
+
 	bedpe= new BedFilePE(bedpe_file);
 
 	lineNum = 0;
@@ -134,7 +150,8 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 									r_bin,
 									weight,
 									id,
-									sample_id);
+									sample_id,
+									this);
 			bedpeEntry = nullBedpe;
 		}
 
@@ -180,7 +197,8 @@ process_input_chr(string chr,
 									r_bin,
 									weight,
 									id,
-									sample_id);
+									sample_id,
+									this);
 			bedpeEntry = nullBedpe;
 		}
 
@@ -208,7 +226,8 @@ process_input_chr_pos(string chr,
 									r_bin,
 									weight,
 									id,
-									sample_id);
+									sample_id,
+									this);
 			bedpeEntry = nullBedpe;
 		}
 

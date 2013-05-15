@@ -34,7 +34,7 @@ struct bedpe_parameters {
 
 class SV_BedpeReader : public SV_EvidenceReader
 {
-	private:
+	public:
 		string bedpe_file,
 			   distro_file;
 		unsigned int back_distance;
@@ -42,7 +42,14 @@ class SV_BedpeReader : public SV_EvidenceReader
 		int id;
 		bool is_open,
 			 have_next_alignment;
-	public:
+
+		double *histo;
+		int histo_start,histo_end;
+		log_space *distro;
+		int distro_size;
+		int distro_start;
+		int distro_end;
+
 
 	BedFilePE *bedpe;
 	BEDPE bedpeEntry, nullBedpe;
@@ -56,6 +63,7 @@ class SV_BedpeReader : public SV_EvidenceReader
 
 	void initialize();
 	void set_statics();
+	void unset_statics();
 	void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
 
 	void process_input_chr(string chr,
@@ -67,6 +75,7 @@ class SV_BedpeReader : public SV_EvidenceReader
 	string get_curr_chr();
 	CHR_POS get_curr_pos();
 	bool has_next();
+
 };
 
 #endif

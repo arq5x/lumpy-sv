@@ -31,6 +31,8 @@ SOURCES= lumpy.cpp \
 		 SV_SplitReadReader.cpp \
 		 SV_PairReader.cpp \
 		 SV_BedpeReader.cpp \
+		 SV_BamReader.cpp \
+		 SV_InterChromBamReader.cpp \
 		 SV_EvidenceReader.cpp \
 		 SV_Tools.cpp \
 		 log_space.cpp

@@ -13,8 +13,10 @@
  * ***************************************************************************/
 
 #include "BamAncillary.h"
+#include "api/BamWriter.h"
 using namespace BamTools;
 
+#include "SV_PairReader.h"
 #include "SV_BreakPoint.h"
 #include "SV_Pair.h"
 #include "log_space.h"
@@ -30,20 +32,7 @@ using namespace BamTools;
 using namespace std;
 
 //{{{ statics
-//distro_sizedouble  SV_Pair:: cluster_Z = 0;
 double  SV_Pair:: insert_Z = 0;
-double  SV_Pair:: insert_stdev = 0;
-double  SV_Pair:: insert_mean = 0;
-int     SV_Pair:: min_non_overlap = 0;
-double *SV_Pair:: histo = NULL;
-double *SV_Pair:: distro = NULL;
-int     SV_Pair:: distro_size = 0;
-int     SV_Pair:: histo_size = 0;
-int     SV_Pair:: histo_start = 0;
-int     SV_Pair:: histo_end = 0;
-int     SV_Pair:: back_distance = 0;
-int     SV_Pair:: read_length = 0;
-int     SV_Pair:: min_mapping_threshold = 0;
 //}}}
 
 //{{{ SV_Pair:: SV_Pair(const BamAlignment &bam_a,
@@ -56,8 +45,11 @@ SV_Pair(const BamAlignment &bam_a,
 		const RefVector &refs,
 		int _weight,
 		int _id,
-		int _sample_id)
+		int _sample_id,
+		SV_PairReader *_reader)
 {
+	reader = _reader;
+
 	if ( bam_a.MapQuality < bam_b.MapQuality )
 		min_mapping_quality = bam_a.MapQuality;
 	else 
@@ -82,10 +74,12 @@ SV_Pair(const BamAlignment &bam_a,
 	else 
 		tmp_b.strand = '+';
 
-	if ( tmp_a.chr.compare(tmp_b.chr) > 0 ) {
+	//if ( tmp_a.chr.compare(tmp_b.chr) > 0 ) {
+	if ( bam_a.RefID < bam_b.RefID ) {
 		read_l = tmp_a;
 		read_r = tmp_b;
-	} else if ( tmp_a.chr.compare(tmp_b.chr) < 0 ) {
+	//} else if ( tmp_a.chr.compare(tmp_b.chr) < 0 ) {
+	} else if ( bam_a.RefID > bam_b.RefID) {
 		read_l = tmp_b;
 		read_r = tmp_a;
 	} else { // ==
@@ -107,11 +101,13 @@ SV_Pair(const BamAlignment &bam_a,
 //{{{ log_space* SV_Pair:: get_interval_probability(char strand)
 log_space*
 SV_Pair::
-get_bp_interval_probability(char strand)
+get_bp_interval_probability(char strand,
+							int distro_size,
+							double *distro)
 {
 	int size = distro_size;
 	log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
-	unsigned int j;
+	int j;
 	for (j = 0; j < size; ++j) {
 		if (strand == '+') 
 			tmp_p[j] = get_ls(distro[j]);
@@ -123,30 +119,6 @@ get_bp_interval_probability(char strand)
 }
 //}}}
 
-//{{{ void SV_Pair:: set_interval_probability()
-/*
-void
-SV_Pair::
-set_bp_interval_probability(struct breakpoint_interval *i)
-{
-	int size = i->i.end - i->i.start + 1;
-	log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
-	log_space *src_p;
-
-	unsigned int j;
-	if (i->i.strand == '+') 
-		src_p = SV_Evidence::distros[sample_id].first;
-	else
-		src_p = SV_Evidence::distros[sample_id].second;
-	for (j = 0; j < size; ++j) {
-		tmp_p[j] = src_p[j];
-	}
-
-	i->p = tmp_p;
-}
-*/
-//}}}
-
 //{{{ void SV_Pair:: set_bp_interval_start_end(struct breakpoint_interval *i,
 /* targer_pair is the other interval in the pair, it is used to bound the
  * breakpoint probabilty distribution range.  The breakpoint cannot exist after
@@ -156,23 +128,36 @@ void
 SV_Pair::
 set_bp_interval_start_end(struct breakpoint_interval *i,
 						  struct interval *target_interval,
-						  struct interval *target_pair)
+						  struct interval *target_pair,
+						  unsigned int back_distance,
+						  unsigned int distro_size)
 {
-#if 0
-	cerr << target_interval->start << "\t" <<
-			target_interval->end << "\t" <<
-			target_pair->start << "\t" <<
-			target_pair->end << endl;
-#endif
-			
 	i->i.chr = target_interval->chr;
 	i->i.strand = target_interval->strand;
 	if ( i->i.strand == '+' ) {
-		i->i.start = target_interval->end - back_distance;
+
+		if (back_distance > target_interval->end) {
+			i->i.start = 0;
+			i->i.start_clip = target_interval->end;
+		}
+		else {
+			i->i.start = target_interval->end - back_distance;
+			i->i.start_clip = 0;
+		}
+
 		i->i.end = i->i.start + distro_size - 1;
+
 	} else {
 		i->i.end = target_interval->start + back_distance;
-		i->i.start = i->i.end - distro_size + 1;
+
+		if (distro_size > i->i.end) {
+			i->i.start = 0;
+			i->i.start_clip = i->i.end;
+		}
+		else {
+			i->i.start = i->i.end - distro_size + 1;
+			i->i.start_clip = 0;
+		}
 	}
 }
 //}}}
@@ -185,8 +170,31 @@ get_bp()
 	// Make a new break point
 	SV_BreakPoint *new_bp = new SV_BreakPoint(this);
 
-	set_bp_interval_start_end(&(new_bp->interval_l), &read_l, &read_r);
-	set_bp_interval_start_end(&(new_bp->interval_r), &read_r, &read_l);
+	set_bp_interval_start_end(&(new_bp->interval_l),
+							  &read_l,
+							  &read_r,
+							  reader->back_distance,
+							  reader->distro_size);
+	set_bp_interval_start_end(&(new_bp->interval_r),
+							  &read_r,
+							  &read_l,
+							  reader->back_distance,
+							  reader->distro_size);
+
+	// test to see if the two interval intersect the reads
+	if ( (new_bp->interval_l.i.chr.compare(read_r.chr) == 0 ) &&
+		 (new_bp->interval_l.i.end >= read_r.start) ) {
+		new_bp->interval_l.i.end_clip = 
+			new_bp->interval_l.i.end - read_r.start + 1;
+		new_bp->interval_l.i.end = read_r.start - 1;
+	}
+
+	if ( (new_bp->interval_r.i.chr.compare(read_l.chr) == 0 ) &&
+	     (new_bp->interval_r.i.start <= read_l.end) ) {
+		new_bp->interval_r.i.start_clip = 
+			read_l.end - new_bp->interval_r.i.start + 1;
+		new_bp->interval_r.i.start = read_l.end + 1;
+	}
 
 	new_bp->interval_r.p = NULL;
 	new_bp->interval_l.p = NULL;
@@ -219,10 +227,12 @@ is_aberrant()
 	if ( read_l.strand == '-')
 		return true;
 
-	if ( (read_r.end - read_l.start) >= insert_mean + (insert_Z*insert_stdev) )
+	if ( (read_r.end - read_l.start) >= 
+			reader->mean + (reader->discordant_z*reader->stdev) )
 		return true;
 
-	if ( (read_r.end - read_l.start) <= insert_mean - (insert_Z*insert_stdev) )
+	if ( (read_r.end - read_l.start) <= 
+			reader->mean - (reader->discordant_z*reader->stdev) )
 		return true;
 
 	return false;
@@ -234,7 +244,7 @@ bool
 SV_Pair::
 is_sane()
 {
-	if ( min_mapping_quality < min_mapping_threshold )
+	if ( min_mapping_quality < reader->min_mapping_threshold )
 		return false;
 
 	int read_len_a = read_l.end - read_l.start;
@@ -259,7 +269,7 @@ is_sane()
 	// how much does not overlap // overlap is at most read_len
 	int non_overlap = min(read_len_a, read_len_b) - overlap;
 
-	if ( (overlap > 0) && (abs(non_overlap) < min_non_overlap) )
+	if ( (overlap > 0) && (abs(non_overlap) < reader->min_non_overlap) )
 		return false;
 	else 
 		return true;
@@ -290,6 +300,150 @@ SV_Pair::
 print_evidence()
 {
 	print_bedpe(0);
+}
+//}}}
+
+//{{{ void BreakPoint:: print_bedpe()
+void
+SV_Pair::
+print_bedpe(int score)
+{
+	// use the address of the current object as the id
+	string sep = "\t";
+	cout << 
+		read_l.chr << sep <<
+		read_l.start << sep <<
+		read_l.end << sep <<
+		read_r.chr << sep <<
+		read_r.start << sep<<
+		read_r.end << sep<<
+		this << sep <<
+		score << sep <<
+		read_l.strand << sep <<
+		read_r.strand << sep <<
+		"id:" << id << sep <<
+		"weight:" << weight <<
+		endl;
+}
+//}}}
+
+//{{{void set_sv_pair_distro()
+// We will assume that the distrobution to upsstream will follow the histogram
+// and downstream will be follow an exponetial decay distribution based on the
+// back_distance
+int
+SV_Pair::
+set_distro_from_histo (int back_distance,
+					   int histo_start,
+					   int histo_end,
+					   double *histo,
+					   double **distro)
+{
+    double lambda = log(0.0001)/(-1 * back_distance);
+    // the bp distribution begins SV_Pair::back_distance base pairs back
+    // from the end of the read (or begining for the negative strand), then
+    // extends for SV_Pair::histo_end base pairs, so the total size is
+    // SV_Pair::back_distance + SV_Pair::histo_end
+	int distro_size = back_distance + histo_end;
+
+	*distro = (double *) malloc(distro_size * sizeof(double));
+
+    for (int i = 0; i < back_distance; ++i)
+        (*distro)[i] = exp(-1*lambda*(back_distance - i));
+
+    for (int i = back_distance; i < histo_start; ++i)
+        (*distro)[i] = 1;
+
+    double last = 0;
+    for (int i = histo_end - 1; i >= histo_start; --i) {
+		(*distro)[i + back_distance] = histo[i - histo_start] + last;
+        last = (*distro)[i + back_distance];
+    }
+
+	return distro_size;
+}
+//}}}
+
+//{{{ void process_pair(const BamAlignment &curr,
+void 
+SV_Pair::
+process_pair(const BamAlignment &curr,
+			const RefVector refs,
+			map<string, BamAlignment> &mapped_pairs,
+			UCSCBins<SV_BreakPoint*> &r_bin,
+			int weight,
+			int id,
+			int sample_id,
+			SV_PairReader *reader)
+{
+	if (mapped_pairs.find(curr.Name) == mapped_pairs.end())
+		mapped_pairs[curr.Name] = curr;
+	else {
+		SV_Pair *new_pair = new SV_Pair(mapped_pairs[curr.Name],
+										curr,
+										refs,
+										weight,
+										id,
+										sample_id,
+										reader);
+		if ( new_pair->is_sane() &&  new_pair->is_aberrant() ) {
+			SV_BreakPoint *new_bp = new_pair->get_bp();
+
+#ifdef TRACE
+			cerr << "PE\t" << *new_bp << endl;
+#endif
+			new_bp->cluster(r_bin);
+		} else {
+			delete(new_pair);
+		}
+
+		mapped_pairs.erase(curr.Name);
+	}
+}
+//}}}
+
+//{{{ void process_intra_chrom_pair(const BamAlignment &curr,
+void 
+SV_Pair::
+process_intra_chrom_pair(const BamAlignment &curr,
+						 const RefVector refs,
+						 BamWriter &inter_chrom_reads,
+						 map<string, BamAlignment> &mapped_pairs,
+						 UCSCBins<SV_BreakPoint*> &r_bin,
+						 int weight,
+						 int id,
+						 int sample_id,
+						 SV_PairReader *reader)
+{
+	if (curr.RefID == curr.MateRefID) {
+
+		process_pair(curr,
+					 refs,
+					 mapped_pairs,
+					 r_bin,
+					 weight,
+					 id,
+					 sample_id,
+					 reader);
+
+	} else if (curr.IsMapped() && 
+			   curr.IsMateMapped() && 
+			   (curr.RefID >= 0) &&
+			   (curr.MateRefID >= 0) ) {
+		BamAlignment al = curr;
+		string x = reader->get_source_file_name();
+		al.AddTag("LS","Z",x);
+		inter_chrom_reads.SaveAlignment(al);
+	}
+}
+//}}}
+
+//{{{string SV_Pair:: evidence_type()
+string
+SV_Pair::
+evidence_type()
+{
+	    return "Pair";
 }
 //}}}
 
@@ -331,32 +485,6 @@ update_matrix(boost::numeric::ublas::matrix<log_space> *m)
 	}
 }
 //}}}
-#endif 
-
-//{{{ void BreakPoint:: print_bedpe()
-void
-SV_Pair::
-print_bedpe(int score)
-{
-	// use the address of the current object as the id
-	string sep = "\t";
-	cout << 
-		read_l.chr << sep <<
-		read_l.start << sep <<
-		read_l.end << sep <<
-		read_r.chr << sep <<
-		read_r.start << sep<<
-		read_r.end << sep<<
-		this << sep <<
-		score << sep <<
-		read_l.strand << sep <<
-		read_r.strand << sep <<
-		"id:" << id << sep <<
-		"weight:" << weight <<
-		endl;
-}
-//}}}
-
 //{{{void set_sv_pair_distro()
 // We will assume that the distrobution to upsstream will follow the histogram
 // and downstream will be follow an exponetial decay distribution based on the
@@ -389,38 +517,6 @@ set_distro_from_histo ()
     }
 }
 //}}}
-
-//{{{ void process_pair(const BamAlignment &curr,
-void 
-SV_Pair::
-process_pair(const BamAlignment &curr,
-			const RefVector refs,
-			map<string, BamAlignment> &mapped_pairs,
-			UCSCBins<SV_BreakPoint*> &r_bin,
-			int weight,
-			int id,
-			int sample_id)
-{
-	if (mapped_pairs.find(curr.Name) == mapped_pairs.end())
-		mapped_pairs[curr.Name] = curr;
-	else {
-		SV_Pair *new_pair = new SV_Pair(mapped_pairs[curr.Name],
-										curr,
-										refs,
-										weight,
-										id,
-										sample_id);
-		if ( new_pair->is_sane() &&  new_pair->is_aberrant() ) {
-			SV_BreakPoint *new_bp = new_pair->get_bp();
-#ifdef TRACE
-			cerr << "PE\t" << *new_bp << endl;
 #endif
-			new_bp->cluster(r_bin);
-		} else {
-			free(new_pair);
-		}
 
-		mapped_pairs.erase(curr.Name);
-	}
-}
-//}}}
+

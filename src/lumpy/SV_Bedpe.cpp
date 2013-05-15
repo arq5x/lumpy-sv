@@ -14,6 +14,7 @@
 #include "BamAncillary.h"
 using namespace BamTools;
 
+#include "SV_BedpeReader.h"
 #include "SV_BreakPoint.h"
 #include "SV_Bedpe.h"
 #include "log_space.h"
@@ -29,21 +30,16 @@ using namespace BamTools;
 
 using namespace std;
 
-//{{{ statics
-log_space *SV_Bedpe:: distro = NULL;
-int     SV_Bedpe:: distro_size = 0;
-int     SV_Bedpe:: distro_start = 0;
-int     SV_Bedpe:: distro_end = 0;
-int     SV_Bedpe:: back_distance = 0;
-//}}}
-
 //{{{ SV_Bedpe:: SV_Bedpe(const BEDPE *bedpeEntry)
 SV_Bedpe::
 SV_Bedpe(const BEDPE *bedpeEntry,
 		 int _weight,
 		 int _id,
-		 int _sample_id)
+		 int _sample_id,
+		 SV_BedpeReader *_reader)
 {
+	reader = _reader;
+
 	sample_id = _sample_id;
 	struct interval tmp_a, tmp_b;
 
@@ -134,8 +130,16 @@ get_bp()
 	// Make a new break point
 	SV_BreakPoint *new_bp = new SV_BreakPoint(this);
 
-	set_bp_interval_start_end(&(new_bp->interval_l), &side_l, &side_r);
-	set_bp_interval_start_end(&(new_bp->interval_r), &side_r, &side_l);
+	set_bp_interval_start_end(&(new_bp->interval_l),
+							  &side_l,
+							  &side_r,
+							  reader->back_distance,
+							  reader->distro_size);
+	set_bp_interval_start_end(&(new_bp->interval_r),
+							  &side_r,
+							  &side_l,
+							  reader->back_distance,
+							  reader->distro_size);
 
 	//set_bp_interval_probability(&(new_bp->interval_l));
 	//set_bp_interval_probability(&(new_bp->interval_r));
@@ -154,7 +158,9 @@ void
 SV_Bedpe::
 set_bp_interval_start_end(struct breakpoint_interval *i,
 						  struct interval *target_interval,
-						  struct interval *target_pair)
+						  struct interval *target_pair,
+						  int back_distance,
+						  int distro_size)
 {
 	i->i.chr = target_interval->chr;
 	i->i.strand = target_interval->strand;
@@ -172,7 +178,9 @@ set_bp_interval_start_end(struct breakpoint_interval *i,
 //{{{ log_space* SV_Bedpe:: get_bp_interval_probability(char strand)
 log_space*
 SV_Bedpe::
-get_bp_interval_probability(char strand)
+get_bp_interval_probability(char strand,
+							int distro_size,
+							double *distro)
 {
 	int size = distro_size;
 	log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
@@ -226,14 +234,25 @@ process_bedpe(const BEDPE *bedpeEntry,
 			  UCSCBins<SV_BreakPoint*> &r_bin,
 			  int weight,
 			  int id,
-			  int sample_id)
+			  int sample_id,
+			  SV_BedpeReader *reader)
 {
 	SV_Bedpe *new_bedpe = new SV_Bedpe(bedpeEntry,
 									   weight,
 									   id,
-									   sample_id);
+									   sample_id,
+									   reader);
 
 	SV_BreakPoint *new_bp = new_bedpe->get_bp();
 	new_bp->cluster(r_bin);
+}
+//}}}
+
+//{{{ string SV_Bedpe:: evidence_type()
+string
+SV_Bedpe::
+evidence_type()
+{
+	return "bedpe";
 }
 //}}}
