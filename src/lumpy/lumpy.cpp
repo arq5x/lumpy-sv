@@ -105,7 +105,7 @@ void ShowHelp(void)
 					"\t\tweight:<sample weight>" << endl << 
 					"\t\tid:<sample id>" << endl << 
 					endl << 
-		"\t-pe"		"\tbedpe_file:<bedpe file>," << endl <<
+		"\t-bedpe"	"\tbedpe_file:<bedpe file>," << endl <<
 					"\t\tdistro_file:<distro_file>," << endl <<
 					"\t\tback_distance:<back distance>" << endl <<
 					"\t\tweight:<sample weight>" << endl << 
