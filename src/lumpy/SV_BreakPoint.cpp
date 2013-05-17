@@ -1326,15 +1326,13 @@ get_score( vector<SV_BreakPoint *> &bps,
         free(t);
     }
 
-    log_space max_r = -INFINITY, max_l = -INFINITY;
+    log_space sum_r = -INFINITY, sum_l = -INFINITY;
 
     for (CHR_POS i = 0; i <  end_l - start_l + 1; ++ i)
-        if (l[i] > max_l)
-            max_l = l[i];
+        sum_l = ls_add(sum_l, l[i]);
 
     for (CHR_POS i = 0; i <  end_r - start_r + 1; ++ i)
-        if (l[i] > max_r)
-            max_r = l[i];
+        sum_r = ls_add(sum_r, r[i]);
 
     double width_l = end_l - start_l + 1;
     double width_r = end_r - start_r + 1;
@@ -1344,8 +1342,8 @@ get_score( vector<SV_BreakPoint *> &bps,
         max_r << "," << get_p(max_r) << "," << width_r << endl;
     */
 
-    *score_l = get_p(max_l)/width_l;
-    *score_r = get_p(max_r)/width_r;
+    *score_l = get_p(sum_l)/width_l;
+    *score_r = get_p(sum_r)/width_r;
 }
 //}}}
 
