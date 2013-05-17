@@ -770,6 +770,26 @@ void
 SV_BreakPoint::
 print_bedpe(int score)
 {
+	vector<SV_Evidence*>::iterator it;
+    vector<SV_BreakPoint *> bps;
+	for (it = evidence.begin(); it < evidence.end(); ++it) {
+    	SV_Evidence *e = *it;
+		SV_BreakPoint *tmp_bp = e->get_bp();
+	    tmp_bp->init_interval_probabilities();
+
+        bps.push_back(tmp_bp);
+    }
+
+    double score_l, score_r;
+    get_score(bps, &score_l, &score_r);
+
+    vector<SV_BreakPoint *>::iterator bp_it;
+	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+		SV_BreakPoint *tmp_bp = *bp_it;
+        delete tmp_bp;
+    }
+
+
 	// use the address of the current object as the id
 	string sep = "\t";
 	cout << 
@@ -780,7 +800,7 @@ print_bedpe(int score)
 		interval_r.i.start << sep<<
 		(interval_r.i.end + 1) << sep<<
 		this << sep <<
-		weight << "\t" <<
+		(score_l+score_r) << "\t" <<
 		interval_l.i.strand << "\t" <<
 		interval_r.i.strand << "\t";
 
@@ -833,7 +853,7 @@ print_bedpe(int score)
 }
 //}}}
 
-
+//{{{ void SV_BreakPoint:: get_distances(vector< SV_BreakPoint*> &new_v)
 void 
 SV_BreakPoint::
 get_distances(vector< SV_BreakPoint*> &new_v)
@@ -876,7 +896,7 @@ get_distances(vector< SV_BreakPoint*> &new_v)
 
 
 }
-
+//}}}
 
 //{{{void SV_BreakPoint:: cluster(UCSCBins<SV_BreakPoint*> &bins);
 void
@@ -1011,8 +1031,6 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 	}
 }
 //}}}
-
-
 
 //{{{ void SV_BreakPoint:: insert(UCSCBins<SV_BreakPoint*> &r_bin,
 void
@@ -1239,6 +1257,7 @@ do_it()
 }
 //}}}
 
+//{{{void SV_BreakPoint:: get_score( vector<SV_BreakPoint *> &bps,
 void
 SV_BreakPoint::
 get_score( vector<SV_BreakPoint *> &bps,
@@ -1328,6 +1347,7 @@ get_score( vector<SV_BreakPoint *> &bps,
     *score_l = get_p(max_l)/width_l;
     *score_r = get_p(max_r)/width_r;
 }
+//}}}
 
 //{{{pair<int,int> SV_BreakPoint:: min_pair( vector< vector<
 pair<CHR_POS,CHR_POS>
