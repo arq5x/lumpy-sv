@@ -770,6 +770,26 @@ void
 SV_BreakPoint::
 print_bedpe(int score)
 {
+	vector<SV_Evidence*>::iterator it;
+    vector<SV_BreakPoint *> bps;
+	for (it = evidence.begin(); it < evidence.end(); ++it) {
+    	SV_Evidence *e = *it;
+		SV_BreakPoint *tmp_bp = e->get_bp();
+	    tmp_bp->init_interval_probabilities();
+
+        bps.push_back(tmp_bp);
+    }
+
+    double score_l, score_r;
+    get_score(bps, &score_l, &score_r);
+
+    vector<SV_BreakPoint *>::iterator bp_it;
+	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+		SV_BreakPoint *tmp_bp = *bp_it;
+        delete tmp_bp;
+    }
+
+
 	// use the address of the current object as the id
 	string sep = "\t";
 	cout << 
@@ -780,7 +800,7 @@ print_bedpe(int score)
 		interval_r.i.start << sep<<
 		(interval_r.i.end + 1) << sep<<
 		this << sep <<
-		weight << "\t" <<
+		(score_l+score_r) << "\t" <<
 		interval_l.i.strand << "\t" <<
 		interval_r.i.strand << "\t";
 
@@ -833,7 +853,7 @@ print_bedpe(int score)
 }
 //}}}
 
-
+//{{{ void SV_BreakPoint:: get_distances(vector< SV_BreakPoint*> &new_v)
 void 
 SV_BreakPoint::
 get_distances(vector< SV_BreakPoint*> &new_v)
@@ -876,7 +896,7 @@ get_distances(vector< SV_BreakPoint*> &new_v)
 
 
 }
-
+//}}}
 
 //{{{void SV_BreakPoint:: cluster(UCSCBins<SV_BreakPoint*> &bins);
 void
@@ -1011,8 +1031,6 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 	}
 }
 //}}}
-
-
 
 //{{{ void SV_BreakPoint:: insert(UCSCBins<SV_BreakPoint*> &r_bin,
 void
@@ -1185,11 +1203,6 @@ SV_BreakPoint::
 do_it()
 {
 	vector<SV_Evidence*>::iterator it;
-    CHR_POS start_l = UINT_MAX, 
-            start_r = UINT_MAX, 
-            end_l = 0, 
-            end_r = 0;
-
     vector<SV_BreakPoint *> bps;
 	for (it = evidence.begin(); it < evidence.end(); ++it) {
     	SV_Evidence *e = *it;
@@ -1198,6 +1211,63 @@ do_it()
 
         bps.push_back(tmp_bp);
     }
+
+    double score_l, score_r;
+    get_score(bps, &score_l, &score_r);
+
+    vector<SV_BreakPoint *>::iterator bp_it;
+
+    int i;
+    vector<int> to_rm;
+    for (i = 0; i < bps.size(); ++i) {
+        double new_score_l, new_score_r;
+        vector<SV_BreakPoint *> tmp_bps;
+	    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+            tmp_bps.push_back(*bp_it);
+        }
+        tmp_bps.erase(tmp_bps.begin() + i);
+
+        // if new_score_l > score_l then the cluster is better off without that
+        // particualr piece of evidence
+        get_score(tmp_bps, &new_score_l, &new_score_r);
+
+        //cout << "\t" << (new_score_l-score_l) << 
+                //"\t" << (new_score_r-score_r) << endl;
+
+        if ( ((new_score_l-score_l) > 0 ) &&
+             ((new_score_r-score_r) > 0 ) ) {
+            to_rm.push_back(i);
+            //cout << "\t-" << endl;
+        }
+    }
+
+    for (i = to_rm.size(); i > 0; --i) {
+        //cout << i << endl;
+        bps.erase(bps.begin()+i);
+        --weight;
+    }
+
+	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+		SV_BreakPoint *tmp_bp = *bp_it;
+        delete tmp_bp;
+    }
+
+    //free(l);
+    //free(r);
+}
+//}}}
+
+//{{{void SV_BreakPoint:: get_score( vector<SV_BreakPoint *> &bps,
+void
+SV_BreakPoint::
+get_score( vector<SV_BreakPoint *> &bps,
+           double *score_l,
+           double *score_r)
+{
+    CHR_POS start_l = UINT_MAX, 
+            start_r = UINT_MAX, 
+            end_l = 0, 
+            end_r = 0;
 
     // find boundaries
     vector<SV_BreakPoint *>::iterator bp_it;
@@ -1237,15 +1307,8 @@ do_it()
         log_space *t = (log_space *) malloc(l_size * sizeof(log_space));
         normalize_ls(l_size, tmp_bp->interval_l.p, t);
 
-        //cout << "+\t" << tmp_bp->interval_l.i.start << "\t";
-        for (CHR_POS i = 0; i < l_size; ++i) {
-            //l[i+l_offset] = ls_multiply(l[i+l_offset], t[i]);
+        for (CHR_POS i = 0; i < l_size; ++i) 
             l[i+l_offset] = ls_add(l[i+l_offset], t[i]);
-            //if (i !=0)
-                //cout << "\t";
-            //cout << t[i];
-        }
-        //cout << endl;
 
         free(t);
 
@@ -1263,104 +1326,24 @@ do_it()
         free(t);
     }
 
-    /*
-    log_space *t = (log_space *)malloc((end_l-start_l+1)*sizeof(log_space));
-    normalize_ls(end_l-start_l+1, l, t);
-    free(l);
-    l = t;
-    */
+    log_space sum_r = -INFINITY, sum_l = -INFINITY;
 
-    //cout << "+\t" << start_l << "\t";
-    //for (CHR_POS j = 0; j < end_l-start_l+1; ++j) {
-        //if (j !=0)
-            //cout << "\t";
-        //cout << l[j];
-    //}
-    //cout << endl;
+    for (CHR_POS i = 0; i <  end_l - start_l + 1; ++ i)
+        sum_l = ls_add(sum_l, l[i]);
+
+    for (CHR_POS i = 0; i <  end_r - start_r + 1; ++ i)
+        sum_r = ls_add(sum_r, r[i]);
+
+    double width_l = end_l - start_l + 1;
+    double width_r = end_r - start_r + 1;
 
     /*
-    t = (log_space *)malloc((end_r-start_r+1)*sizeof(log_space));
-    normalize_ls(end_r-start_r+1, r, t);
-    free(r);
-    r = t;
+    cerr << "\t\t" << max_l << "," << get_p(max_l) << "," << width_l << "\t" <<
+        max_r << "," << get_p(max_r) << "," << width_r << endl;
     */
 
-    // Find the intersection of the join curve and each evidnece curve
-	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-		SV_BreakPoint *tmp_bp = *bp_it;
-
-        CHR_POS l_offset = tmp_bp->interval_l.i.start - start_l;
-        log_space l_r = -INFINITY;
-        for (CHR_POS i = 0; 
-             i < tmp_bp->interval_l.i.end - tmp_bp->interval_l.i.start;
-             ++i) {
-            log_space v = ls_multiply(l[i+l_offset], tmp_bp->interval_l.p[i]);
-            l_r = ls_add(l_r,v);
-        }
-
-        CHR_POS r_offset = tmp_bp->interval_r.i.start - start_r;
-        log_space r_r = -INFINITY;
-        for (CHR_POS i = 0; 
-             i < tmp_bp->interval_r.i.end - tmp_bp->interval_r.i.start;
-             ++i) {
-            log_space v = ls_multiply(r[i+r_offset], tmp_bp->interval_r.p[i]);
-            r_r = ls_add(l_r,v);
-        }
-
-        //cout << "\t" << get_p(l_r) << "\t" << get_p(r_r) << endl;
-    }
-
-	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-		SV_BreakPoint *tmp_bp = *bp_it;
-        delete tmp_bp;
-    }
-
-    free(l);
-    free(r);
-
-
-    /*
-	vector< vector< pair<CHR_POS,CHR_POS> > > m;
-
-	// make the adjacency matrix of peak distance and overlap
-	vector<SV_Evidence*>::iterator it;
-	for (it = evidence.begin(); it < evidence.end(); ++it) {
-		SV_Evidence *e = *it;
-		SV_BreakPoint *tmp_bp = e->get_bp();
-		//cerr << e->evidence_type() << " " << *tmp_bp <<  endl;
-
-		vector< pair<CHR_POS, CHR_POS> > row;
-
-			vector<SV_Evidence*>::iterator it2;
-		for (it2= evidence.begin(); it2 < evidence.end(); ++it2) {
-			SV_Evidence *e2 = *it2;
-			SV_BreakPoint *tmp_bp2 = e2->get_bp();
-			CHR_POS dist, overlap;
-			tmp_bp->peak_distance(tmp_bp2, &dist, &overlap);
-			row.push_back(pair<CHR_POS,CHR_POS>(dist,overlap));
-
-			//try {
-				//SV_BreakPoint test = SV_BreakPoint(tmp_bp, tmp_bp2);
-			//} catch (int e){
-				//cerr << "oops" << endl;
-			//}
-		}
-		m.push_back(row);
-	}
-
-	vector< vector< pair<CHR_POS,CHR_POS> > >::iterator row_it;
-	for (row_it = m.begin(); row_it < m.end(); ++row_it) {
-		vector< pair<CHR_POS,CHR_POS> >::iterator col_it;
-		for (col_it = row_it->begin(); col_it < row_it->end(); ++col_it) {
-			cerr << col_it->first << "," << col_it->second << " ";
-		}
-		cerr << endl;
-	}
-
-	pair<CHR_POS,CHR_POS> next_to_merge = min_pair(m);
-
-	cerr << next_to_merge.first << "," << next_to_merge.second << endl << endl;
-    */
+    *score_l = get_p(sum_l)/width_l;
+    *score_r = get_p(sum_r)/width_r;
 }
 //}}}
 

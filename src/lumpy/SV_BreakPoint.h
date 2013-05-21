@@ -78,6 +78,9 @@ class SV_BreakPoint
 		SV_BreakPoint(SV_BreakPoint *a, SV_BreakPoint *b);
 		~SV_BreakPoint();
 		void free_evidence();
+        static void get_score( vector<SV_BreakPoint *> &bps,
+                               double *score_l,
+                               double *score_r);
 		static bool does_intersect(struct breakpoint_interval *a,
 								   struct breakpoint_interval *b,
 								   bool check_strand);
