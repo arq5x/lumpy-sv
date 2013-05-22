@@ -342,6 +342,7 @@ merge(SV_BreakPoint *p)
 		l_end_sum+=tmp_bp->interval_l.i.end;
 		r_start_sum+=tmp_bp->interval_r.i.start;
 		r_end_sum+=tmp_bp->interval_r.i.end;
+		delete(tmp_bp);
 	}
 
 	CHR_POS l_merged_start, l_merged_end, r_merged_start, r_merged_end;
