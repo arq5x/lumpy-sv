@@ -470,7 +470,7 @@ int main(int argc, char* argv[])
 				// current chrom
 				if ( bp->weight >= min_weight ) {
 					//bp->do_it();
-					//bp->trim_intervals();
+					bp->trim_intervals();
                     bp->print_bedpe(-1);
                     if (show_evidence)
                         bp->print_evidence("\t");
