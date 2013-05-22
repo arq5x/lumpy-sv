@@ -469,12 +469,11 @@ int main(int argc, char* argv[])
 				// Make sure both ends of the bp are less than or equal to the
 				// current chrom
 				if ( bp->weight >= min_weight ) {
-					 
-					bp->do_it();
-					//bp->trim_intervals();
-					bp->print_bedpe(-1);
-					if (show_evidence)
-						bp->print_evidence("\t");
+					//bp->do_it();
+					bp->trim_intervals();
+                    bp->print_bedpe(-1);
+                    if (show_evidence)
+                        bp->print_evidence("\t");
 				}
 
 				if (r_bin.remove(*it, false, false, true) != 0) {

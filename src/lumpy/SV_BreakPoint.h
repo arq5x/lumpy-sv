@@ -46,9 +46,10 @@ class SV_BreakPoint
 	friend ostream& operator<<(ostream& out, const SV_BreakPoint& b);
 
 	private:
-		static void trim_interval(struct breakpoint_interval *curr_interval,
-								  log_space *interval_v,
-								  unsigned int size);
+		static void trim_interval(log_space *interval_v,
+								  unsigned int size,
+                                  int *trim_start,
+                                  int *trim_end);
 
 	public:
 		static const int DELETION = 1;
@@ -78,6 +79,18 @@ class SV_BreakPoint
 		SV_BreakPoint(SV_BreakPoint *a, SV_BreakPoint *b);
 		~SV_BreakPoint();
 		void free_evidence();
+        static void get_score( vector<SV_BreakPoint *> &bps,
+                               double *score_l,
+                               double *score_r);
+        static void get_mixture(vector<SV_BreakPoint *> &bps,
+                                CHR_POS *start_l,
+                                CHR_POS *start_r,
+                                CHR_POS *end_l,
+                                CHR_POS *end_r,
+                                log_space **l,
+                                log_space **r);
+
+
 		static bool does_intersect(struct breakpoint_interval *a,
 								   struct breakpoint_interval *b,
 								   bool check_strand);
