@@ -401,6 +401,8 @@ int main(int argc, char* argv[])
 	}
 	//}}}
 
+    int call_id = 0;
+
 	//{{{ process the intra-chrom events that were saved to a file
 	CHR_POS max_pos = 0;
 	string last_min_chr = "";
@@ -471,7 +473,7 @@ int main(int argc, char* argv[])
 				if ( bp->weight >= min_weight ) {
 					//bp->do_it();
 					bp->trim_intervals();
-                    bp->print_bedpe(-1);
+                    bp->print_bedpe(++call_id);
                     if (show_evidence)
                         bp->print_evidence("\t");
 				}
@@ -519,9 +521,9 @@ int main(int argc, char* argv[])
 
 		if ( bp->weight >= min_weight ) {
 			 
-			bp->do_it();
-			//bp->trim_intervals();
-			bp->print_bedpe(-1);
+			//bp->do_it();
+			bp->trim_intervals();
+			bp->print_bedpe(++call_id);
 			if (show_evidence)
 				bp->print_evidence("\t");
 		}
@@ -653,9 +655,9 @@ int main(int argc, char* argv[])
 					SV_BreakPoint *bp = it->value;
 					//cerr << *bp << endl;
 					if ( bp->weight >= min_weight ) {
-						bp->do_it();
-						//bp->trim_intervals();
-						bp->print_bedpe(-1);
+						//bp->do_it();
+						bp->trim_intervals();
+						bp->print_bedpe(++call_id);
 						if (show_evidence)
 							bp->print_evidence("\t");
 					}
@@ -694,9 +696,9 @@ int main(int argc, char* argv[])
 
 			if ( bp->weight >= min_weight ) {
 				 
-				bp->do_it();
-				//bp->trim_intervals();
-				bp->print_bedpe(-1);
+				//bp->do_it();
+				bp->trim_intervals();
+				bp->print_bedpe(++call_id);
 				if (show_evidence)
 					bp->print_evidence("\t");
 			}

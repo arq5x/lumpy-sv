@@ -833,10 +833,10 @@ ascii_prob(log_space *d, int size)
 }
 //}}}
 
-//{{{ void SV_BreakPoint:: print_bedpe(int score)
+//{{{ void SV_BreakPoint:: print_bedpe(int id)
 void
 SV_BreakPoint::
-print_bedpe(int score)
+print_bedpe(int id)
 {
 	vector<SV_Evidence*>::iterator it;
     vector<SV_BreakPoint *> bps;
@@ -857,7 +857,6 @@ print_bedpe(int score)
         delete tmp_bp;
     }
 
-
 	// use the address of the current object as the id
 	string sep = "\t";
 	cout << 
@@ -866,8 +865,14 @@ print_bedpe(int score)
 		(interval_l.i.end + 1) << sep <<
 		interval_r.i.chr << sep <<
 		interval_r.i.start << sep<<
-		(interval_r.i.end + 1) << sep<<
-		this << sep <<
+		(interval_r.i.end + 1) << sep;
+
+    if (id == -1)
+        cout << this << sep;
+    else 
+        cout << id << sep;
+
+    cout <<
 		(score_l+score_r) << "\t" <<
 		interval_l.i.strand << "\t" <<
 		interval_r.i.strand << "\t";
