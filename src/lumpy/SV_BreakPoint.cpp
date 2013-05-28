@@ -1420,6 +1420,7 @@ get_score( vector<SV_BreakPoint *> &bps,
     log_space *l, *r;
     get_mixture(bps, &start_l, &start_r, &end_l, &end_r, &l, &r);
 
+    /*
     log_space sum_r = -INFINITY, sum_l = -INFINITY;
 
     for (CHR_POS i = 0; i <  end_l - start_l + 1; ++ i)
@@ -1427,17 +1428,24 @@ get_score( vector<SV_BreakPoint *> &bps,
 
     for (CHR_POS i = 0; i <  end_r - start_r + 1; ++ i)
         sum_r = ls_add(sum_r, r[i]);
+    */
+    log_space max_r = -INFINITY, max_l = -INFINITY;
+
+    for (CHR_POS i = 0; i <  end_l - start_l + 1; ++ i)
+        if (l[i] > max_l)
+            max_l = l[i];
+
+    for (CHR_POS i = 0; i <  end_r - start_r + 1; ++ i)
+        if (r[i] > max_r)
+            max_r = l[i];
+
 
     double width_l = end_l - start_l + 1;
     double width_r = end_r - start_r + 1;
 
-    /*
-    cerr << "\t\t" << max_l << "," << get_p(max_l) << "," << width_l << "\t" <<
-        max_r << "," << get_p(max_r) << "," << width_r << endl;
-    */
 
-    *score_l = get_p(sum_l)/width_l;
-    *score_r = get_p(sum_r)/width_r;
+    *score_l = get_p(max_l)/width_l;
+    *score_r = get_p(max_r)/width_r;
     free(l);
     free(r);
 }
