@@ -304,10 +304,13 @@ for the the existence of this directory before running lumpy.
 Example Single Sample PE and SR Work flow
 ========================================
 
-Assuming that the input files are "sample.1.fq" and "sample.2.fq", and the read
-length is 150::
+Assume that the input files are "sample.1.fq" and "sample.2.fq", and the read length is 150.
 
-    # we prefer novoalign for paired-end reads
+Paired end alignment
+-----
+
+We prefer novoalign for paired-end reads:
+::
     novoalign \
         -d hg19.ndx \
         -o SAM \
@@ -316,93 +319,115 @@ length is 150::
         -f sample.1.fq sample.2.fq \
         | samtools view -Sb - > sample.pe.bam
 
-    # bwa is another option
-	bwa aln hg19.fa sample.1.fq > sample.1.sai
-	bwa aln hg19.fa sample.2.fq > sample.2.sai
-	bwa sampe hg19.fa \
-	    sample.1.sai sample.2.sai \
-	    sample.1.fq sample.2.fq \
-	    | samtools view -S -b - \
-	    > sample.pe.bam
+However, bwa is another option:
+::
+    bwa aln hg19.fa sample.1.fq > sample.1.sai
+    bwa aln hg19.fa sample.2.fq > sample.2.sai
+    bwa sampe hg19.fa \
+        sample.1.sai sample.2.sai \
+        sample.1.fq sample.2.fq \
+        | samtools view -S -b - \
+        > sample.pe.bam
 
-    # use bamtools to sort since samtools does not correctly flag the 
-    # resulting bam as coordinate sorted
-	bamtools sort -in sample.pe.bam -out sample.pe.sort.bam
+Use bamtools to sort since samtools does not correctly flag the resulting bam as coordinate sorted:
+::
+    bamtools sort -in sample.pe.bam -out sample.pe.sort.bam
 
-    # extract the reads in sample.pe.sort.bam that are either unmapped 
-    # have a soft clipped portion of at least 20 base pairs
-	samtools view sample.pe.sort.bam \
-	    | scripts/split_unmapped_to_fasta.pl -b 20 \
-	    > sample.um.fq
+Split read alignment
+-----
 
-    # use a split-read aligner on the unmapped/soft clipped reads
-    # we prefer yaha
-	# using yaha (index first)
-	yaha -g hg19.fa  -L 11
+Extract the reads in sample.pe.sort.bam that are either unmapped or have a soft clipped portion of at least 20 base pairs
+::
+    samtools view sample.pe.sort.bam \
+        | scripts/split_unmapped_to_fasta.pl -b 20 \
+	> sample.um.fq
+
+Use a split-read aligner on the unmapped/soft clipped reads; we prefer yaha:
+::
+    # index first
+    yaha -g hg19.fa  -L 11
+    
     # using 20 threads
-	yaha \
+    yaha \
         -t 20 \
-	    -x hg19.X11_01_65525S
-	    -q sample.um.fq \
-	    -osh stdout \
-	    -M 15 \
-	    -H 2000 \
-	    -L 11 \
-	    | samtools view -Sb - \
-	    > sample.sr.bam
+	-x hg19.X11_01_65525S
+	-q sample.um.fq \
+	-osh stdout \
+	-M 15 \
+	-H 2000 \
+	-L 11 \
+	| samtools view -Sb - \
+	> sample.sr.bam
 
-	# bwasw is another option
-	bwa bwasw -H -t 20 hg19.fa sample.um.fq \
-	    | samtools view -Sb - \
-	    > sample.sr.bam
+For split reads, bwasw is another option:
+::    
+    bwa bwasw -H -t 20 hg19.fa sample.um.fq \
+        | samtools view -Sb - \
+        > sample.sr.bam
 
-    # sort the split-read alignments
-	bamtools sort -in sample.sr.bam -out sample.sr.sort.bam
+Sort the split-read alignments (again, using bamtools):
+::
+    bamtools sort -in sample.sr.bam -out sample.sr.sort.bam
 
-    # empirically define the paired-end distribution from 10000 proper
-    # alignments
-	samtools view sample.pe.sort.bam \
-	    | scripts/pairend_distro.pl \
-	        -rl 150 \
-	        -X 4 \
-	        -N 10000 \
-	        -o sample.pe.histo
+Run lumpy-sv using paired end reads
+-----
 
-	# scripts/pairend_distro.pl will display mean and stdev to screen, we will
-	# assume the mean=500 and stdev=50
+Using the paired end mapped reads,  empirically define the paired-end distribution from 10000 proper alignments:
+::    
+    samtools view sample.pe.sort.bam \
+        | scripts/pairend_distro.pl \
+        -rl 150 \
+        -X 4 \
+        -N 10000 \
+        -o sample.pe.histo
 
-    # run lumpy with just the paired-end data
+The above script (scripts/pairend_distro.pl) will display mean and stdev to screen.
+
+To run lumpy with just the paired-end data, We will assume the mean=500 and stdev=50:
+::
+    ../bin/lumpy \
+        -mw 4 \
+	-tt 1e-3 \
+	-pe \
+	bam_file:sample.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+	> sample.pe.bedpe
+
+Run lumpy-sv using split-reads reads
+-----
+
+We can run lumpy with just the split-read data too:
+::    
+    ../bin/lumpy \
+        -mw 4 \
+	-tt 1e-3 \
+	-sr \
+	bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
+	> sample.sr.bedpe
+
+Run lumpy-sv using both paired and split reads
+-----
+
+Or, we run lumpy with both the paired-end and split-read data:
+::
 	../bin/lumpy \
-	    -mw 4 \
-	    -tt 1e-3 \
-	    -pe \
-	    bam_file:sample.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
-	    > sample.pe.bedpe
+		-mw 4 \
+		-tt 1e-3 \
+		-pe \
+		bam_file:sample.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+		-sr \
+		bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
+		> sample.pesr.bedpe
 
-    # run lumpy with just the split-read data
-	../bin/lumpy \
-	    -mw 4 \
-	    -tt 1e-3 \
-	    -sr \
-	    bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
-	    > sample.sr.bedpe
+Run lumpy-sv using matched samples
+-----
 
-    # run lumpy with both the paired-end and split-read data
+Lastly, we can run lumpy with paired-end data from a matched tumor/normal samples
+::
 	../bin/lumpy \
-	    -mw 4 \
-	    -tt 1e-3 \
-	    -pe \
-	    bam_file:sample.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
-	    -sr \
-	    bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
-	    > sample.pesr.bedpe
-
-    # run lumpy with paired-end data from a matched tumor/normal samples
-	../bin/lumpy \
-	    -mw 4 \
-	    -tt 1e-3 \
-	    -pe \
-	    bam_file:tumor.pe.sort.bam,histo_file:tumor.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
-	    -pe \
-	    bam_file:normal.pe.sort.bam,histo_file:normal.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
-	    > tumor_v_normal.pe.bedpe
+	        -mw 4 \
+	        -tt 1e-3 \
+	        -pe \
+	        bam_file:tumor.pe.sort.bam,histo_file:tumor.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+	        -pe \
+	        bam_file:normal.pe.sort.bam,histo_file:normal.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+	        > tumor_v_normal.pe.bedpe
