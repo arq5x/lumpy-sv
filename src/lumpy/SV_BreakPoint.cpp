@@ -879,18 +879,18 @@ print_bedpe(int id)
 
 		cout << "TYPE:";
 
-		if (type == DELETION )
-        	cout << "DELETION";
-		else if (type == DUPLICATION)
-        	cout << "DUPLICATION";
+        if (interval_l.i.chr.compare(interval_r.i.chr) != 0)
+            cout << "INTERCHROM";
+        else if (type == DELETION )
+            cout << "DELETION";
+        else if (type == DUPLICATION)
+            cout << "DUPLICATION";
         else if (type == INVERSION)
-        	cout << "INVERSION";
-        else if (type == TRANSLOCATION)
-        	cout <<  "TRANSLOCATION";
+            cout << "INVERSION";
         else
-        	cout <<  "???";
+            cout <<  "???";
 
-		cout <<  "\t";
+        cout <<  "\t";
 
 		//ascii_interval_prob(&interval_l) << "\t" <<
 		//ascii_interval_prob(&interval_r) <<
