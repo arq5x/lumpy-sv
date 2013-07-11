@@ -193,6 +193,35 @@ struct inter_chrom_sort
 	}
 
 
+        if (l_primary_ref < r_primary_ref) {
+            return true;
+        } else if (l_primary_ref > r_primary_ref) {
+            return false;
+        } else if (l_primary_ref == r_primary_ref) {
+            if (l_secondary_ref < r_secondary_ref) {
+                return true;
+            } else if (l_secondary_ref > r_secondary_ref) {
+                return false;
+            } else if (l_secondary_ref == r_secondary_ref) {
+                if (l_primary_pos < r_primary_pos) {
+                    return true;
+                } else if (l_primary_pos > r_primary_pos) {
+                    return false;
+                } else if (l_primary_pos == r_primary_pos) {
+                    if (l_secondary_pos < r_secondary_pos) {
+                        return true;
+                    } else if (l_secondary_pos > r_secondary_pos) {
+                        return false;
+                    } else if (l_secondary_pos == r_secondary_pos) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        exit(1); 
+
+        /*
 	return  ( (l_primary_ref < r_primary_ref) ||
 
 			  ((l_primary_ref == r_primary_ref) && 
@@ -206,6 +235,89 @@ struct inter_chrom_sort
 					(l_secondary_ref == r_secondary_ref) &&
 					(l_primary_pos == r_primary_pos) && 
 					(l_secondary_pos == r_secondary_pos)) );
+        */
+    }
+};
+//}}}
+
+//{{{struct inter_chrom_sort
+struct inter_chrom_rev_sort
+{
+    bool operator()( const BamAlignment& l, const BamAlignment& r ) const {
+
+	// sort by the first mate position, that is if l or r are second mate, then
+	// switch the postions 
+	
+	int32_t l_primary_ref = l.RefID,
+			l_primary_pos = l.Position,
+			l_secondary_pos = l.MatePosition,
+			l_secondary_ref = l.MateRefID;
+	
+	int32_t r_primary_ref = r.RefID,
+			r_primary_pos = r.Position,
+			r_secondary_ref = r.MateRefID,
+			r_secondary_pos = r.MatePosition;
+
+	//if (l.IsSecondMate()) {
+	if (l.RefID > l.MateRefID) {
+		l_primary_ref = l.MateRefID;
+		l_primary_pos = l.MatePosition;
+		l_secondary_ref = l.RefID;
+		l_secondary_pos = l.Position;
+	}
+
+	//if (r.IsSecondMate()) {
+	if (r.RefID > r.MateRefID) {
+		r_primary_ref = r.MateRefID;
+		r_primary_pos = r.MatePosition;
+		r_secondary_ref = r.RefID;
+		r_secondary_pos = r.Position;
+	}
+
+
+        if (l_primary_ref < r_primary_ref) {
+            return false;
+        } else if (l_primary_ref > r_primary_ref) {
+            return true;
+        } else if (l_primary_ref == r_primary_ref) {
+            if (l_secondary_ref < r_secondary_ref) {
+                return false;
+            } else if (l_secondary_ref > r_secondary_ref) {
+                return true;
+            } else if (l_secondary_ref == r_secondary_ref) {
+                if (l_primary_pos < r_primary_pos) {
+                    return false;
+                } else if (l_primary_pos > r_primary_pos) {
+                    return true;
+                } else if (l_primary_pos == r_primary_pos) {
+                    if (l_secondary_pos < r_secondary_pos) {
+                        return false;
+                    } else if (l_secondary_pos > r_secondary_pos) {
+                        return true;
+                    } else if (l_secondary_pos == r_secondary_pos) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        exit(1); 
+
+        /*
+	return  ( (l_primary_ref < r_primary_ref) ||
+
+			  ((l_primary_ref == r_primary_ref) && 
+					(l_secondary_ref < r_secondary_ref)) ||
+
+			  ((l_primary_ref == r_primary_ref) && 
+					(l_secondary_ref == r_secondary_ref) &&
+					(l_primary_pos < r_primary_pos)) ||
+
+			  ((l_primary_ref == r_primary_ref) && 
+					(l_secondary_ref == r_secondary_ref) &&
+					(l_primary_pos == r_primary_pos) && 
+					(l_secondary_pos == r_secondary_pos)) );
+        */
     }
 };
 //}}}
@@ -222,60 +334,58 @@ bool sort_inter_chrom_bam(string in_file_name,
         return false;
     }
 
-	SamHeader header = reader.GetHeader();
+    SamHeader header = reader.GetHeader();
     if ( !header.HasVersion() )
         header.Version = Constants::SAM_CURRENT_VERSION;
 
-	string header_text = header.ToString();
+    string header_text = header.ToString();
     RefVector ref = reader.GetReferenceData();
 
-	// set up alignments buffer
+    // set up alignments buffer
     BamAlignment al;
     vector<BamAlignment> buffer;
     buffer.reserve( (size_t)(SORT_DEFAULT_MAX_BUFFER_COUNT*1.1) );
     bool bufferFull = false;
 
 	
-	int buff_count = 0;
-	// iterate through file
-   	while ( reader.GetNextAlignment(al)) {
+    int buff_count = 0;
+    // iterate through file
+    while ( reader.GetNextAlignment(al)) {
 
-		// check buffer's usage
-		bufferFull = ( buffer.size() >= SORT_DEFAULT_MAX_BUFFER_COUNT );
+        // check buffer's usage
+        bufferFull = ( buffer.size() >= SORT_DEFAULT_MAX_BUFFER_COUNT );
 
-		// store alignments until buffer is "full"
-		if ( !bufferFull )
-			buffer.push_back(al);
-
-
-		// if buffer is "full"
-		else {
-			// so create a sorted temp file with current buffer contents
-			// then push "al" into fresh buffer
-			create_sorted_temp_file(buffer,
-									out_file_name,
-									buff_count,
-									header_text,
-									ref);
-			++buff_count;
-			buffer.push_back(al);
-		}
-	}
+        // store alignments until buffer is "full"
+        if ( !bufferFull )
+            buffer.push_back(al);
+        // if buffer is "full"
+        else {
+            // so create a sorted temp file with current buffer contents
+            // then push "al" into fresh buffer
+            create_sorted_temp_file(buffer,
+                                    out_file_name,
+                                    buff_count,
+                                    header_text,
+                                    ref);
+                                    ++buff_count;
+            buffer.push_back(al);
+        }
+    }
 
     // handle any leftover buffer contents
     if ( !buffer.empty() ) {
         create_sorted_temp_file(buffer,
-								out_file_name,
-								buff_count,
-								header_text,
-								ref);
+                                out_file_name,
+                                buff_count,
+                                header_text,
+                                ref);
 
-		++buff_count;
-	}
+        ++buff_count;
+    }
 
     reader.Close();
 
-	return merge_sorted_files(out_file_name, buff_count, header_text, ref);
+    return merge_sorted_files(out_file_name, buff_count, header_text, ref);
 
 /*
 	for (int i = 0; i < buff_count; ++i) {
@@ -295,7 +405,7 @@ bool create_sorted_temp_file(vector<BamAlignment>& buffer,
 {
  
     // do sorting
-	stable_sort(buffer.begin(), buffer.end(), inter_chrom_sort());
+    stable_sort(buffer.begin(), buffer.end(), inter_chrom_sort());
   
     // write sorted contents to temp file, store success/fail
     stringstream temp_name;
@@ -345,62 +455,61 @@ bool merge_sorted_files(string out_file_name,
 						RefVector &ref)
 {
 
-	map<string,BamReader*> bam_readers;
-	priority_queue< BamAlignment, vector<BamAlignment>, inter_chrom_sort > q;
+    map<string,BamReader*> bam_readers;
+    priority_queue< BamAlignment, vector<BamAlignment>, inter_chrom_rev_sort > q;
 
-	for (int i = 0; i < buff_count; ++i) {
-    	stringstream temp_name;
-    	temp_name << out_file_name << i;
+    for (int i = 0; i < buff_count; ++i) {
+        stringstream temp_name;
+        temp_name << out_file_name << i;
 
-    	BamReader *reader = new BamReader();
+        BamReader *reader = new BamReader();
 
-	    if ( !reader->Open(temp_name.str()) ) {
-        	cerr << "sort ERROR: could not open " << 
-				temp_name.str() << " for reading... Aborting." << endl;
-        	return false;
-		}
+        if ( !reader->Open(temp_name.str()) ) {
+            cerr << "sort ERROR: could not open " << 
+                    temp_name.str() << " for reading... Aborting." << endl;
+            return false;
+        }
 
-		bam_readers[temp_name.str()] = reader;
-		// place an item from each bam onto the q
-		BamAlignment al;
-   		if (reader->GetNextAlignment(al))
-			q.push(al);
-	}
+        bam_readers[temp_name.str()] = reader;
+        // place an item from each bam onto the q
+        BamAlignment al;
+        if (reader->GetNextAlignment(al))
+        q.push(al);
+    }
 
     BamWriter merged_writer;
     if ( !merged_writer.Open(out_file_name, header_text, ref) ) {
         cerr << "sort ERROR: could not open " << out_file_name
-             << " for writing." << endl;
+                << " for writing." << endl;
         return false;
     }
 
 
- 	while (!q.empty()) {
-		BamAlignment al = q.top();
-		q.pop();
+    while (!q.empty()) {
+        BamAlignment al = q.top();
+        q.pop();
         merged_writer.SaveAlignment(al);
 
-		BamReader *reader =	bam_readers[al.Filename];
+        BamReader *reader = bam_readers[al.Filename];
 
-		BamAlignment new_al;
+        BamAlignment new_al;
 
-   		if (reader->GetNextAlignment(new_al))
-			q.push(new_al);
-  	}
+        if (reader->GetNextAlignment(new_al))
+            q.push(new_al);
+    }
 
-	merged_writer.Close();
+    merged_writer.Close();
 
-	//close and remove temp files
-	map<string,BamReader*>::iterator it;
-	for (it = bam_readers.begin(); it != bam_readers.end(); ++it) {
-		BamReader *reader =	it->second;
-		reader->Close();
-		delete reader;
-		
-		remove(it->first.c_str());
-	}
+    //close and remove temp files
+    map<string,BamReader*>::iterator it;
+    for (it = bam_readers.begin(); it != bam_readers.end(); ++it) {
+        BamReader *reader =	it->second;
+        reader->Close();
+        delete reader;
+        remove(it->first.c_str());
+    }
 
-	return true;
+    return true;
 }
 //}}}
 
