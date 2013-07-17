@@ -297,10 +297,10 @@ get_bp()
 	new_bp->type = type;
 
 	new_bp->interval_l.i.chr = side_l.chr;
-	new_bp->interval_l.i.strand = side_l.strand;
+	new_bp->interval_l.i.strand = '?';
 
 	new_bp->interval_r.i.chr = side_r.chr;
-	new_bp->interval_r.i.strand = side_r.strand;
+	new_bp->interval_r.i.strand = '?';
 
 	if (type == SV_BreakPoint::INVERSION) {
 		if ( ( ( query_l.qs_pos < query_r.qs_pos ) && 
@@ -309,6 +309,8 @@ get_bp()
 			 ( ( query_l.qs_pos > query_r.qs_pos ) && 
 			   ( side_l.strand == '+' ) && 
 			   ( side_r.strand == '-' ) ) ) {
+
+	                new_bp->interval_l.i.strand = '-';
 
 			if ( side_l.start > reader->back_distance) {
 				new_bp->interval_l.i.start = 
@@ -320,6 +322,9 @@ get_bp()
 			}
 
 			new_bp->interval_l.i.end = side_l.start + reader->back_distance;
+
+
+	                new_bp->interval_r.i.strand = '-';
 
 			if (side_r.start > reader->back_distance) {
 				new_bp->interval_r.i.start = 
@@ -339,6 +344,8 @@ get_bp()
 					  ( side_l.strand == '-' ) &&
 					  ( side_r.strand == '+' ) ) ) {
 
+	                new_bp->interval_l.i.strand = '+';
+
 			if (side_l.end > reader->back_distance) {
 				new_bp->interval_l.i.start =
 					side_l.end  - reader->back_distance;
@@ -350,6 +357,7 @@ get_bp()
 
 			new_bp->interval_l.i.end = side_l.end + reader->back_distance;
 
+	                new_bp->interval_r.i.strand = '+';
 			if (side_r.end > reader->back_distance) {
 				new_bp->interval_r.i.start = 
 					side_r.end - reader->back_distance;
@@ -365,6 +373,8 @@ get_bp()
 		}
 	} else if (type == SV_BreakPoint::DELETION) {
 
+	        new_bp->interval_l.i.strand = '+';
+
 		if (side_l.end > reader->back_distance) {
 			new_bp->interval_l.i.start = side_l.end - reader->back_distance;
 			new_bp->interval_l.i.start_clip = 0;
@@ -374,6 +384,8 @@ get_bp()
 		}
 
 		new_bp->interval_l.i.end = side_l.end + reader->back_distance;
+
+	        new_bp->interval_r.i.strand = '-';
 
 		if (side_r.start > reader->back_distance) {
 			new_bp->interval_r.i.start = side_r.start - reader->back_distance;
@@ -386,6 +398,8 @@ get_bp()
 		new_bp->interval_r.i.end = side_r.start + reader->back_distance;
 	} else if (type == SV_BreakPoint::DUPLICATION) {
 
+	        new_bp->interval_l.i.strand = '-';
+
 		if (side_l.start > reader->back_distance) {
 			new_bp->interval_l.i.start = side_l.start - reader->back_distance;
 			new_bp->interval_l.i.start_clip = 0;
@@ -396,6 +410,8 @@ get_bp()
 
 		new_bp->interval_l.i.end = side_l.start + reader->back_distance;
 		
+	        new_bp->interval_r.i.strand = '+';
+
 		if (side_r.end > reader->back_distance) {
 			new_bp->interval_r.i.start = side_r.end - reader->back_distance;
 			new_bp->interval_r.i.start_clip = 0;
