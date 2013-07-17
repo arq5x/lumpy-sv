@@ -22,6 +22,7 @@
 #include <vector>
 #include <climits>
 #include <sstream>
+#include <map>
 
 
 double SV_BreakPoint::p_trim_threshold = 1;;
@@ -838,14 +839,23 @@ void
 SV_BreakPoint::
 print_bedpe(int id)
 {
-	vector<SV_Evidence*>::iterator it;
+    map<string,int> uniq_strands;
+    vector<SV_Evidence*>::iterator it;
     vector<SV_BreakPoint *> bps;
-	for (it = evidence.begin(); it < evidence.end(); ++it) {
+    for (it = evidence.begin(); it < evidence.end(); ++it) {
     	SV_Evidence *e = *it;
-		SV_BreakPoint *tmp_bp = e->get_bp();
-	    tmp_bp->init_interval_probabilities();
+        SV_BreakPoint *tmp_bp = e->get_bp();
+        tmp_bp->init_interval_probabilities();
 
         bps.push_back(tmp_bp);
+
+        stringstream strands;
+        strands << tmp_bp->interval_l.i.strand << tmp_bp->interval_r.i.strand;
+
+        if (uniq_strands.find(strands.str()) == uniq_strands.end())
+            uniq_strands[strands.str()] = 1;
+        else
+            uniq_strands[strands.str()] = uniq_strands[strands.str()] + 1;
     }
 
     double score_l, score_r;
@@ -892,8 +902,8 @@ print_bedpe(int id)
 
         cout <<  "\t";
 
-		//ascii_interval_prob(&interval_l) << "\t" <<
-		//ascii_interval_prob(&interval_r) <<
+        //ascii_interval_prob(&interval_l) << "\t" <<
+        //ascii_interval_prob(&interval_r) <<
 
 	/*
 	vector <int> ids = get_evidence_ids();
@@ -921,7 +931,16 @@ print_bedpe(int id)
 			cout << ";";
 		cout << *_ids_it << "," << ids[*_ids_it];
 	}
-		
+
+	cout << "\t";
+
+	cout << "STRANDS:";
+        map<string,int>:: iterator s_it;
+        for ( s_it = uniq_strands.begin(); s_it != uniq_strands.end(); ++s_it) {
+            if (s_it != uniq_strands.begin())
+                cout <<  ";";
+            cout << s_it->first << "," << s_it->second;
+        }	
 	cout << endl;
 }
 //}}}
