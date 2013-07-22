@@ -41,6 +41,7 @@ _EXT_OBJECTS=BamAncillary.o \
 			 sequenceUtils.o \
 			 gzstream.o \
 			 bedFilePE.o \
+			 bedFile.o \
 			 fileType.o \
 			 sqlite3.o 
 EXT_OBJECTS=$(patsubst %,$(OBJ_DIR)/%,$(_EXT_OBJECTS))

@@ -244,35 +244,54 @@ bool
 SV_Pair::
 is_sane()
 {
-	if ( min_mapping_quality < reader->min_mapping_threshold )
-		return false;
+    // test if either end is in and excluded region
+    vector<UCSCElement<int> > v = exclude_regions.get(read_l.chr,
+                                                      read_l.start,
+                                                      read_l.end,
+                                                      '+',
+                                                      false);
+    if ( v.size() > 0 )
+        return false;
 
-	int read_len_a = read_l.end - read_l.start;
-	int read_len_b = read_r.end - read_r.start;
+    v = exclude_regions.get(read_r.chr,
+                            read_r.start,
+                            read_r.end,
+                            '+',
+                            false);
 
-	// |-----------------|
-	//              |-----------------|
-	//              ^min ^max
-	//				|-----| overlap
-	// |------------| non_overlap
-	//
-	// |-----------------|
-	//                            |-----------------|
-	//                   ^min     ^max
-	//                   |--------| "overalp" (less than 0)
-	// |--------| "non_overlap"
-	//
+    if ( v.size() > 0 )
+        return false;
+ 
+
+    if ( min_mapping_quality < reader->min_mapping_threshold )
+        return false;
+
+    int read_len_a = read_l.end - read_l.start;
+    int read_len_b = read_r.end - read_r.start;
+
+    // |-----------------|
+    //              |-----------------|
+    //              ^min ^max
+    //				|-----| overlap
+    // |------------| non_overlap
+    //
+    // |-----------------|
+    //                            |-----------------|
+    //                   ^min     ^max
+    //                   |--------| "overalp" (less than 0)
+    // |--------| "non_overlap"
+    //
 
 
-	int overlap = min(read_l.end, read_r.end) - max(read_l.start, read_r.start);
-	//int non_overlap = min(read_len_a, read_len_b) - overlap;
-	// how much does not overlap // overlap is at most read_len
-	int non_overlap = min(read_len_a, read_len_b) - overlap;
+    int overlap = min(read_l.end, read_r.end) - max(read_l.start, read_r.start);
+    //int non_overlap = min(read_len_a, read_len_b) - overlap;
+    // how much does not overlap // overlap is at most read_len
+    int non_overlap = min(read_len_a, read_len_b) - overlap;
 
-	if ( (overlap > 0) && (abs(non_overlap) < reader->min_non_overlap) )
-		return false;
-	else 
-		return true;
+    if ( (overlap > 0) && (abs(non_overlap) < reader->min_non_overlap) )
+        return false;
+    else 
+        return true;
 }
 //}}}
 
