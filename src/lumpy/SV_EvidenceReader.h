@@ -27,55 +27,47 @@ using namespace std;
 class SV_EvidenceReader
 {
 
-	public:
-		static int counter;
-		int sample_id;
-		virtual string check_params();
-		virtual bool add_param(char *param, char *val);
+public:
+    static int counter;
+    int sample_id;
+    virtual string check_params();
+    virtual bool add_param(char *param, char *val);
 
-		virtual void initialize();
-		virtual void set_statics();
-		virtual void unset_statics();
-#if 0
-		virtual void process_input( BamAlignment &_bam,
-									RefVector &_ref,
-									string header,
-									UCSCBins<SV_BreakPoint*> &r_bin);
-		virtual void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
-		virtual void process_input_chr(string chr,
-									   UCSCBins<SV_BreakPoint*> &r_bin);
-#endif
-		virtual void process_input_chr_pos(string chr,
-										   CHR_POS pos,
-										   UCSCBins<SV_BreakPoint*> &r_bin);
-		virtual void process_input_chr_pos(string primary_chr,
-						                   string secondary_chr,
-										   CHR_POS pos,
-										   UCSCBins<SV_BreakPoint*> &r_bin);
-		virtual void process_input( BamAlignment &_bam,
-									RefVector &_refs,
-									BamWriter &inter_chrom_reads,
-									UCSCBins<SV_BreakPoint*> &r_bin);
-		virtual void process_input( BamAlignment &_bam,
-									RefVector &_refs,
-									UCSCBins<SV_BreakPoint*> &r_bin);
+    virtual void initialize();
+    virtual void set_statics();
+    virtual void unset_statics();
 
-		virtual void terminate();
-		virtual string get_curr_chr();
-		virtual CHR_POS get_curr_pos();
+    virtual void process_input_chr_pos(string chr,
+                                       CHR_POS pos,
+                                       UCSCBins<SV_BreakPoint*> &r_bin);
+    virtual void process_input_chr_pos(string primary_chr,
+                                       string secondary_chr,
+                                       CHR_POS pos,
+                                       UCSCBins<SV_BreakPoint*> &r_bin);
+    virtual void process_input( BamAlignment &_bam,
+                                RefVector &_refs,
+                                BamWriter &inter_chrom_reads,
+                                UCSCBins<SV_BreakPoint*> &r_bin);
+    virtual void process_input( BamAlignment &_bam,
+                                RefVector &_refs,
+                                UCSCBins<SV_BreakPoint*> &r_bin);
 
-		virtual bool has_next();
+    virtual void terminate();
+    virtual string get_curr_chr();
+    virtual CHR_POS get_curr_pos();
 
-		virtual string get_source_file_name();
+    virtual bool has_next();
 
-		virtual string get_curr_primary_chr();
-		virtual string get_curr_secondary_chr();
+    virtual string get_source_file_name();
 
-		virtual int32_t get_curr_primary_refid();
-		virtual int32_t get_curr_secondary_refid();
+    virtual string get_curr_primary_chr();
+    virtual string get_curr_secondary_chr();
 
-		virtual CHR_POS get_curr_primary_pos();
-		virtual CHR_POS get_curr_secondary_pos();
+    virtual int32_t get_curr_primary_refid();
+    virtual int32_t get_curr_secondary_refid();
+
+    virtual CHR_POS get_curr_primary_pos();
+    virtual CHR_POS get_curr_secondary_pos();
 
 };
 #endif

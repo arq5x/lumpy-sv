@@ -25,28 +25,29 @@ class SV_BreakPoint;
 
 using namespace std;
 
+#include "ucsc_bins.hpp"
 #include "log_space.h"
 #include <map>
 
 class SV_Evidence
 {
 
-	public:
-		static map<int, pair<log_space*,log_space*> > distros;
-		static map<int, int> distros_size;
+public:
+        static map<int, pair<log_space*,log_space*> > distros;
+        static map<int, int> distros_size;
+        static UCSCBins<int> exclude_regions;
+        int weight;
+        int id;
+        int sample_id;
+        int type;
 
-		int weight;
-		int id;
-		int sample_id;
-		int type;
+        virtual void set_bp_interval_probability(struct breakpoint_interval *i);
 
-		virtual void set_bp_interval_probability(struct breakpoint_interval *i);
+        virtual string evidence_type();
 
-		virtual string evidence_type();
-
-		virtual void print_evidence();
-		virtual ~SV_Evidence();
-		virtual SV_BreakPoint* get_bp();
+        virtual void print_evidence();
+        virtual ~SV_Evidence();
+        virtual SV_BreakPoint* get_bp();
 
 };
 #endif

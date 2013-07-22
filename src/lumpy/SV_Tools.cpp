@@ -23,6 +23,7 @@ const unsigned int SORT_DEFAULT_MAX_BUFFER_MEMORY = 1024;
 
 #include "SV_Tools.h"
 
+#include "bedFile.h"
 
 #include <cstdio>
 #include <string>
@@ -513,7 +514,6 @@ bool merge_sorted_files(string out_file_name,
 }
 //}}}
 
-
 //{{{void normalize_ls(CHR_POS size, log_space *o, log_space *r)
 void normalize_ls(CHR_POS size, log_space *o, log_space *r)
 {
@@ -524,5 +524,25 @@ void normalize_ls(CHR_POS size, log_space *o, log_space *r)
 
     for (CHR_POS i = 0; i < size; ++ i)
         r[i] = ls_divide(o[i],sum);
+}
+//}}}
+
+//{{{void parse_exclude_file(string exclude_bed_file,
+void parse_exclude_file(string exclude_bed_file,
+                        UCSCBins<int> &exclude_regions)
+{
+    BedFile *bed_file = new BedFile(exclude_bed_file);
+    bed_file->Open();
+    BED bed;
+    while (bed_file->GetNextBed(bed, false)) {
+        if (bed_file->_status == BED_VALID) {
+            exclude_regions.add(bed.chrom,
+                                bed.start,
+                                bed.end,
+                                '+',
+                                1);
+        }
+    }
+    bed_file->Close();
 }
 //}}}

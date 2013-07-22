@@ -499,8 +499,28 @@ bool
 SV_SplitRead::
 is_sane()
 {
-	if ( min_mapping_quality < reader->min_mapping_threshold )
-		return false;
+    // test if either end is in and excluded region
+    vector<UCSCElement<int> > v = exclude_regions.get(side_l.chr,
+                                                      side_l.start,
+                                                      side_l.end,
+                                                      '+',
+                                                      false);
+    if ( v.size() > 0 )
+        return false;
+
+    v = exclude_regions.get(side_r.chr,
+                            side_r.start,
+                            side_r.end,
+                            '+',
+                            false);
+
+    if ( v.size() > 0 )
+        return false;
+
+
+
+    if ( min_mapping_quality < reader->min_mapping_threshold )
+            return false;
 
 
     if (side_l.strand != side_r.strand)
