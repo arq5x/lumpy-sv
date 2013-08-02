@@ -20,6 +20,7 @@ using namespace std;
 
 map<int, pair<log_space*,log_space*> > SV_Evidence:: distros;
 map<int, int> SV_Evidence:: distros_size;
+UCSCBins<int> SV_Evidence:: exclude_regions;
 
 void
 SV_Evidence::
