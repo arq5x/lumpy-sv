@@ -123,7 +123,7 @@ Usage
 General options
 ::
 
-    -e  Show evidnece for each call
+    -e  Show evidence for each call
 
 The default output reports the predicted breakpoint.  This option includes the
 evidence supporting each call.
@@ -137,8 +137,18 @@ set.  The sum of weights in the evidence set must be above this value.
 
     -tt trim threshold
 
-Each prediced breakpoint interval has a probability array associated with it.
+Each predicted breakpoint interval has a probability array associated with it.
 The intervals can be trimmed of values that are below some trimming percentile.
+::
+
+    -x excluded regions bed file
+
+Regions of the genome may be excluded from consideration by included them in
+bed file format.  Any alignment that overlaps any of the regions will be
+ignored.  This is particularly useful when a sample has regions with either too
+very low or very high coverage due to biases in sequencing or alignment.  See
+below for help creating this file.
+::
 
 Split-read options
 ::
@@ -282,15 +292,16 @@ Tab separated::
 	5. interval 2 start
 	6. interval 2 end
 	7. id
-	8. evidence set size
+	8. evidence set score
 	9. strand 1
 	10. strand 2
-	11. type (DELETION = 1, DUPLICATION = 2, INVERSION = 3)
+	11. type 
 	12. id of samples containing evidence for this breakpoint
+        13. strand configurations observed in the evidence set
 
 Example::
 
-	chr10	2225782	2226073	chr10	2235576	2235865	0x10f504f80	4	+	-	1	ids:1
+        chr1    34971904    34971945    chr1    34976002    34976043    0x7f9eb0917210  0.0110386   +   -   TYPE:DELETION   IDS:11,1    STRANDS:+-,1
 
 Test data sets
 ==============
@@ -421,7 +432,7 @@ Or, we run lumpy with both the paired-end and split-read data:
 Run lumpy-sv using matched samples
 -----
 
-Lastly, we can run lumpy with paired-end data from a matched tumor/normal samples
+We can run lumpy with paired-end data from a matched tumor/normal samples
 ::
 	../bin/lumpy \
 	        -mw 4 \
@@ -431,3 +442,55 @@ Lastly, we can run lumpy with paired-end data from a matched tumor/normal sample
 	        -pe \
 	        bam_file:normal.pe.sort.bam,histo_file:normal.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
 	        > tumor_v_normal.pe.bedpe
+
+Run lumpy-sv with regions of very high coverage excluded
+-----
+We can direct lumpy to ignore certain regions by using the exclude region
+option.  In this example we find and then exclude regions that have very high
+coverage.  First we use the get_coverages.py script to find the min, max, and
+mean coverages of the the sr and pe bam files, and to create coverage profiles
+for both files.
+::
+        python ../scripts/get_coverages.py \
+                sample.pe.sort.bam \
+                sample.sr.sort.bam
+
+        sample.pe.sort.bam.coverage  min:1   max:14  mean(non-zero):2.35557521272
+        sample.sr.sort.bam.coverage  min:1   max:7   mean(non-zero):1.08945936729
+
+From this output, we will choose to exclude regions that have more than 10x
+coverage.  To create the exclude file we will use the get_exclude_regions.py
+script to create the exclude.bed file
+::
+        python ../scripts/get_exclude_regions.py \
+                10 \
+                exclude.bed \
+                sample.pe.sort.bam \
+                sample.sr.sort.bam
+        
+We now rerun lumpy with the exclude (-x) option 
+::
+	../bin/lumpy \
+		-mw 4 \
+		-tt 1e-3 \
+                -x exclude.bed \
+		-pe \
+		bam_file:sample.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+		-sr \
+		bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
+		> sample.pesr.exclude.bedpe
+
+Troubleshooting
+============
+All of the bam files that lumpy processes must be position sorted.  To check if your bams are sorted correctly, use the check_sorting.py script
+::
+        python ../scripts/check_sorting.py \
+                pe.pos_sorted.bam \
+                sr.pos_sorted.bam \
+                pe.name_sorted.bam
+        pe.pos_sorted.bam
+        in order
+        sr.pos_sorted.bam
+        in order
+        pe.name_sorted.bam
+        out of order:   chr10   102292476   occurred after   chr10   102292893
