@@ -32,6 +32,7 @@
 #include "SV_BamReader.h"
 #include "SV_InterChromBamReader.h"
 #include "SV_Tools.h"
+#include "genomeFile.h"
 
 #include "ucsc_bins.hpp"
 #include "log_space.h"
@@ -80,6 +81,7 @@ void ShowHelp(void)
             endl <<
     "Usage:   " << PROGRAM_NAME << " [OPTIONS] " << endl << endl <<
     "Options: " << endl <<
+        "\t-g"	"\tGenome file (defines chromosome order)" << endl <<
         "\t-e"	"\tShow evidnece for each call" << endl <<
         "\t-w"	"\tFile read windows size (default 1000000)" << endl <<
         "\t-mw"	"\tminimum weight for a call" << endl <<
@@ -135,6 +137,8 @@ int main(int argc, char* argv[])
     srand (time(NULL));
     string exclude_bed_file;
     bool has_exclude = false;
+    string genome_file; 
+    bool has_genome_file = false;
     //vector<string> bam_files;
     //}}}
 
@@ -352,6 +356,15 @@ int main(int argc, char* argv[])
             }
         }
 
+        else if(PARAMETER_CHECK("-g", 2, parameterLength)) {
+            if ((i+1) < argc) {
+                genome_file = argv[i + 1];
+                has_genome_file = true;
+                i++;
+            }
+        }
+
+
         else if(PARAMETER_CHECK("-t", 2, parameterLength)) {
             if ((i+1) < argc) {
 		inter_chrom_file_prefix = argv[i + 1];
@@ -385,16 +398,46 @@ int main(int argc, char* argv[])
     if (has_exclude) 
         parse_exclude_file(exclude_bed_file, SV_Evidence::exclude_regions);
 
-    //}}} end parsing 
-
-    //{{{ put bams into evidence reader
+    SV_BamReader *bam_r;
     if (has_bams) {
-        SV_BamReader *bam_r = new SV_BamReader(&bam_evidence_readers);
+        bam_r = new SV_BamReader(&bam_evidence_readers);
         bam_r->set_inter_chrom_file_name(inter_chrom_file_prefix + ".bam");
         bam_r->initialize();
         evidence_readers.push_back(bam_r);
     }
-    //}}}
+
+    map<string, int> genome_order;
+    if (has_genome_file) {
+        GenomeFile *genome;
+        genome  = new GenomeFile(genome_file);
+        vector<string> chroms = genome->getChromList();
+        vector<string>::iterator chr_itr;
+        int chr_count = 0;
+        for (chr_itr = chroms.begin(); chr_itr != chroms.end(); ++chr_itr) {
+            genome_order[*chr_itr] = chr_count;
+            chr_count += 1;
+        }
+    } else if (has_bams) {
+        //map<string, SV_EvidenceReader*> bam_evidence_readers;
+        //map<string, SV_EvidenceReader*>::iterator bam_itr;
+        //bam_itr = bam_evidence_readers.begin();
+        RefVector refs = bam_r->refs;
+        vector<RefData>::iterator ref_itr;
+        int chr_count = 0;
+        for (ref_itr = refs.begin(); ref_itr != refs.end(); ++ref_itr) {
+            RefData r = *ref_itr;
+            genome_order[r.RefName] = chr_count;
+            chr_count += 1;
+        }
+    } else {
+            cerr << endl << "*****ERROR: Unknown chromosome order.  " <<
+                "Chromosome order must be\nspecified by either bam header " <<
+                "or a genome file *****" << endl << endl;
+	    ShowHelp();
+    }
+
+    //}}} end parsing 
+
 
     //{{{ Test if there lines to process in each input file
     for ( i_er = evidence_readers.begin();
@@ -419,7 +462,8 @@ int main(int argc, char* argv[])
             if ( er->has_next() ) {
                 string curr_chr = er->get_curr_chr();
                 if ( ( min_chr.compare("") == 0 ) ||
-                       ( curr_chr.compare(min_chr) < 0 ) ) {
+                     ( genome_order[curr_chr] < genome_order[min_chr] ) ) {
+                       //( curr_chr.compare(min_chr) < 0 ) ) {
                     min_chr = curr_chr;
                 }
             }
@@ -433,6 +477,7 @@ int main(int argc, char* argv[])
         }
         //}}}
 
+        cerr << min_chr << "\t" << max_pos << endl;
         bool input_processed = true;
 
         while (input_processed) {
@@ -448,7 +493,8 @@ int main(int argc, char* argv[])
                 if ( er->has_next() ) {
                     string curr_chr = er->get_curr_chr();
                     CHR_POS curr_pos = er->get_curr_pos();
-                    if ( ( curr_chr.compare(min_chr) <= 0 ) &&
+                    //if ( ( curr_chr.compare(min_chr) <= 0 ) &&
+                    if ( ( genome_order[curr_chr] <= genome_order[min_chr] ) &&
                          ( curr_pos < max_pos) ) {
                         er->process_input_chr_pos(curr_chr, max_pos, r_bin);
                         input_processed = true;

@@ -8,6 +8,7 @@ BIN_DIR = ../../bin/
 # -------------------
 INCLUDES = -I$(UTILITIES_DIR)/bedFile/ \
            -I$(UTILITIES_DIR)/bedFilePE/ \
+           -I$(UTILITIES_DIR)/genomeFile/ \
            -I$(UTILITIES_DIR)/version/ \
            -I$(UTILITIES_DIR)/gzstream/ \
            -I$(UTILITIES_DIR)/lineFileUtilities/ \
@@ -42,6 +43,7 @@ _EXT_OBJECTS=BamAncillary.o \
 			 gzstream.o \
 			 bedFilePE.o \
 			 bedFile.o \
+			 genomeFile.o \
 			 fileType.o \
 			 sqlite3.o 
 EXT_OBJECTS=$(patsubst %,$(OBJ_DIR)/%,$(_EXT_OBJECTS))
