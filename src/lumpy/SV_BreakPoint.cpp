@@ -37,9 +37,9 @@ const int SV_BreakPoint::TRANSLOCATION;
 SV_BreakPoint::
 SV_BreakPoint(SV_Evidence *e)
 {
-	evidence.push_back(e);
+    evidence.push_back(e);
 
-	ids[e->id] = 1;
+    ids[e->id] = 1;
 }
 //}}}
 
@@ -47,87 +47,87 @@ SV_BreakPoint(SV_Evidence *e)
 SV_BreakPoint::
 SV_BreakPoint(SV_BreakPoint *a, SV_BreakPoint *b)
 {
-	a->init_interval_probabilities();
-	b->init_interval_probabilities();
+    a->init_interval_probabilities();
+    b->init_interval_probabilities();
 
-	// a may not overlap b, so we need to check
-	// after this ar_overlap_intr will point to the interval in a that
-	// overlaps the right interval in b, and al_overlap_intr will point to the
-	// interval in a that overlaps the left interval in b
-	struct breakpoint_interval *al_overlap_intr = NULL, 
-							   *ar_overlap_intr = NULL;
+    // a may not overlap b, so we need to check
+    // after this ar_overlap_intr will point to the interval in a that
+    // overlaps the right interval in b, and al_overlap_intr will point to the
+    // interval in a that overlaps the left interval in b
+    struct breakpoint_interval *al_overlap_intr = NULL,
+                                        *ar_overlap_intr = NULL;
 
-	if ( does_intersect(&(a->interval_l), &(b->interval_l), false) &&
-		 does_intersect(&(a->interval_r), &(b->interval_r), false) ) {
-		al_overlap_intr = &(a->interval_l);
-		ar_overlap_intr = &(a->interval_r);
-	} else if ( does_intersect(&(a->interval_r), &(b->interval_l), false) &&
-				does_intersect(&(a->interval_l), &(b->interval_r), false) ) {
-		ar_overlap_intr = &(a->interval_l);
-		al_overlap_intr = &(a->interval_r);
-	} else {
-		throw 0;
-	}
+    if ( does_intersect(&(a->interval_l), &(b->interval_l), false) &&
+            does_intersect(&(a->interval_r), &(b->interval_r), false) ) {
+        al_overlap_intr = &(a->interval_l);
+        ar_overlap_intr = &(a->interval_r);
+    } else if ( does_intersect(&(a->interval_r), &(b->interval_l), false) &&
+                does_intersect(&(a->interval_l), &(b->interval_r), false) ) {
+        ar_overlap_intr = &(a->interval_l);
+        al_overlap_intr = &(a->interval_r);
+    } else {
+        throw 0;
+    }
 
-	if ( (al_overlap_intr != NULL) && (ar_overlap_intr != NULL) ) {
-		CHR_POS r_merged_start, 
-				r_merged_end, 
-				l_merged_start, 
-				l_merged_end;
+    if ( (al_overlap_intr != NULL) && (ar_overlap_intr != NULL) ) {
+        CHR_POS r_merged_start,
+                r_merged_end,
+                l_merged_start,
+                l_merged_end;
 
-		log_space *r_merged_prob, *l_merged_prob;
+        log_space *r_merged_prob, *l_merged_prob;
 
-		bool l_merges = test_interval_merge(&(b->interval_l),
-											al_overlap_intr,
-											&l_merged_start,
-											&l_merged_end,
-											&l_merged_prob);
+        bool l_merges = test_interval_merge(&(b->interval_l),
+                                            al_overlap_intr,
+                                            &l_merged_start,
+                                            &l_merged_end,
+                                            &l_merged_prob);
 
 
-		bool r_merges = test_interval_merge(&(b->interval_r),
-											ar_overlap_intr,
-											&r_merged_start,
-											&r_merged_end,
-											&r_merged_prob);
+        bool r_merges = test_interval_merge(&(b->interval_r),
+                                            ar_overlap_intr,
+                                            &r_merged_start,
+                                            &r_merged_end,
+                                            &r_merged_prob);
 
-		weight = 0;
+        weight = 0;
 
-		if (r_merges && l_merges) {
+        if (r_merges && l_merges) {
 
-			interval_l.i.start = l_merged_start;
-			interval_l.i.end = l_merged_end;
-			interval_l.p = l_merged_prob;
+            interval_l.i.start = l_merged_start;
+            interval_l.i.end = l_merged_end;
+            interval_l.p = l_merged_prob;
 
-			interval_r.i.start = r_merged_start;
-			interval_r.i.end = r_merged_end;
-			interval_r.p = r_merged_prob;
+            interval_r.i.start = r_merged_start;
+            interval_r.i.end = r_merged_end;
+            interval_r.p = r_merged_prob;
 
-			vector<SV_Evidence*>::iterator ev_it;
+            vector<SV_Evidence*>::iterator ev_it;
 
-			for (ev_it = a->evidence.begin(); ev_it < a->evidence.end(); ++ev_it)
-				evidence.push_back(*ev_it);
+            for (ev_it = a->evidence.begin(); ev_it < a->evidence.end(); ++ev_it)
+                evidence.push_back(*ev_it);
 
-			for (ev_it = b->evidence.begin(); ev_it < b->evidence.end(); ++ev_it)
-				evidence.push_back(*ev_it);
+            for (ev_it = b->evidence.begin(); ev_it < b->evidence.end(); ++ev_it)
+                evidence.push_back(*ev_it);
 
-			map<int, int>::iterator id_it;
+            map<int, int>::iterator id_it;
 
-			for (id_it = a->ids.begin(); id_it != a->ids.end(); ++id_it) {
-				if ( ids.find( id_it->first ) == ids.end() )
-					ids[id_it->first] = 0;
-				ids[id_it->first] += id_it->second;
-			}
+            for (id_it = a->ids.begin(); id_it != a->ids.end(); ++id_it) {
+                if ( ids.find( id_it->first ) == ids.end() )
+                    ids[id_it->first] = 0;
+                ids[id_it->first] += id_it->second;
+            }
 
-			for (id_it = a->ids.begin(); id_it != a->ids.end(); ++id_it) {
-				if ( ids.find( id_it->first ) == ids.end() )
-					ids[id_it->first] = 0;
-				ids[id_it->first] += id_it->second;
-			}
+            for (id_it = a->ids.begin(); id_it != a->ids.end(); ++id_it) {
+                if ( ids.find( id_it->first ) == ids.end() )
+                    ids[id_it->first] = 0;
+                ids[id_it->first] += id_it->second;
+            }
 
-			weight += a->weight;
-			weight += b->weight;
-		} 
-	}
+            weight += a->weight;
+            weight += b->weight;
+        }
+    }
 }
 //}}}
 
@@ -136,10 +136,10 @@ SV_BreakPoint::
 ~SV_BreakPoint()
 {
     if (interval_l.p != NULL)
-	    free(interval_l.p);
+        free(interval_l.p);
 
     if (interval_r.p != NULL)
-	    free(interval_r.p);
+        free(interval_r.p);
 }
 //}}}
 
@@ -148,11 +148,11 @@ void
 SV_BreakPoint::
 free_evidence()
 {
-	vector<SV_Evidence*>::iterator it;
-	for (it = evidence.begin(); it < evidence.end(); ++it) {
-		SV_Evidence *sv_e = *it;
-		delete sv_e;
-	}
+    vector<SV_Evidence*>::iterator it;
+    for (it = evidence.begin(); it < evidence.end(); ++it) {
+        SV_Evidence *sv_e = *it;
+        delete sv_e;
+    }
 }
 //}}}
 
@@ -168,32 +168,32 @@ void
 SV_BreakPoint::
 print_evidence(string pre)
 {
-	vector<SV_Evidence*>::iterator it;
-	for (it = evidence.begin(); it < evidence.end(); ++it) {
-		SV_Evidence *sv_e = *it;
-		cout << pre;
-		SV_BreakPoint *tmp_bp = sv_e->get_bp();
-		tmp_bp->print_bedpe(-1);
-		delete(tmp_bp);
-	}
+    vector<SV_Evidence*>::iterator it;
+    for (it = evidence.begin(); it < evidence.end(); ++it) {
+        SV_Evidence *sv_e = *it;
+        cout << pre;
+        SV_BreakPoint *tmp_bp = sv_e->get_bp();
+        tmp_bp->print_bedpe(-1);
+        delete(tmp_bp);
+    }
 }
 //}}}
 
 //{{{ ostream& operator << (ostream& out, const SV_BreakPoint& b)
 ostream& operator<< (ostream& out, const SV_BreakPoint& b)
 {
-	out << 
-		b.interval_l.i.chr << "," <<
-		b.interval_l.i.start << "," <<
-		(b.interval_l.i.end+1) << "," <<
-		b.interval_l.i.strand << "\t" <<
-		b.interval_r.i.chr << "," <<
-		b.interval_r.i.start << "," <<
-		(b.interval_r.i.end+1) << "," <<
-		b.interval_r.i.strand << "\t" <<
-		b.evidence.size();
+    out <<
+        b.interval_l.i.chr << "," <<
+        b.interval_l.i.start << "," <<
+        (b.interval_l.i.end+1) << "," <<
+        b.interval_l.i.strand << "\t" <<
+        b.interval_r.i.chr << "," <<
+        b.interval_r.i.start << "," <<
+        (b.interval_r.i.end+1) << "," <<
+        b.interval_r.i.strand << "\t" <<
+        b.evidence.size();
 
-	return out;
+    return out;
 }
 //}}}
 
@@ -201,18 +201,18 @@ ostream& operator<< (ostream& out, const SV_BreakPoint& b)
 bool
 SV_BreakPoint::
 does_intersect(struct breakpoint_interval *a,
-			   struct breakpoint_interval *b,
-			   bool check_strand)
+               struct breakpoint_interval *b,
+               bool check_strand)
 {
-	if ( (a->i.chr == b->i.chr) &&
-		 (a->i.start < b->i.end) &&
-		 (a->i.end > b->i.start) )
-		if (check_strand)
-			return (a->i.strand == b->i.strand);
-		else
-			return true;
-	else
-		return false;
+    if ( (a->i.chr == b->i.chr) &&
+            (a->i.start < b->i.end) &&
+            (a->i.end > b->i.start) )
+        if (check_strand)
+            return (a->i.strand == b->i.strand);
+        else
+            return true;
+    else
+        return false;
 }
 //}}}
 
@@ -221,14 +221,14 @@ void
 SV_BreakPoint::
 init_interval_probabilities()
 {
-	// skip if they have been initialized
-	if ( (interval_l.p == NULL) || (interval_r.p == NULL) ) {
+    // skip if they have been initialized
+    if ( (interval_l.p == NULL) || (interval_r.p == NULL) ) {
 
-		// take the first piece of evidence from the list
-		SV_Evidence *e = evidence[0];
-		e->set_bp_interval_probability(&interval_l);
-		e->set_bp_interval_probability(&interval_r);
-	}
+        // take the first piece of evidence from the list
+        SV_Evidence *e = evidence[0];
+        e->set_bp_interval_probability(&interval_l);
+        e->set_bp_interval_probability(&interval_r);
+    }
 }
 //}}}
 
@@ -237,16 +237,16 @@ void
 SV_BreakPoint::
 free_interval_probabilities()
 {
-	// skip if they have been initialized
-	if ( (interval_l.p != NULL) || (interval_r.p != NULL) ) {
+    // skip if they have been initialized
+    if ( (interval_l.p != NULL) || (interval_r.p != NULL) ) {
 
-		// take the first piece of evidence from the list
-		//SV_Evidence *e = evidence[0];
-		free(interval_l.p);
-		free(interval_r.p);
-		interval_l.p = NULL;
-		interval_r.p = NULL;
-	}
+        // take the first piece of evidence from the list
+        //SV_Evidence *e = evidence[0];
+        free(interval_l.p);
+        free(interval_r.p);
+        interval_l.p = NULL;
+        interval_r.p = NULL;
+    }
 }
 //}}}
 
@@ -255,229 +255,229 @@ bool
 SV_BreakPoint::
 merge(SV_BreakPoint *p)
 {
-	// p->a may not overlap a, so we need to check
-	// after this a_overlap_intr will point to the interval in p that
-	// overlaps the current a interval and bt_overlap_intr overlaps the
-	// current b interval
-	// if this->a overalps p->a then ll will be true, otherise false
-	//bool ll = true;
-	struct breakpoint_interval *a_overlap_intr, *b_overlap_intr;
+    // p->a may not overlap a, so we need to check
+    // after this a_overlap_intr will point to the interval in p that
+    // overlaps the current a interval and bt_overlap_intr overlaps the
+    // current b interval
+    // if this->a overalps p->a then ll will be true, otherise false
+    //bool ll = true;
+    struct breakpoint_interval *a_overlap_intr, *b_overlap_intr;
 
-	if ( does_intersect(&interval_l, &(p->interval_l), false) &&
-		 does_intersect(&interval_r, &(p->interval_r), false) ) {
-		//ll = true;
-		a_overlap_intr = &(p->interval_l);
-		b_overlap_intr = &(p->interval_r);
-	} else if ( does_intersect(&interval_r, &(p->interval_l), false) &&
-				does_intersect(&interval_l, &(p->interval_r), false) ) {
-		//ll = false;
-		a_overlap_intr = &(p->interval_r);
-		b_overlap_intr = &(p->interval_l);
-	} else {
-		//{{{ Give error and abort
-		cerr << "Error in merge(): no correct overlap" << endl <<
-				"t:" <<
-				interval_l.i.chr << "," <<
-				interval_l.i.start << "," <<
-				interval_l.i.end << "," <<
-				interval_l.i.strand << " " <<
-				interval_r.i.chr << "," <<
-				interval_r.i.start << "," <<
-				interval_r.i.end << "," <<
-				interval_r.i.strand << "\t" <<
-				"p:" <<
-				p->interval_l.i.chr << "," <<
-				p->interval_l.i.start << "," <<
-				p->interval_l.i.end << "," <<
-				p->interval_l.i.strand << " " <<
-				p->interval_r.i.chr << "," <<
-				p->interval_r.i.start << "," <<
-				p->interval_r.i.end << "," <<
-				p->interval_r.i.strand << "\t" <<
-				"tl-pl:" << 
-					does_intersect(&interval_l, &(p->interval_l), true) << 
-					" " <<
-				"tl-pr:" <<
-					does_intersect(&interval_l, &(p->interval_r), true) << 
-					" " <<
-				"tr-pl:" << 
-					does_intersect(&interval_r, &(p->interval_l), true) << 
-					" " <<
-				"tr-pr:" << 
-					does_intersect(&interval_r, &(p->interval_r), true) << 
-				endl;
-		//abort();
-		return false;
-		//}}}
-	}
+    if ( does_intersect(&interval_l, &(p->interval_l), false) &&
+            does_intersect(&interval_r, &(p->interval_r), false) ) {
+        //ll = true;
+        a_overlap_intr = &(p->interval_l);
+        b_overlap_intr = &(p->interval_r);
+    } else if ( does_intersect(&interval_r, &(p->interval_l), false) &&
+                does_intersect(&interval_l, &(p->interval_r), false) ) {
+        //ll = false;
+        a_overlap_intr = &(p->interval_r);
+        b_overlap_intr = &(p->interval_l);
+    } else {
+        //{{{ Give error and abort
+        cerr << "Error in merge(): no correct overlap" << endl <<
+             "t:" <<
+             interval_l.i.chr << "," <<
+             interval_l.i.start << "," <<
+             interval_l.i.end << "," <<
+             interval_l.i.strand << " " <<
+             interval_r.i.chr << "," <<
+             interval_r.i.start << "," <<
+             interval_r.i.end << "," <<
+             interval_r.i.strand << "\t" <<
+             "p:" <<
+             p->interval_l.i.chr << "," <<
+             p->interval_l.i.start << "," <<
+             p->interval_l.i.end << "," <<
+             p->interval_l.i.strand << " " <<
+             p->interval_r.i.chr << "," <<
+             p->interval_r.i.start << "," <<
+             p->interval_r.i.end << "," <<
+             p->interval_r.i.strand << "\t" <<
+             "tl-pl:" <<
+             does_intersect(&interval_l, &(p->interval_l), true) <<
+             " " <<
+             "tl-pr:" <<
+             does_intersect(&interval_l, &(p->interval_r), true) <<
+             " " <<
+             "tr-pl:" <<
+             does_intersect(&interval_r, &(p->interval_l), true) <<
+             " " <<
+             "tr-pr:" <<
+             does_intersect(&interval_r, &(p->interval_r), true) <<
+             endl;
+        //abort();
+        return false;
+        //}}}
+    }
 
 #if 1
-	// just put everything together and refine the breakpoint boundaries to be
-	// the mean of the evidence set
-	vector<SV_Evidence*>::iterator ev_it;
+    // just put everything together and refine the breakpoint boundaries to be
+    // the mean of the evidence set
+    vector<SV_Evidence*>::iterator ev_it;
 
-	// copy all of the evidence and ids from the incomming breakpoint to the
-	// current breakpoint 
-	for (ev_it = p->evidence.begin(); ev_it < p->evidence.end(); ++ev_it)
-		evidence.push_back(*ev_it);
+    // copy all of the evidence and ids from the incomming breakpoint to the
+    // current breakpoint
+    for (ev_it = p->evidence.begin(); ev_it < p->evidence.end(); ++ev_it)
+        evidence.push_back(*ev_it);
 
-	map<int, int>::iterator id_it;
+    map<int, int>::iterator id_it;
 
-	for (id_it = p->ids.begin(); id_it != p->ids.end(); ++id_it) {
-		if ( ids.find( id_it->first ) == ids.end() )
-			ids[id_it->first] = 0;
+    for (id_it = p->ids.begin(); id_it != p->ids.end(); ++id_it) {
+        if ( ids.find( id_it->first ) == ids.end() )
+            ids[id_it->first] = 0;
 
-		ids[id_it->first] += id_it->second;
-	}
+        ids[id_it->first] += id_it->second;
+    }
 
-	// find the mean start and end points for the current bp
-	CHR_POS l_start_sum = 0, 
-			l_end_sum = 0, 
-			r_start_sum = 0, 
-			r_end_sum = 0;
-	for (ev_it = evidence.begin(); ev_it < evidence.end(); ++ev_it) {
-		SV_Evidence *sv_e = *ev_it;
-		SV_BreakPoint *tmp_bp = sv_e->get_bp();
+    // find the mean start and end points for the current bp
+    CHR_POS l_start_sum = 0,
+            l_end_sum = 0,
+            r_start_sum = 0,
+            r_end_sum = 0;
+    for (ev_it = evidence.begin(); ev_it < evidence.end(); ++ev_it) {
+        SV_Evidence *sv_e = *ev_it;
+        SV_BreakPoint *tmp_bp = sv_e->get_bp();
 
-		l_start_sum+=tmp_bp->interval_l.i.start;
-		l_end_sum+=tmp_bp->interval_l.i.end;
-		r_start_sum+=tmp_bp->interval_r.i.start;
-		r_end_sum+=tmp_bp->interval_r.i.end;
-		delete(tmp_bp);
-	}
+        l_start_sum+=tmp_bp->interval_l.i.start;
+        l_end_sum+=tmp_bp->interval_l.i.end;
+        r_start_sum+=tmp_bp->interval_r.i.start;
+        r_end_sum+=tmp_bp->interval_r.i.end;
+        delete(tmp_bp);
+    }
 
-	CHR_POS l_merged_start, l_merged_end, r_merged_start, r_merged_end;
+    CHR_POS l_merged_start, l_merged_end, r_merged_start, r_merged_end;
 
-	l_merged_start = l_start_sum / evidence.size();
-	l_merged_end = l_end_sum / evidence.size();
-	r_merged_start = r_start_sum / evidence.size();
-	r_merged_end = r_end_sum / evidence.size();
+    l_merged_start = l_start_sum / evidence.size();
+    l_merged_end = l_end_sum / evidence.size();
+    r_merged_start = r_start_sum / evidence.size();
+    r_merged_end = r_end_sum / evidence.size();
 
-	interval_l.i.start = l_merged_start;
-	interval_l.i.end = l_merged_end;
+    interval_l.i.start = l_merged_start;
+    interval_l.i.end = l_merged_end;
 
-	interval_r.i.start = r_merged_start;
-	interval_r.i.end = r_merged_end;
+    interval_r.i.start = r_merged_start;
+    interval_r.i.end = r_merged_end;
 
-	this->weight += p->weight;
+    this->weight += p->weight;
 
-	return true;
+    return true;
 #endif
 
 
 #if 0
-	// just put everything together and keep the first breakpoint position
+    // just put everything together and keep the first breakpoint position
 //{{{
-	vector<SV_Evidence*>::iterator ev_it;
+    vector<SV_Evidence*>::iterator ev_it;
 
-	for (ev_it = p->evidence.begin(); ev_it < p->evidence.end(); ++ev_it)
-		evidence.push_back(*ev_it);
+    for (ev_it = p->evidence.begin(); ev_it < p->evidence.end(); ++ev_it)
+        evidence.push_back(*ev_it);
 
-	map<int, int>::iterator id_it;
+    map<int, int>::iterator id_it;
 
-	for (id_it = p->ids.begin(); id_it != p->ids.end(); ++id_it) {
-		if ( ids.find( id_it->first ) == ids.end() )
-			ids[id_it->first] = 0;
+    for (id_it = p->ids.begin(); id_it != p->ids.end(); ++id_it) {
+        if ( ids.find( id_it->first ) == ids.end() )
+            ids[id_it->first] = 0;
 
-		ids[id_it->first] += id_it->second;
-	}
+        ids[id_it->first] += id_it->second;
+    }
 
-	this->weight += p->weight;
+    this->weight += p->weight;
 
-	return true;
+    return true;
 //}}}
 #endif
 
 #if 0
-	// merge thow read and shrink the vector to be the rejoins common to both
-	// end points
+    // merge thow read and shrink the vector to be the rejoins common to both
+    // end points
 //{{{
-	CHR_POS a_merged_start, 
-			a_merged_end, 
-			b_merged_start, 
-			b_merged_end;
+    CHR_POS a_merged_start,
+            a_merged_end,
+            b_merged_start,
+            b_merged_end;
 
-	log_space *a_merged_prob, *b_merged_prob;
+    log_space *a_merged_prob, *b_merged_prob;
 
-	bool a_merges = test_interval_merge(&interval_l,
-										a_overlap_intr,
-										&a_merged_start,
-										&a_merged_end,
-										&a_merged_prob);
+    bool a_merges = test_interval_merge(&interval_l,
+                                        a_overlap_intr,
+                                        &a_merged_start,
+                                        &a_merged_end,
+                                        &a_merged_prob);
 
 
-	bool b_merges = test_interval_merge(&interval_r,
-										b_overlap_intr,
-										&b_merged_start,
-										&b_merged_end,
-										&b_merged_prob);
+    bool b_merges = test_interval_merge(&interval_r,
+                                        b_overlap_intr,
+                                        &b_merged_start,
+                                        &b_merged_end,
+                                        &b_merged_prob);
 
-	if (a_merges && b_merges) {
+    if (a_merges && b_merges) {
 
 #ifdef TRACE
-		//{{{
-		cout << 
-			interval_l.i.start << ":" <<
-			interval_l.i.end << " " <<
-			ascii_interval_prob(&interval_l) << endl <<
+        //{{{
+        cout <<
+             interval_l.i.start << ":" <<
+             interval_l.i.end << " " <<
+             ascii_interval_prob(&interval_l) << endl <<
 
-			a_overlap_intr->i.start << ":" <<
-			a_overlap_intr->i.end << " " <<
-			ascii_interval_prob(a_overlap_intr) << endl<<
+             a_overlap_intr->i.start << ":" <<
+             a_overlap_intr->i.end << " " <<
+             ascii_interval_prob(a_overlap_intr) << endl<<
 
 
-			a_merged_start << ":" <<
-			a_merged_end << " " <<
-			ascii_prob(a_merged_prob, a_merged_end - a_merged_start) << endl <<
+             a_merged_start << ":" <<
+             a_merged_end << " " <<
+             ascii_prob(a_merged_prob, a_merged_end - a_merged_start) << endl <<
 
-			interval_r.i.start << ":"	 <<
-			interval_r.i.end << " "	 <<
+             interval_r.i.start << ":"	 <<
+             interval_r.i.end << " "	 <<
 
-			b_overlap_intr->i.start << ":" <<
-			b_overlap_intr->i.end << " -> " <<
+             b_overlap_intr->i.start << ":" <<
+             b_overlap_intr->i.end << " -> " <<
 
-			b_merged_start << ":" <<
-			b_merged_end << " " <<
+             b_merged_start << ":" <<
+             b_merged_end << " " <<
 
-			ascii_interval_prob(&interval_r) << "\t" <<
+             ascii_interval_prob(&interval_r) << "\t" <<
 
-		endl;	
-		//}}}
+             endl;
+        //}}}
 #endif
 
-		interval_l.i.start = a_merged_start;
-		interval_l.i.end = a_merged_end;
-		free(interval_l.p);
-		interval_l.p = a_merged_prob;
+        interval_l.i.start = a_merged_start;
+        interval_l.i.end = a_merged_end;
+        free(interval_l.p);
+        interval_l.p = a_merged_prob;
 
-		interval_r.i.start = b_merged_start;
-		interval_r.i.end = b_merged_end;
-		free(interval_r.p);
-		interval_r.p = b_merged_prob;
+        interval_r.i.start = b_merged_start;
+        interval_r.i.end = b_merged_end;
+        free(interval_r.p);
+        interval_r.p = b_merged_prob;
 
-		vector<SV_Evidence*>::iterator ev_it;
+        vector<SV_Evidence*>::iterator ev_it;
 
-		for (ev_it = p->evidence.begin(); ev_it < p->evidence.end(); ++ev_it)
-			evidence.push_back(*ev_it);
+        for (ev_it = p->evidence.begin(); ev_it < p->evidence.end(); ++ev_it)
+            evidence.push_back(*ev_it);
 
-		map<int, int>::iterator id_it;
+        map<int, int>::iterator id_it;
 
-		for (id_it = p->ids.begin(); id_it != p->ids.end(); ++id_it) {
-			if ( ids.find( id_it->first ) == ids.end() )
-				ids[id_it->first] = 0;
+        for (id_it = p->ids.begin(); id_it != p->ids.end(); ++id_it) {
+            if ( ids.find( id_it->first ) == ids.end() )
+                ids[id_it->first] = 0;
 
-			ids[id_it->first] += id_it->second;
-		}
+            ids[id_it->first] += id_it->second;
+        }
 
-		this->weight += p->weight;
+        this->weight += p->weight;
 
-		return true;
-	} else {
-		free(a_merged_prob);
-		free(b_merged_prob);
+        return true;
+    } else {
+        free(a_merged_prob);
+        free(b_merged_prob);
 
-		return false;
-	}
+        return false;
+    }
 //}}}
 #endif
 }
@@ -487,87 +487,87 @@ merge(SV_BreakPoint *p)
 void
 SV_BreakPoint::
 interval_product(struct breakpoint_interval *a_intr,
-				 struct breakpoint_interval *b_intr,
-				 CHR_POS *product_len,
-				 CHR_POS *product_start,
-				 CHR_POS *product_end,
-				 log_space **product_prob)
+                 struct breakpoint_interval *b_intr,
+                 CHR_POS *product_len,
+                 CHR_POS *product_start,
+                 CHR_POS *product_end,
+                 log_space **product_prob)
 {
 
     // if the those intervals do not intersect, then set the len to zero and
     // return
     if ( (a_intr->i.end < b_intr->i.start) ||
-         (a_intr->i.start > b_intr->i.end) ) {
+            (a_intr->i.start > b_intr->i.end) ) {
         *product_len = 0;
         return;
     }
 
 
-	// Find how much to clip from the start of the current break point (this)
-	// or the new break point (p)
-	// Case 1:
-	// curr:   |---------------...
-	// new:        |-----------... 
-	// c_clip  ||||
-	// Case 2:
-	// curr:       |-------...
-	// new:    |-----------... 
-	// n_clip  ||||
-	
-
-	CHR_POS curr_clip_start = 0;
-	CHR_POS new_clip_start = 0;
-	if (a_intr->i.start < b_intr->i.start) // Case 1
-		curr_clip_start = b_intr->i.start - a_intr->i.start;
-	else if (a_intr->i.start > b_intr->i.start) // Case 2
-		new_clip_start = a_intr->i.start - b_intr->i.start;
-
-	// Find how much to clip from the end of the current break point (this)
-	// or the new bre ak point (p)
-	// Case 1:
-	// curr:   ...--------|
-	// new:    ...----|
-	// c_clip          ||||
-	// Case 2:
-	// curr:   ...----|
-	// new:    ...--------|
-	// n_clip          ||||
-	CHR_POS curr_clip_end = 0;
-	if (a_intr->i.end > b_intr->i.end) // Case 1
-		curr_clip_end = a_intr->i.end - b_intr->i.end;
+    // Find how much to clip from the start of the current break point (this)
+    // or the new break point (p)
+    // Case 1:
+    // curr:   |---------------...
+    // new:        |-----------...
+    // c_clip  ||||
+    // Case 2:
+    // curr:       |-------...
+    // new:    |-----------...
+    // n_clip  ||||
 
 
-	// Length of the new break point interval
-	unsigned int new_len = (a_intr->i.end - curr_clip_end) -
-						   (a_intr->i.start + curr_clip_start) + 1;
+    CHR_POS curr_clip_start = 0;
+    CHR_POS new_clip_start = 0;
+    if (a_intr->i.start < b_intr->i.start) // Case 1
+        curr_clip_start = b_intr->i.start - a_intr->i.start;
+    else if (a_intr->i.start > b_intr->i.start) // Case 2
+        new_clip_start = a_intr->i.start - b_intr->i.start;
 
-	// Before we acutally merge these two breakpoints, we need to test if the
-	// merged probability is greater than zero, if it is not, then we should
-	// not merge the two
-	unsigned int i = 0;
+    // Find how much to clip from the end of the current break point (this)
+    // or the new bre ak point (p)
+    // Case 1:
+    // curr:   ...--------|
+    // new:    ...----|
+    // c_clip          ||||
+    // Case 2:
+    // curr:   ...----|
+    // new:    ...--------|
+    // n_clip          ||||
+    CHR_POS curr_clip_end = 0;
+    if (a_intr->i.end > b_intr->i.end) // Case 1
+        curr_clip_end = a_intr->i.end - b_intr->i.end;
 
-	*product_start = a_intr->i.start + curr_clip_start;
-	*product_end = a_intr->i.end - curr_clip_end;
+
+    // Length of the new break point interval
+    unsigned int new_len = (a_intr->i.end - curr_clip_end) -
+                           (a_intr->i.start + curr_clip_start) + 1;
+
+    // Before we acutally merge these two breakpoints, we need to test if the
+    // merged probability is greater than zero, if it is not, then we should
+    // not merge the two
+    unsigned int i = 0;
+
+    *product_start = a_intr->i.start + curr_clip_start;
+    *product_end = a_intr->i.end - curr_clip_end;
 
     log_space *curr_p = (log_space *)
-            malloc( (a_intr->i.end - a_intr->i.start + 1) * 
-                    sizeof(log_space));
+                        malloc( (a_intr->i.end - a_intr->i.start + 1) *
+                                sizeof(log_space));
     normalize_ls((a_intr->i.end - a_intr->i.start + 1),
-                  a_intr->p,
-                  curr_p);
+                 a_intr->p,
+                 curr_p);
 
     log_space *new_p = (log_space *)
-            malloc( (b_intr->i.end - b_intr->i.start + 1) * 
-                    sizeof(log_space));
+                       malloc( (b_intr->i.end - b_intr->i.start + 1) *
+                               sizeof(log_space));
     normalize_ls((b_intr->i.end - b_intr->i.start + 1),
-                  b_intr->p,
-                  new_p);
+                 b_intr->p,
+                 new_p);
 
-	*product_prob = (log_space *) malloc(new_len * sizeof(log_space));
+    *product_prob = (log_space *) malloc(new_len * sizeof(log_space));
 
-	for (i = 0; i < new_len; ++i)
-		(*product_prob)[i] = ls_multiply(a_intr->p[i + curr_clip_start],
-										b_intr->p[i + new_clip_start]);
+    for (i = 0; i < new_len; ++i)
+        (*product_prob)[i] = ls_multiply(a_intr->p[i + curr_clip_start],
+                                         b_intr->p[i + new_clip_start]);
 
     *product_len = new_len;
 
@@ -580,82 +580,82 @@ interval_product(struct breakpoint_interval *a_intr,
 bool
 SV_BreakPoint::
 test_interval_merge(struct breakpoint_interval *curr_intr,
-					struct breakpoint_interval *new_intr,
-					CHR_POS *merged_start,
-					CHR_POS *merged_end,
-					log_space **merged_prob)
+                    struct breakpoint_interval *new_intr,
+                    CHR_POS *merged_start,
+                    CHR_POS *merged_end,
+                    log_space **merged_prob)
 {
 
-	log_space ls_threshold = get_ls(p_merge_threshold);
+    log_space ls_threshold = get_ls(p_merge_threshold);
 
-	// Find how much to clip from the start of the current break point (this)
-	// or the new break point (p)
-	// Case 1:
-	// curr:   |---------------...
-	// new:        |-----------... 
-	// c_clip  ||||
-	// Case 2:
-	// curr:       |-------...
-	// new:    |-----------... 
-	// n_clip  ||||
-	
-
-	CHR_POS curr_clip_start = 0;
-	CHR_POS new_clip_start = 0;
-	if (curr_intr->i.start < new_intr->i.start) // Case 1
-		curr_clip_start = new_intr->i.start - curr_intr->i.start;
-	else if (curr_intr->i.start > new_intr->i.start) // Case 2
-		new_clip_start = curr_intr->i.start - new_intr->i.start;
-
-	// Find how much to clip from the end of the current break point (this)
-	// or the new bre ak point (p)
-	// Case 1:
-	// curr:   ...--------|
-	// new:    ...----|
-	// c_clip          ||||
-	// Case 2:
-	// curr:   ...----|
-	// new:    ...--------|
-	// n_clip          ||||
-	CHR_POS curr_clip_end = 0;
-	//CHR_POS new_clip_end = 0;
-	if (curr_intr->i.end > new_intr->i.end) // Case 1
-		curr_clip_end = curr_intr->i.end - new_intr->i.end;
-	//else if (curr_intr->i.end < new_intr->i.end) // Case 2
-		//new_clip_end = new_intr->i.end - curr_intr->i.end;
+    // Find how much to clip from the start of the current break point (this)
+    // or the new break point (p)
+    // Case 1:
+    // curr:   |---------------...
+    // new:        |-----------...
+    // c_clip  ||||
+    // Case 2:
+    // curr:       |-------...
+    // new:    |-----------...
+    // n_clip  ||||
 
 
-	// Length of the new break point interval
-	unsigned int new_len = (curr_intr->i.end - curr_clip_end) -
-						   (curr_intr->i.start + curr_clip_start) + 1;
+    CHR_POS curr_clip_start = 0;
+    CHR_POS new_clip_start = 0;
+    if (curr_intr->i.start < new_intr->i.start) // Case 1
+        curr_clip_start = new_intr->i.start - curr_intr->i.start;
+    else if (curr_intr->i.start > new_intr->i.start) // Case 2
+        new_clip_start = curr_intr->i.start - new_intr->i.start;
 
-	// Before we acutally merge these two breakpoints, we need to test if the
-	// merged probability is greater than zero, if it is not, then we should
-	// not merge the two
-	unsigned int i = 0;
+    // Find how much to clip from the end of the current break point (this)
+    // or the new bre ak point (p)
+    // Case 1:
+    // curr:   ...--------|
+    // new:    ...----|
+    // c_clip          ||||
+    // Case 2:
+    // curr:   ...----|
+    // new:    ...--------|
+    // n_clip          ||||
+    CHR_POS curr_clip_end = 0;
+    //CHR_POS new_clip_end = 0;
+    if (curr_intr->i.end > new_intr->i.end) // Case 1
+        curr_clip_end = curr_intr->i.end - new_intr->i.end;
+    //else if (curr_intr->i.end < new_intr->i.end) // Case 2
+    //new_clip_end = new_intr->i.end - curr_intr->i.end;
 
-	*merged_start = curr_intr->i.start + curr_clip_start;
-	*merged_end = curr_intr->i.end - curr_clip_end;
 
-	*merged_prob = (log_space *) malloc(new_len * sizeof(log_space));
+    // Length of the new break point interval
+    unsigned int new_len = (curr_intr->i.end - curr_clip_end) -
+                           (curr_intr->i.start + curr_clip_start) + 1;
 
-	log_space ls_max = -INFINITY;
+    // Before we acutally merge these two breakpoints, we need to test if the
+    // merged probability is greater than zero, if it is not, then we should
+    // not merge the two
+    unsigned int i = 0;
 
-	for (i = 0; i < new_len; ++i) {
-		(*merged_prob)[i] = ls_multiply(curr_intr->p[i + curr_clip_start],
-										new_intr->p[i + new_clip_start]);
-	}
+    *merged_start = curr_intr->i.start + curr_clip_start;
+    *merged_end = curr_intr->i.end - curr_clip_end;
+
+    *merged_prob = (log_space *) malloc(new_len * sizeof(log_space));
+
+    log_space ls_max = -INFINITY;
+
+    for (i = 0; i < new_len; ++i) {
+        (*merged_prob)[i] = ls_multiply(curr_intr->p[i + curr_clip_start],
+                                        new_intr->p[i + new_clip_start]);
+    }
 
 
-	for (i = 0; i < new_len; ++i)
-		if ( (*merged_prob)[i] > ls_max )
-			ls_max = (*merged_prob)[i]; 
+    for (i = 0; i < new_len; ++i)
+        if ( (*merged_prob)[i] > ls_max )
+            ls_max = (*merged_prob)[i];
 
-	if (ls_max < ls_threshold )
-		return false;
-	else 
-		return true;
-	
+    if (ls_max < ls_threshold )
+        return false;
+    else
+        return true;
+
 }
 //}}}
 
@@ -664,19 +664,19 @@ void
 SV_BreakPoint::
 trim_intervals()
 {
-	vector<SV_Evidence*>::iterator it;
+    vector<SV_Evidence*>::iterator it;
     vector<SV_BreakPoint *> bps;
-	for (it = evidence.begin(); it < evidence.end(); ++it) {
-    	SV_Evidence *e = *it;
-		SV_BreakPoint *tmp_bp = e->get_bp();
-	    tmp_bp->init_interval_probabilities();
+    for (it = evidence.begin(); it < evidence.end(); ++it) {
+        SV_Evidence *e = *it;
+        SV_BreakPoint *tmp_bp = e->get_bp();
+        tmp_bp->init_interval_probabilities();
 
         bps.push_back(tmp_bp);
     }
 
-    CHR_POS start_l = UINT_MAX, 
-            start_r = UINT_MAX, 
-            end_l = 0, 
+    CHR_POS start_l = UINT_MAX,
+            start_r = UINT_MAX,
+            end_l = 0,
             end_r = 0;
 
     log_space *l, *r;
@@ -694,7 +694,7 @@ trim_intervals()
         interval_l.i.start = start_l + l_trim_start + 1;
 
     if (l_trim_end > -1)
-	    interval_l.i.end = interval_l.i.start + l_trim_end;
+        interval_l.i.end = interval_l.i.start + l_trim_end;
 
     free(t);
 
@@ -708,14 +708,14 @@ trim_intervals()
         interval_r.i.start = start_r + r_trim_start + 1;
 
     if (r_trim_end > -1)
-	    interval_r.i.end = interval_r.i.start + r_trim_end;
+        interval_r.i.end = interval_r.i.start + r_trim_end;
 
     free(t);
 
 
     vector<SV_BreakPoint *>::iterator bp_it;
-	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-		SV_BreakPoint *tmp_bp = *bp_it;
+    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+        SV_BreakPoint *tmp_bp = *bp_it;
         delete tmp_bp;
     }
 
@@ -726,29 +726,29 @@ trim_intervals()
     free(r);
 
 #if 0
-	int a_v_size = interval_l.i.end - interval_l.i.start + 1,
-		b_v_size = interval_r.i.end - interval_r.i.start + 1;
-	log_space *a_v = (log_space *) malloc( a_v_size* sizeof(log_space));
-	log_space *b_v = (log_space *) malloc( b_v_size* sizeof(log_space));
+    int a_v_size = interval_l.i.end - interval_l.i.start + 1,
+        b_v_size = interval_r.i.end - interval_r.i.start + 1;
+    log_space *a_v = (log_space *) malloc( a_v_size* sizeof(log_space));
+    log_space *b_v = (log_space *) malloc( b_v_size* sizeof(log_space));
 
-	for (int a = 0; a < a_v_size; ++a) 
-		a_v[a] = interval_l.p[a];
+    for (int a = 0; a < a_v_size; ++a)
+        a_v[a] = interval_l.p[a];
 
-	for (int b = 0; b < b_v_size; ++b)
-		b_v[b] = interval_r.p[b];
+    for (int b = 0; b < b_v_size; ++b)
+        b_v[b] = interval_r.p[b];
 
-	for (int b = 0; b < b_v_size; ++b)
-		b_v[b] = interval_r.p[b];
+    for (int b = 0; b < b_v_size; ++b)
+        b_v[b] = interval_r.p[b];
 
-	//cerr << ascii_interval_prob(&interval_l) <<endl;
-	trim_interval(&interval_l, a_v, a_v_size);
-	//cerr << ascii_interval_prob(&interval_l) <<endl;
-	free(a_v);
+    //cerr << ascii_interval_prob(&interval_l) <<endl;
+    trim_interval(&interval_l, a_v, a_v_size);
+    //cerr << ascii_interval_prob(&interval_l) <<endl;
+    free(a_v);
 
-	//cerr << ascii_interval_prob(&interval_r) <<endl;
-	trim_interval(&interval_r, b_v, b_v_size);
-	//cerr << ascii_interval_prob(&interval_r) <<endl;
-	free(b_v);
+    //cerr << ascii_interval_prob(&interval_r) <<endl;
+    trim_interval(&interval_r, b_v, b_v_size);
+    //cerr << ascii_interval_prob(&interval_r) <<endl;
+    free(b_v);
 #endif
 }
 //}}}
@@ -756,46 +756,46 @@ trim_intervals()
 //{{{ void BreakPoint:: trim_interval(struct interval *curr_interval,
 void
 SV_BreakPoint:: trim_interval(log_space *interval_v,
-							  unsigned int size,
+                              unsigned int size,
                               int *trim_start,
                               int *trim_end)
 {
-	log_space max = -INFINITY;
-	unsigned int i;
-	for (i = 0; i < size; ++i)
-		if (interval_v[i] > max)
-			max = interval_v[i];
-	
-	int v_first = -1;
-	for (i = 0; i < size; ++i) 
-		if (get_p(interval_v[i])/get_p(max) < p_trim_threshold) 
-			v_first=i;
-		else
-			break;
+    log_space max = -INFINITY;
+    unsigned int i;
+    for (i = 0; i < size; ++i)
+        if (interval_v[i] > max)
+            max = interval_v[i];
 
-	int v_last = -1;
-	for (i = size - 1; i > 0; --i)
-		if (get_p(interval_v[i])/get_p(max) < p_trim_threshold) 
-			v_last=i;
-		else
-			break;
+    int v_first = -1;
+    for (i = 0; i < size; ++i)
+        if (get_p(interval_v[i])/get_p(max) < p_trim_threshold)
+            v_first=i;
+        else
+            break;
+
+    int v_last = -1;
+    for (i = size - 1; i > 0; --i)
+        if (get_p(interval_v[i])/get_p(max) < p_trim_threshold)
+            v_last=i;
+        else
+            break;
 
     *trim_start = v_first;
     *trim_end = v_last;
     /*
-	if ( (v_first != -1) && (v_last != -1) ) {
-		// Adjust the breakpoint intervals
-		curr_interval->i.start = curr_interval->i.start + v_first;
-		curr_interval->i.end = curr_interval->i.start + (v_last - v_first);
+    if ( (v_first != -1) && (v_last != -1) ) {
+    	// Adjust the breakpoint intervals
+    	curr_interval->i.start = curr_interval->i.start + v_first;
+    	curr_interval->i.end = curr_interval->i.start + (v_last - v_first);
 
-		unsigned int v_size = curr_interval->i.end - curr_interval->i.start + 1;
+    	unsigned int v_size = curr_interval->i.end - curr_interval->i.start + 1;
 
-		free(curr_interval->p);
-		curr_interval->p = (log_space *) malloc(v_size * sizeof(log_space));
+    	free(curr_interval->p);
+    	curr_interval->p = (log_space *) malloc(v_size * sizeof(log_space));
 
-		for (i = 0; i < v_size; ++i) 
-			curr_interval->p[i] = interval_v[i + v_first];
-	}
+    	for (i = 0; i < v_size; ++i)
+    		curr_interval->p[i] = interval_v[i + v_first];
+    }
     */
 }
 
@@ -806,16 +806,16 @@ string
 SV_BreakPoint::
 ascii_interval_prob(struct breakpoint_interval *i)
 {
-	int size = i->i.end - i->i.start;
-	int j;
-	stringstream oss;
-	for (j = 0; j < size; ++j) {
-		if (j!=0)
-			oss << ",";
-		oss << get_p(i->p[j]);
-	}
+    int size = i->i.end - i->i.start;
+    int j;
+    stringstream oss;
+    for (j = 0; j < size; ++j) {
+        if (j!=0)
+            oss << ",";
+        oss << get_p(i->p[j]);
+    }
 
-	return oss.str();
+    return oss.str();
 }
 //}}}
 
@@ -824,13 +824,13 @@ string
 SV_BreakPoint::
 ascii_prob(log_space *d, int size)
 {
-	int j;
-	stringstream oss;
-	for (j = 0; j < size; ++j) {
-		oss << d[j] << " ";
-	}
+    int j;
+    stringstream oss;
+    for (j = 0; j < size; ++j) {
+        oss << d[j] << " ";
+    }
 
-	return oss.str();
+    return oss.str();
 }
 //}}}
 
@@ -843,7 +843,7 @@ print_bedpe(int id)
     vector<SV_Evidence*>::iterator it;
     vector<SV_BreakPoint *> bps;
     for (it = evidence.begin(); it < evidence.end(); ++it) {
-    	SV_Evidence *e = *it;
+        SV_Evidence *e = *it;
         SV_BreakPoint *tmp_bp = e->get_bp();
         tmp_bp->init_interval_probabilities();
 
@@ -862,91 +862,91 @@ print_bedpe(int id)
     get_score(bps, &score_l, &score_r);
 
     vector<SV_BreakPoint *>::iterator bp_it;
-	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-		SV_BreakPoint *tmp_bp = *bp_it;
+    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+        SV_BreakPoint *tmp_bp = *bp_it;
         delete tmp_bp;
     }
 
-	// use the address of the current object as the id
-	string sep = "\t";
-	cout << 
-		interval_l.i.chr << sep <<
-		interval_l.i.start << sep <<
-		(interval_l.i.end + 1) << sep <<
-		interval_r.i.chr << sep <<
-		interval_r.i.start << sep<<
-		(interval_r.i.end + 1) << sep;
+    // use the address of the current object as the id
+    string sep = "\t";
+    cout <<
+         interval_l.i.chr << sep <<
+         interval_l.i.start << sep <<
+         (interval_l.i.end + 1) << sep <<
+         interval_r.i.chr << sep <<
+         interval_r.i.start << sep<<
+         (interval_r.i.end + 1) << sep;
 
     if (id == -1)
         cout << this << sep;
-    else 
+    else
         cout << id << sep;
 
     cout <<
-		(score_l+score_r) << "\t" <<
-		interval_l.i.strand << "\t" <<
-		interval_r.i.strand << "\t";
+         (score_l+score_r) << "\t" <<
+         interval_l.i.strand << "\t" <<
+         interval_r.i.strand << "\t";
 
-		cout << "TYPE:";
+    cout << "TYPE:";
 
-        if (interval_l.i.chr.compare(interval_r.i.chr) != 0)
-            cout << "INTERCHROM";
-        else if (type == DELETION )
-            cout << "DELETION";
-        else if (type == DUPLICATION)
-            cout << "DUPLICATION";
-        else if (type == INVERSION)
-            cout << "INVERSION";
-        else
-            cout <<  "???";
+    if (interval_l.i.chr.compare(interval_r.i.chr) != 0)
+        cout << "INTERCHROM";
+    else if (type == DELETION )
+        cout << "DELETION";
+    else if (type == DUPLICATION)
+        cout << "DUPLICATION";
+    else if (type == INVERSION)
+        cout << "INVERSION";
+    else
+        cout <<  "???";
 
-        cout <<  "\t";
+    cout <<  "\t";
 
-        //ascii_interval_prob(&interval_l) << "\t" <<
-        //ascii_interval_prob(&interval_r) <<
+    //ascii_interval_prob(&interval_l) << "\t" <<
+    //ascii_interval_prob(&interval_r) <<
 
-	/*
-	vector <int> ids = get_evidence_ids();
-	vector <int>::iterator i;
-	cout << "ids:";
-	for (i=ids.begin(); i!=ids.end(); ++i) {
-		if (i != ids.begin())
-			cout << ",";
-		cout << *i;
-	}
-	*/
+    /*
+    vector <int> ids = get_evidence_ids();
+    vector <int>::iterator i;
+    cout << "ids:";
+    for (i=ids.begin(); i!=ids.end(); ++i) {
+    	if (i != ids.begin())
+    		cout << ",";
+    	cout << *i;
+    }
+    */
 
-	map<int, int>::iterator ids_it;
-	vector<int> _ids;
-	for ( ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
-		_ids.push_back(ids_it->first);
+    map<int, int>::iterator ids_it;
+    vector<int> _ids;
+    for ( ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
+        _ids.push_back(ids_it->first);
 
-	sort(_ids.begin(), _ids.end());
+    sort(_ids.begin(), _ids.end());
 
-	vector<int>::iterator _ids_it;
+    vector<int>::iterator _ids_it;
 
-	cout << "IDS:";
-	for ( _ids_it = _ids.begin(); _ids_it != _ids.end(); ++_ids_it) {
-		if (_ids_it != _ids.begin())
-			cout << ";";
-		cout << *_ids_it << "," << ids[*_ids_it];
-	}
+    cout << "IDS:";
+    for ( _ids_it = _ids.begin(); _ids_it != _ids.end(); ++_ids_it) {
+        if (_ids_it != _ids.begin())
+            cout << ";";
+        cout << *_ids_it << "," << ids[*_ids_it];
+    }
 
-	cout << "\t";
+    cout << "\t";
 
-	cout << "STRANDS:";
-        map<string,int>:: iterator s_it;
-        for ( s_it = uniq_strands.begin(); s_it != uniq_strands.end(); ++s_it) {
-            if (s_it != uniq_strands.begin())
-                cout <<  ";";
-            cout << s_it->first << "," << s_it->second;
-        }	
-	cout << endl;
+    cout << "STRANDS:";
+    map<string,int>:: iterator s_it;
+    for ( s_it = uniq_strands.begin(); s_it != uniq_strands.end(); ++s_it) {
+        if (s_it != uniq_strands.begin())
+            cout <<  ";";
+        cout << s_it->first << "," << s_it->second;
+    }
+    cout << endl;
 }
 //}}}
 
 //{{{ void SV_BreakPoint:: get_distances(vector< SV_BreakPoint*> &new_v)
-void 
+void
 SV_BreakPoint::
 get_distances(vector< SV_BreakPoint*> &new_v)
 {
@@ -966,10 +966,10 @@ get_distances(vector< SV_BreakPoint*> &new_v)
             SV_BreakPoint *b_j = *jt;
             interval_product(&(b_i->interval_l),
                              &(b_j->interval_l),
-					         &product_len,
-					         &product_start,
-					         &product_end,
-					         &product_prob);
+                             &product_len,
+                             &product_start,
+                             &product_end,
+                             &product_prob);
             if (product_len > 0) {
                 log_space distance = -INFINITY;
                 for (unsigned int i = 0; i < product_len; ++i)
@@ -995,64 +995,64 @@ void
 SV_BreakPoint::
 cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 {
-	vector< UCSCElement<SV_BreakPoint*> > tmp_hits_r =
-			r_bin.get(interval_r.i.chr,
-					  interval_r.i.start,
-					  interval_r.i.end,
-					  interval_r.i.strand,
-					  false);		
+    vector< UCSCElement<SV_BreakPoint*> > tmp_hits_r =
+        r_bin.get(interval_r.i.chr,
+                  interval_r.i.start,
+                  interval_r.i.end,
+                  interval_r.i.strand,
+                  false);
 
-	if (tmp_hits_r.size() == 0) {
-		insert(r_bin);
-	} else { 
-		vector< UCSCElement<SV_BreakPoint*> >::iterator it;
+    if (tmp_hits_r.size() == 0) {
+        insert(r_bin);
+    } else {
+        vector< UCSCElement<SV_BreakPoint*> >::iterator it;
 
-		it = tmp_hits_r.begin();
+        it = tmp_hits_r.begin();
 
-		// remove hits that are of a different type, or do not intersect the
-		// left side, hopefully there is only 1 guy left
-		while(it != tmp_hits_r.end()) {
-			if(it->value->type != type)
-				it = tmp_hits_r.erase(it);
-			//else if ( it->value->interval_l.i.chr != interval_l.i.chr )
-			else if(it->value->interval_l.i.chr.compare(interval_l.i.chr) != 0)
-				it = tmp_hits_r.erase(it);
-			else if (!((it->value->interval_l.i.start < interval_l.i.end) &&
-					   (it->value->interval_l.i.end > interval_l.i.start) ) )
-				it = tmp_hits_r.erase(it);
-			else
-				++it;
-		}
+        // remove hits that are of a different type, or do not intersect the
+        // left side, hopefully there is only 1 guy left
+        while(it != tmp_hits_r.end()) {
+            if(it->value->type != type)
+                it = tmp_hits_r.erase(it);
+            //else if ( it->value->interval_l.i.chr != interval_l.i.chr )
+            else if(it->value->interval_l.i.chr.compare(interval_l.i.chr) != 0)
+                it = tmp_hits_r.erase(it);
+            else if (!((it->value->interval_l.i.start < interval_l.i.end) &&
+                       (it->value->interval_l.i.end > interval_l.i.start) ) )
+                it = tmp_hits_r.erase(it);
+            else
+                ++it;
+        }
 
-		// non left to match against
-		if (tmp_hits_r.size() < 1)
-			insert(r_bin);
-		// one match so merge
-		else if  (tmp_hits_r.size() == 1) {
-			// addr of the bp in both sets (and only item in the intersection)
-			SV_BreakPoint *bp = tmp_hits_r[0].value;
-			if ( this->merge(bp) ) {
-				UCSCElement<SV_BreakPoint*> rm = tmp_hits_r[0];
+        // non left to match against
+        if (tmp_hits_r.size() < 1)
+            insert(r_bin);
+        // one match so merge
+        else if  (tmp_hits_r.size() == 1) {
+            // addr of the bp in both sets (and only item in the intersection)
+            SV_BreakPoint *bp = tmp_hits_r[0].value;
+            if ( this->merge(bp) ) {
+                UCSCElement<SV_BreakPoint*> rm = tmp_hits_r[0];
 
-				if (r_bin.remove(rm, false, false, true) != 0) {
-					cerr << "Error removing item in cluster()" << endl;
-					abort();
-				}
+                if (r_bin.remove(rm, false, false, true) != 0) {
+                    cerr << "Error removing item in cluster()" << endl;
+                    abort();
+                }
 
-				delete bp;
-				this->insert(r_bin);
-			}
-        // more than one match
-		} else {
-        #if 0
+                delete bp;
+                this->insert(r_bin);
+            }
+            // more than one match
+        } else {
+#if 0
             cerr << "X" << endl;
             int top_hit = -1;
             int curr = 0;
             double top_score = -1;
-	        this->init_interval_probabilities();
+            this->init_interval_probabilities();
 
             vector< UCSCElement<SV_BreakPoint*> >::iterator m_it;
-		    for(m_it = tmp_hits_r.begin(); m_it != tmp_hits_r.end(); ++m_it) {
+            for(m_it = tmp_hits_r.begin(); m_it != tmp_hits_r.end(); ++m_it) {
                 SV_BreakPoint *bp = m_it->value;
 
                 struct breakpoint_interval *r_mixture, *l_mixture;
@@ -1063,7 +1063,7 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
                 log_space *l_product_prob;
 
                 interval_product(&interval_l,
-                                 l_mixture, 
+                                 l_mixture,
                                  &l_product_len,
                                  &l_product_start,
                                  &l_product_end,
@@ -1077,7 +1077,7 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
                 log_space *r_product_prob;
 
                 interval_product(&interval_r,
-                                 r_mixture, 
+                                 r_mixture,
                                  &r_product_len,
                                  &r_product_start,
                                  &r_product_end,
@@ -1100,27 +1100,27 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
                 free(l_mixture->p);
                 free(r_mixture);
                 free(l_mixture);
-                
+
                 ++curr;
             }
 
-	        this->free_interval_probabilities();
+            this->free_interval_probabilities();
 
-			SV_BreakPoint *bp = tmp_hits_r[top_hit].value;
-			if ( this->merge(bp) ) {
-				UCSCElement<SV_BreakPoint*> rm = tmp_hits_r[0];
+            SV_BreakPoint *bp = tmp_hits_r[top_hit].value;
+            if ( this->merge(bp) ) {
+                UCSCElement<SV_BreakPoint*> rm = tmp_hits_r[0];
 
-				if (r_bin.remove(rm, false, false, true) != 0) {
-					cerr << "Error removing item in cluster()" << endl;
-					abort();
-				}
+                if (r_bin.remove(rm, false, false, true) != 0) {
+                    cerr << "Error removing item in cluster()" << endl;
+                    abort();
+                }
 
-				delete bp;
-				this->insert(r_bin);
-			}
-        #endif
-		}
-	}
+                delete bp;
+                this->insert(r_bin);
+            }
+#endif
+        }
+    }
 }
 //}}}
 
@@ -1129,12 +1129,12 @@ void
 SV_BreakPoint::
 insert(UCSCBins<SV_BreakPoint*> &r_bin)
 {
-	//cerr << *this << endl;
-	r_bin.add(interval_r.i.chr,
-		 	  interval_r.i.start,
-			  interval_r.i.end,
-			  interval_r.i.strand,
-			  this);
+    //cerr << *this << endl;
+    r_bin.add(interval_r.i.chr,
+              interval_r.i.start,
+              interval_r.i.end,
+              interval_r.i.strand,
+              this);
 }
 //}}}
 
@@ -1142,19 +1142,19 @@ insert(UCSCBins<SV_BreakPoint*> &r_bin)
 void
 SV_BreakPoint::
 insert(UCSCBins<SV_BreakPoint*> &l_bin,
-	   UCSCBins<SV_BreakPoint*> &r_bin)
+       UCSCBins<SV_BreakPoint*> &r_bin)
 {
-	l_bin.add(interval_l.i.chr,
-			  interval_l.i.start,
-			  interval_l.i.end,
-			  interval_l.i.strand,
-			  this);
+    l_bin.add(interval_l.i.chr,
+              interval_l.i.start,
+              interval_l.i.end,
+              interval_l.i.strand,
+              this);
 
-	r_bin.add(interval_r.i.chr,
-		 	  interval_r.i.start,
-			  interval_r.i.end,
-			  interval_r.i.strand,
-			  this);
+    r_bin.add(interval_r.i.chr,
+              interval_r.i.start,
+              interval_r.i.end,
+              interval_r.i.strand,
+              this);
 }
 //}}}
 
@@ -1163,23 +1163,23 @@ vector<int>
 SV_BreakPoint::
 get_evidence_ids()
 {
-	vector<int> ids;
+    vector<int> ids;
 
-	vector<SV_Evidence*>::iterator it;
-	for (it = evidence.begin(); it < evidence.end(); ++it) {
-		SV_Evidence *e = *it;
-		int id = e->id;
-		ids.push_back(id);
-	}
+    vector<SV_Evidence*>::iterator it;
+    for (it = evidence.begin(); it < evidence.end(); ++it) {
+        SV_Evidence *e = *it;
+        int id = e->id;
+        ids.push_back(id);
+    }
 
-	sort(ids.begin(), ids.end());
+    sort(ids.begin(), ids.end());
 
-	vector<int>::iterator it_id;
-	it_id = unique(ids.begin(), ids.end());
+    vector<int>::iterator it_id;
+    it_id = unique(ids.begin(), ids.end());
 
-	ids.resize( it_id - ids.begin() );
+    ids.resize( it_id - ids.begin() );
 
-	return ids;
+    return ids;
 }
 //}}}
 
@@ -1189,25 +1189,25 @@ SV_BreakPoint::
 get_mixture(struct breakpoint_interval **l_mixture,
             struct breakpoint_interval **r_mixture)
 {
-	vector<SV_Evidence*>::iterator it;
-    CHR_POS start_l = UINT_MAX, 
-            start_r = UINT_MAX, 
-            end_l = 0, 
+    vector<SV_Evidence*>::iterator it;
+    CHR_POS start_l = UINT_MAX,
+            start_r = UINT_MAX,
+            end_l = 0,
             end_r = 0;
 
     vector<SV_BreakPoint *> bps;
-	for (it = evidence.begin(); it < evidence.end(); ++it) {
-    	SV_Evidence *e = *it;
-		SV_BreakPoint *tmp_bp = e->get_bp();
-	    tmp_bp->init_interval_probabilities();
+    for (it = evidence.begin(); it < evidence.end(); ++it) {
+        SV_Evidence *e = *it;
+        SV_BreakPoint *tmp_bp = e->get_bp();
+        tmp_bp->init_interval_probabilities();
 
         bps.push_back(tmp_bp);
     }
 
     // find boundaries
     vector<SV_BreakPoint *>::iterator bp_it;
-	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-		SV_BreakPoint *tmp_bp = *bp_it;
+    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+        SV_BreakPoint *tmp_bp = *bp_it;
 
         if (tmp_bp->interval_l.i.start < start_l)
             start_l = tmp_bp->interval_l.i.start;
@@ -1232,12 +1232,12 @@ get_mixture(struct breakpoint_interval **l_mixture,
         r[i] = get_ls(0);
 
     // find mixture distribution
-	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-		SV_BreakPoint *tmp_bp = *bp_it;
+    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+        SV_BreakPoint *tmp_bp = *bp_it;
 
         CHR_POS l_offset = tmp_bp->interval_l.i.start - start_l;
-        CHR_POS l_size = tmp_bp->interval_l.i.end - 
-                tmp_bp->interval_l.i.start + 1;
+        CHR_POS l_size = tmp_bp->interval_l.i.end -
+                         tmp_bp->interval_l.i.start + 1;
 
         log_space *t = (log_space *) malloc(l_size * sizeof(log_space));
         normalize_ls(l_size, tmp_bp->interval_l.p, t);
@@ -1248,13 +1248,13 @@ get_mixture(struct breakpoint_interval **l_mixture,
         free(t);
 
         CHR_POS r_offset = tmp_bp->interval_r.i.start - start_r;
-        CHR_POS r_size = tmp_bp->interval_r.i.end - 
-                tmp_bp->interval_r.i.start + 1;
+        CHR_POS r_size = tmp_bp->interval_r.i.end -
+                         tmp_bp->interval_r.i.start + 1;
 
         t = (log_space *) malloc(r_size * sizeof(log_space));
         normalize_ls(r_size, tmp_bp->interval_r.p, t);
 
-        for (CHR_POS i = 0; i < r_size; ++i) 
+        for (CHR_POS i = 0; i < r_size; ++i)
             r[i+r_offset] = ls_add(r[i+r_offset], t[i]);
 
         free(t);
@@ -1270,19 +1270,19 @@ get_mixture(struct breakpoint_interval **l_mixture,
     free(r);
     r = t;
 
-	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-		SV_BreakPoint *tmp_bp = *bp_it;
+    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+        SV_BreakPoint *tmp_bp = *bp_it;
         delete tmp_bp;
     }
 
     *l_mixture = (struct breakpoint_interval *) malloc (
-            sizeof( struct breakpoint_interval));
+                     sizeof( struct breakpoint_interval));
     (*l_mixture)->i.start = start_l;
     (*l_mixture)->i.end = end_l;
     (*l_mixture)->p = l;
 
     *r_mixture = (struct breakpoint_interval *) malloc (
-            sizeof( struct breakpoint_interval));
+                     sizeof( struct breakpoint_interval));
     (*r_mixture)->i.start = start_r;
     (*r_mixture)->i.end = end_r;
     (*r_mixture)->p = r;
@@ -1294,12 +1294,12 @@ void
 SV_BreakPoint::
 do_it()
 {
-	vector<SV_Evidence*>::iterator it;
+    vector<SV_Evidence*>::iterator it;
     vector<SV_BreakPoint *> bps;
-	for (it = evidence.begin(); it < evidence.end(); ++it) {
-    	SV_Evidence *e = *it;
-		SV_BreakPoint *tmp_bp = e->get_bp();
-	    tmp_bp->init_interval_probabilities();
+    for (it = evidence.begin(); it < evidence.end(); ++it) {
+        SV_Evidence *e = *it;
+        SV_BreakPoint *tmp_bp = e->get_bp();
+        tmp_bp->init_interval_probabilities();
 
         bps.push_back(tmp_bp);
     }
@@ -1314,7 +1314,7 @@ do_it()
     for (unsigned int i = 0; i < bps.size(); ++i) {
         double new_score_l, new_score_r;
         vector<SV_BreakPoint *> tmp_bps;
-	    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+        for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
             tmp_bps.push_back(*bp_it);
         }
         tmp_bps.erase(tmp_bps.begin() + i);
@@ -1323,11 +1323,11 @@ do_it()
         // particualr piece of evidence
         get_score(tmp_bps, &new_score_l, &new_score_r);
 
-        //cout << "\t" << (new_score_l-score_l) << 
-                //"\t" << (new_score_r-score_r) << endl;
+        //cout << "\t" << (new_score_l-score_l) <<
+        //"\t" << (new_score_r-score_r) << endl;
 
         if ( ((new_score_l-score_l) > 0 ) &&
-             ((new_score_r-score_r) > 0 ) ) {
+                ((new_score_r-score_r) > 0 ) ) {
             to_rm.push_back(i);
             //cout << "\t-" << endl;
         }
@@ -1339,8 +1339,8 @@ do_it()
         --weight;
     }
 
-	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-		SV_BreakPoint *tmp_bp = *bp_it;
+    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+        SV_BreakPoint *tmp_bp = *bp_it;
         delete tmp_bp;
     }
 
@@ -1360,15 +1360,15 @@ get_mixture(vector<SV_BreakPoint *> &bps,
             log_space **l,
             log_space **r)
 {
-    *start_l = UINT_MAX; 
-    *start_r = UINT_MAX, 
-    *end_l = 0; 
+    *start_l = UINT_MAX;
+    *start_r = UINT_MAX,
+     *end_l = 0;
     *end_r = 0;
 
     // find boundaries
     vector<SV_BreakPoint *>::iterator bp_it;
-	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-		SV_BreakPoint *tmp_bp = *bp_it;
+    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+        SV_BreakPoint *tmp_bp = *bp_it;
 
         if (tmp_bp->interval_l.i.start < *start_l)
             *start_l = tmp_bp->interval_l.i.start;
@@ -1393,24 +1393,24 @@ get_mixture(vector<SV_BreakPoint *> &bps,
         (*r)[i] = get_ls(0);
 
     // find mixture distribution
-	for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-		SV_BreakPoint *tmp_bp = *bp_it;
+    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+        SV_BreakPoint *tmp_bp = *bp_it;
 
         CHR_POS l_offset = tmp_bp->interval_l.i.start - *start_l;
-        CHR_POS l_size = tmp_bp->interval_l.i.end - 
-                tmp_bp->interval_l.i.start + 1;
+        CHR_POS l_size = tmp_bp->interval_l.i.end -
+                         tmp_bp->interval_l.i.start + 1;
 
         log_space *t = (log_space *) malloc(l_size * sizeof(log_space));
         normalize_ls(l_size, tmp_bp->interval_l.p, t);
 
-        for (CHR_POS i = 0; i < l_size; ++i) 
+        for (CHR_POS i = 0; i < l_size; ++i)
             (*l)[i+l_offset] = ls_add((*l)[i+l_offset], t[i]);
 
         free(t);
 
         CHR_POS r_offset = tmp_bp->interval_r.i.start - *start_r;
-        CHR_POS r_size = tmp_bp->interval_r.i.end - 
-                tmp_bp->interval_r.i.start + 1;
+        CHR_POS r_size = tmp_bp->interval_r.i.end -
+                         tmp_bp->interval_r.i.start + 1;
 
         t = (log_space *) malloc(r_size * sizeof(log_space));
         normalize_ls(r_size, tmp_bp->interval_r.p, t);
@@ -1431,9 +1431,9 @@ get_score( vector<SV_BreakPoint *> &bps,
            double *score_l,
            double *score_r)
 {
-    CHR_POS start_l = UINT_MAX, 
-            start_r = UINT_MAX, 
-            end_l = 0, 
+    CHR_POS start_l = UINT_MAX,
+            start_r = UINT_MAX,
+            end_l = 0,
             end_r = 0;
 
     log_space *l, *r;
@@ -1475,66 +1475,66 @@ pair<CHR_POS,CHR_POS>
 SV_BreakPoint::
 min_pair( vector< vector< pair<CHR_POS,CHR_POS> > > &m)
 {
-	CHR_POS min_dist = UINT_MAX;	
-	CHR_POS max_overlap = 0;
-	CHR_POS min_row = 0, min_col = 0;
-	CHR_POS curr_dist, curr_overlap;
+    CHR_POS min_dist = UINT_MAX;
+    CHR_POS max_overlap = 0;
+    CHR_POS min_row = 0, min_col = 0;
+    CHR_POS curr_dist, curr_overlap;
 
-	unsigned int r, c;
-	for (r = 0; r < m.size(); ++r) {
-		vector< pair<CHR_POS,CHR_POS> > row = m[r];
-		for (c = r + 1; c < row.size(); ++c) {
-			curr_dist = row[c].first;
-			curr_overlap = row[c].second;
-			if (min_dist > curr_dist) {
-				min_dist = curr_dist;
-				max_overlap = curr_overlap;
-				min_row = r;
-				min_col = c;
-			} else if ( (min_dist == curr_dist) && (max_overlap < curr_overlap)){
-				min_dist = curr_dist;
-				max_overlap = curr_overlap;
-				min_row = r;
-				min_col = c;
-			}
-		}
-	}
+    unsigned int r, c;
+    for (r = 0; r < m.size(); ++r) {
+        vector< pair<CHR_POS,CHR_POS> > row = m[r];
+        for (c = r + 1; c < row.size(); ++c) {
+            curr_dist = row[c].first;
+            curr_overlap = row[c].second;
+            if (min_dist > curr_dist) {
+                min_dist = curr_dist;
+                max_overlap = curr_overlap;
+                min_row = r;
+                min_col = c;
+            } else if ( (min_dist == curr_dist) && (max_overlap < curr_overlap)) {
+                min_dist = curr_dist;
+                max_overlap = curr_overlap;
+                min_row = r;
+                min_col = c;
+            }
+        }
+    }
 
-	pair<CHR_POS,CHR_POS> min_index;
-	min_index.first = min_row;
-	min_index.second = min_col;
+    pair<CHR_POS,CHR_POS> min_index;
+    min_index.first = min_row;
+    min_index.second = min_col;
 
-	return min_index;
+    return min_index;
 }
 //}}}
 
 //{{{void SV_BreakPoint:: get_max_range(struct breakpoint_interval *b,
-void 
+void
 SV_BreakPoint::
 get_max_range(struct breakpoint_interval *b,
-			  CHR_POS *max_start,
-			  CHR_POS *max_end,
-			  log_space *max_value)
+              CHR_POS *max_start,
+              CHR_POS *max_end,
+              log_space *max_value)
 {
-	// find the range of values that are in the max position for each bp
-	CHR_POS i;
-	*max_start = 0;
-	*max_end = 0;
-	*max_value = -INFINITY;
-	for (i = 0; i < b->i.end - b->i.start; ++i) {
-		if ( b->p[i] > *max_value ) {
-			*max_value = b->p[i]; 
-			*max_start = i;
-		} else if ( b->p[i] == *max_value ) {
-			*max_end = i;
-		}
-	}
+    // find the range of values that are in the max position for each bp
+    CHR_POS i;
+    *max_start = 0;
+    *max_end = 0;
+    *max_value = -INFINITY;
+    for (i = 0; i < b->i.end - b->i.start; ++i) {
+        if ( b->p[i] > *max_value ) {
+            *max_value = b->p[i];
+            *max_start = i;
+        } else if ( b->p[i] == *max_value ) {
+            *max_end = i;
+        }
+    }
 
-	if (*max_end < *max_start)
-		*max_end = *max_start;
+    if (*max_end < *max_start)
+        *max_end = *max_start;
 
-	*max_end = b->i.start + *max_end;
-	*max_start = b->i.start + *max_start;
+    *max_end = b->i.start + *max_end;
+    *max_start = b->i.start + *max_start;
 }
 //}}}
 
@@ -1542,101 +1542,101 @@ get_max_range(struct breakpoint_interval *b,
 void
 SV_BreakPoint::
 peak_distance(SV_BreakPoint *e,
-		 CHR_POS *dist,
-		 CHR_POS *overlap)
+              CHR_POS *dist,
+              CHR_POS *overlap)
 {
-	init_interval_probabilities();
-	e->init_interval_probabilities();
+    init_interval_probabilities();
+    e->init_interval_probabilities();
 
-	CHR_POS a_max_start, a_max_end, b_max_start, b_max_end;
-	log_space a_max, b_max;
-	get_max_range(&interval_l, &a_max_start, &a_max_end, &a_max);
-	get_max_range(&(e->interval_l), &b_max_start, &b_max_end, &b_max);
+    CHR_POS a_max_start, a_max_end, b_max_start, b_max_end;
+    log_space a_max, b_max;
+    get_max_range(&interval_l, &a_max_start, &a_max_end, &a_max);
+    get_max_range(&(e->interval_l), &b_max_start, &b_max_end, &b_max);
 
-	free_interval_probabilities();
-	e->free_interval_probabilities();
+    free_interval_probabilities();
+    e->free_interval_probabilities();
 
-	if ( (a_max_end >= b_max_start) && (a_max_start <= b_max_end) ) {
-		*dist = 0;
-		*overlap = min(a_max_end,b_max_end) - max(a_max_start,b_max_start) + 1;
-	} else if (a_max_start > b_max_end) {
-		*dist = a_max_start - b_max_end; 
-		*overlap = 0;
-	} else {
-		*dist = b_max_start - a_max_end;
-		*overlap = 0;
-	}
+    if ( (a_max_end >= b_max_start) && (a_max_start <= b_max_end) ) {
+        *dist = 0;
+        *overlap = min(a_max_end,b_max_end) - max(a_max_start,b_max_start) + 1;
+    } else if (a_max_start > b_max_end) {
+        *dist = a_max_start - b_max_end;
+        *overlap = 0;
+    } else {
+        *dist = b_max_start - a_max_end;
+        *overlap = 0;
+    }
 #if 0
-	log_space ls_threshold = get_ls(p_merge_threshold);
+    log_space ls_threshold = get_ls(p_merge_threshold);
 
-	// Find how much to clip from the start of the current break point (this)
-	// or the new break point (p)
-	// Case 1:
-	// curr:   |---------------...
-	// new:        |-----------... 
-	// c_clip  ||||
-	// Case 2:
-	// curr:       |-------...
-	// new:    |-----------... 
-	// n_clip  ||||
-	
-
-	CHR_POS curr_clip_start = 0;
-	CHR_POS new_clip_start = 0;
-	if (curr_intr->i.start < new_intr->i.start) // Case 1
-		curr_clip_start = new_intr->i.start - curr_intr->i.start;
-	else if (curr_intr->i.start > new_intr->i.start) // Case 2
-		new_clip_start = curr_intr->i.start - new_intr->i.start;
-
-	// Find how much to clip from the end of the current break point (this)
-	// or the new bre ak point (p)
-	// Case 1:
-	// curr:   ...--------|
-	// new:    ...----|
-	// c_clip          ||||
-	// Case 2:
-	// curr:   ...----|
-	// new:    ...--------|
-	// n_clip          ||||
-	CHR_POS curr_clip_end = 0;
-	//CHR_POS new_clip_end = 0;
-	if (curr_intr->i.end > new_intr->i.end) // Case 1
-		curr_clip_end = curr_intr->i.end - new_intr->i.end;
-	//else if (curr_intr->i.end < new_intr->i.end) // Case 2
-		//new_clip_end = new_intr->i.end - curr_intr->i.end;
+    // Find how much to clip from the start of the current break point (this)
+    // or the new break point (p)
+    // Case 1:
+    // curr:   |---------------...
+    // new:        |-----------...
+    // c_clip  ||||
+    // Case 2:
+    // curr:       |-------...
+    // new:    |-----------...
+    // n_clip  ||||
 
 
-	// Length of the new break point interval
-	unsigned int new_len = (curr_intr->i.end - curr_clip_end) -
-						   (curr_intr->i.start + curr_clip_start) + 1;
+    CHR_POS curr_clip_start = 0;
+    CHR_POS new_clip_start = 0;
+    if (curr_intr->i.start < new_intr->i.start) // Case 1
+        curr_clip_start = new_intr->i.start - curr_intr->i.start;
+    else if (curr_intr->i.start > new_intr->i.start) // Case 2
+        new_clip_start = curr_intr->i.start - new_intr->i.start;
 
-	// Before we acutally merge these two breakpoints, we need to test if the
-	// merged probability is greater than zero, if it is not, then we should
-	// not merge the two
-	unsigned int i = 0;
+    // Find how much to clip from the end of the current break point (this)
+    // or the new bre ak point (p)
+    // Case 1:
+    // curr:   ...--------|
+    // new:    ...----|
+    // c_clip          ||||
+    // Case 2:
+    // curr:   ...----|
+    // new:    ...--------|
+    // n_clip          ||||
+    CHR_POS curr_clip_end = 0;
+    //CHR_POS new_clip_end = 0;
+    if (curr_intr->i.end > new_intr->i.end) // Case 1
+        curr_clip_end = curr_intr->i.end - new_intr->i.end;
+    //else if (curr_intr->i.end < new_intr->i.end) // Case 2
+    //new_clip_end = new_intr->i.end - curr_intr->i.end;
 
-	*merged_start = curr_intr->i.start + curr_clip_start;
-	*merged_end = curr_intr->i.end - curr_clip_end;
 
-	*merged_prob = (log_space *) malloc(new_len * sizeof(log_space));
+    // Length of the new break point interval
+    unsigned int new_len = (curr_intr->i.end - curr_clip_end) -
+                           (curr_intr->i.start + curr_clip_start) + 1;
 
-	log_space ls_max = -INFINITY;
+    // Before we acutally merge these two breakpoints, we need to test if the
+    // merged probability is greater than zero, if it is not, then we should
+    // not merge the two
+    unsigned int i = 0;
 
-	for (i = 0; i < new_len; ++i) {
-		(*merged_prob)[i] = ls_multiply(curr_intr->p[i + curr_clip_start],
-										new_intr->p[i + new_clip_start]);
-	}
+    *merged_start = curr_intr->i.start + curr_clip_start;
+    *merged_end = curr_intr->i.end - curr_clip_end;
+
+    *merged_prob = (log_space *) malloc(new_len * sizeof(log_space));
+
+    log_space ls_max = -INFINITY;
+
+    for (i = 0; i < new_len; ++i) {
+        (*merged_prob)[i] = ls_multiply(curr_intr->p[i + curr_clip_start],
+                                        new_intr->p[i + new_clip_start]);
+    }
 
 
-	for (i = 0; i < new_len; ++i)
-		if ( (*merged_prob)[i] > ls_max )
-			ls_max = (*merged_prob)[i]; 
+    for (i = 0; i < new_len; ++i)
+        if ( (*merged_prob)[i] > ls_max )
+            ls_max = (*merged_prob)[i];
 
-	if (ls_max < ls_threshold )
-		return false;
-	else 
-		return true;
-	
+    if (ls_max < ls_threshold )
+        return false;
+    else
+        return true;
+
 #endif
 }
 //}}}
@@ -1650,55 +1650,55 @@ boost::numeric::ublas::matrix<log_space>*
 SV_BreakPoint::
 get_matrix()
 {
-	// initialize the matrix
-	boost::numeric::ublas::matrix<log_space> *m  = 
-		new boost::numeric::ublas::matrix<log_space>(
-				interval_l.i.end - interval_l.i.start + 1,
-				interval_r.i.end - interval_r.i.start + 1);
+    // initialize the matrix
+    boost::numeric::ublas::matrix<log_space> *m  =
+        new boost::numeric::ublas::matrix<log_space>(
+        interval_l.i.end - interval_l.i.start + 1,
+        interval_r.i.end - interval_r.i.start + 1);
 
-	// Print the interval vectors that will be used to set the martix priors
-	// set the matrix priors to be the probability based on the left and right
-	// intervals
-	for (unsigned int a = 0; a < m->size1 (); ++a)
-		for (unsigned int b = 0; b < m->size2 (); ++b) 
-			(*m)(a, b) = ls_multiply(interval_l.p[a], interval_r.p[b]);
+    // Print the interval vectors that will be used to set the martix priors
+    // set the matrix priors to be the probability based on the left and right
+    // intervals
+    for (unsigned int a = 0; a < m->size1 (); ++a)
+        for (unsigned int b = 0; b < m->size2 (); ++b)
+            (*m)(a, b) = ls_multiply(interval_l.p[a], interval_r.p[b]);
 
-	// Print the matrix priors
-	#if 0
-	cerr << m->size1() << "," << m->size2() << endl;
-	for (unsigned int l = 0; l < m->size1 (); ++l)
-		for (unsigned int r = 0; r < m->size2 (); ++r)
-			cout << (*m)(l,r) << endl;
-	#endif
+    // Print the matrix priors
+#if 0
+    cerr << m->size1() << "," << m->size2() << endl;
+    for (unsigned int l = 0; l < m->size1 (); ++l)
+        for (unsigned int r = 0; r < m->size2 (); ++r)
+            cout << (*m)(l,r) << endl;
+#endif
 
-	// For each pair in this breakpoint, we need to update the matrix
-	// probabilities based on the template length of the pair given 
-	// breakpoint
-	// Use log-space probabilities to avoid underflow
-	vector<SV_Evidence*>::iterator it; 
+    // For each pair in this breakpoint, we need to update the matrix
+    // probabilities based on the template length of the pair given
+    // breakpoint
+    // Use log-space probabilities to avoid underflow
+    vector<SV_Evidence*>::iterator it;
 
-	for (it = evidence.begin(); it < evidence.end(); ++it) 
-		(*it)->update_matrix(m);
+    for (it = evidence.begin(); it < evidence.end(); ++it)
+        (*it)->update_matrix(m);
 
-	log_space ls_sum = -INFINITY;
+    log_space ls_sum = -INFINITY;
 
-	for (unsigned int a = 0; a < m->size1 (); ++ a)
-		for (unsigned int b = 0; b < m->size2 (); ++ b) 
-			ls_sum = ls_add(ls_sum, (*m)(a, b));
+    for (unsigned int a = 0; a < m->size1 (); ++ a)
+        for (unsigned int b = 0; b < m->size2 (); ++ b)
+            ls_sum = ls_add(ls_sum, (*m)(a, b));
 
 
-	for (unsigned int a = 0; a < m->size1 (); ++ a)
-		for (unsigned int b = 0; b < m->size2 (); ++ b)
-			(*m)(a, b) = ls_divide( (*m)(a, b), ls_sum );
+    for (unsigned int a = 0; a < m->size1 (); ++ a)
+        for (unsigned int b = 0; b < m->size2 (); ++ b)
+            (*m)(a, b) = ls_divide( (*m)(a, b), ls_sum );
 
-	// Print the matrix 
-	#if 0
-	cerr << m->size1() << "," << m->size2() << endl;
-	for (unsigned int l = 0; l < m->size1 (); ++l)
-		for (unsigned int r = 0; r < m->size2 (); ++r)
-			cout << (*m)(l,r) << endl;
-	#endif
-	return m;
+    // Print the matrix
+#if 0
+    cerr << m->size1() << "," << m->size2() << endl;
+    for (unsigned int l = 0; l < m->size1 (); ++l)
+        for (unsigned int r = 0; r < m->size2 (); ++r)
+            cout << (*m)(l,r) << endl;
+#endif
+    return m;
 }
 ///}}}
 #endif

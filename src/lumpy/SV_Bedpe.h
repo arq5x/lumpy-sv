@@ -43,18 +43,19 @@ class SV_Bedpe: public SV_Evidence
 				 int id,
 				 int sample_id,
 				 SV_BedpeReader *reader);
+                void set_bp_interval_probability(struct breakpoint_interval *i);
 
 		static void process_bedpe(const BEDPE *bedpeEntry,
-								  UCSCBins<SV_BreakPoint*> &r_bin,
-								  int weight,
-								  int id,
-								  int sample_id,
-								  SV_BedpeReader *reader);
+                                          UCSCBins<SV_BreakPoint*> &r_bin,
+                                          int weight,
+                                          int id,
+                                          int sample_id,
+                                          SV_BedpeReader *reader);
 
 
 		static log_space* get_bp_interval_probability(char strand,
-													  int distro_size,
-													  double *distro);
+                                                              int distro_size,
+                                                              double *distro);
 		struct interval side_l;
 		struct interval side_r;
 		SV_BedpeReader *reader;

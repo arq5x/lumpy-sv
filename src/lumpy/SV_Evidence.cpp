@@ -26,7 +26,7 @@ void
 SV_Evidence::
 print_evidence()
 {
-	cerr << "***** :( *****";
+    cerr << "***** :( *****";
 }
 
 SV_Evidence::
@@ -38,45 +38,49 @@ SV_BreakPoint*
 SV_Evidence::
 get_bp()
 {
-	return NULL;
+    return NULL;
 }
 
 string
 SV_Evidence::
 evidence_type()
 {
-	return "";
+    return "";
 }
 //{{{ void SV_Pair:: set_interval_probability()
 void
 SV_Evidence::
 set_bp_interval_probability(struct breakpoint_interval *i)
 {
-	int size = i->i.end - i->i.start + 1;
-	log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
-	log_space *src_p;
+    int size = i->i.end - i->i.start + 1;
+    log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
+    log_space *src_p;
 
-	unsigned int j;
-	if (i->i.strand == '+') 
-		src_p = SV_Evidence::distros[sample_id].first;
-	else
-		src_p = SV_Evidence::distros[sample_id].second;
+    unsigned int j;
+    if (i->i.strand == '+')
+        src_p = SV_Evidence::distros[sample_id].first;
+    else
+        src_p = SV_Evidence::distros[sample_id].second;
 
-	// It is possible that the start of this interval was trucated because it
-	// started close the the start of the chrome, and the back distance for the
-	// + strand or the extension of the distribution for the - strand would
-	// have caused an underrun.  In this case we need to clip the begining of
-	// the distro
-	// It is also possible that the end of this inteval was trucated because it
-	// overlapped its pair's read interval
-	// the full size is from 0 to size
-	// i->i.start_clip and i->i.end_clip tell us how much of each side of the
-	// disto to remove
-	int offset = i->i.start_clip;
-	for (j = 0; j < size; ++j) {
-		tmp_p[j] = src_p[j + offset];
-	}
 
-	i->p = tmp_p;
+    // It is possible that the start of this interval was trucated because it
+    // started close the the start of the chrome, and the back distance for the
+    // + strand or the extension of the distribution for the - strand would
+    // have caused an underrun.  In this case we need to clip the begining of
+    // the distro
+    // It is also possible that the end of this inteval was trucated because it
+    // overlapped its pair's read interval
+    // the full size is from 0 to size
+    // i->i.start_clip and i->i.end_clip tell us how much of each side of the
+    // disto to remove
+
+    // if src_p is NULL then we assume a uniform distribution
+
+    int offset = i->i.start_clip;
+    for (j = 0; j < size; ++j) {
+        tmp_p[j] = src_p[j + offset];
+    }
+
+    i->p = tmp_p;
 }
 //}}}

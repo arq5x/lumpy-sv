@@ -147,7 +147,8 @@ int read_distro_file(string file_name,
 			first = false;
 		}
 		last = v;
-		(*distro)[i]= atof(strtok(NULL, "\t"));
+                double d = atof(strtok(NULL, "\t"));
+		(*distro)[i]= d;
 		++i;
 	}
 
