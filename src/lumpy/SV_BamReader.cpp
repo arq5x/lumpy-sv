@@ -26,8 +26,8 @@
 SV_BamReader::
 SV_BamReader()
 {
-	curr_reader = NULL;
-	tmp_file_name = "/tmp/lumpy_inter_chrom_reads.bam";
+    curr_reader = NULL;
+    tmp_file_name = "/tmp/lumpy_inter_chrom_reads.bam";
 }
 //}}}
 
@@ -35,9 +35,9 @@ SV_BamReader()
 SV_BamReader::
 SV_BamReader(map<string, SV_EvidenceReader*> *_bam_evidence_readers)
 {
-	bam_evidence_readers = _bam_evidence_readers;
-	curr_reader = NULL;
-	tmp_file_name = "/tmp/lumpy_inter_chrom_reads.bam";
+    bam_evidence_readers = _bam_evidence_readers;
+    curr_reader = NULL;
+    tmp_file_name = "/tmp/lumpy_inter_chrom_reads.bam";
 }
 //}}}
 
@@ -45,11 +45,11 @@ SV_BamReader(map<string, SV_EvidenceReader*> *_bam_evidence_readers)
 SV_BamReader::
 ~SV_BamReader()
 {
-	map<string, SV_EvidenceReader*>::iterator it;
-	for (it = bam_evidence_readers->begin();
-			it != bam_evidence_readers->end();
-			++it)
-		delete(it->second);
+    map<string, SV_EvidenceReader*>::iterator it;
+    for (it = bam_evidence_readers->begin();
+            it != bam_evidence_readers->end();
+            ++it)
+        delete(it->second);
 }
 //}}}
 
@@ -58,7 +58,7 @@ string
 SV_BamReader::
 check_params()
 {
-	return "";
+    return "";
 }
 //}}}
 
@@ -67,7 +67,7 @@ bool
 SV_BamReader::
 add_param(char *param, char *val)
 {
-	return false;
+    return false;
 }
 //}}}
 
@@ -76,29 +76,29 @@ void
 SV_BamReader::
 initialize()
 {
-	vector<string> bam_files;
-	map<string, SV_EvidenceReader*>::iterator it;
-	for (it = bam_evidence_readers->begin(); 
-		 it != bam_evidence_readers->end(); 
-		 ++it) 
-		bam_files.push_back(it->first);
+    vector<string> bam_files;
+    map<string, SV_EvidenceReader*>::iterator it;
+    for (it = bam_evidence_readers->begin();
+            it != bam_evidence_readers->end();
+            ++it)
+        bam_files.push_back(it->first);
 
-	if ( !bam_reader.Open(bam_files) ) {
+    if ( !bam_reader.Open(bam_files) ) {
         cerr << "Could not open input BAM files: " <<
-            bam_reader.GetErrorString() << endl;
-		exit(1);
-	}    
-	refs = bam_reader.GetReferenceData();
-	header = bam_reader.GetHeader().ToString();
-	has_next_alignment = bam_reader.GetNextAlignment(bam);
+             bam_reader.GetErrorString() << endl;
+        exit(1);
+    }
+    refs = bam_reader.GetReferenceData();
+    header = bam_reader.GetHeader().ToString();
+    has_next_alignment = bam_reader.GetNextAlignment(bam);
 
-	if ( !inter_chrom_reads.Open(tmp_file_name,
-								 header,
-								 refs) ) {
-		cerr << "Could not open temp file" << tmp_file_name << 
-				" for writing... Aborting." << endl;
-		abort();
-	}
+    if ( !inter_chrom_reads.Open(tmp_file_name,
+                                 header,
+                                 refs) ) {
+        cerr << "Could not open temp file" << tmp_file_name <<
+             " for writing... Aborting." << endl;
+        abort();
+    }
 }
 //}}}
 
@@ -107,7 +107,7 @@ bool
 SV_BamReader::
 has_next()
 {
-	return has_next_alignment;
+    return has_next_alignment;
 }
 //}}}
 
@@ -116,8 +116,8 @@ string
 SV_BamReader::
 get_curr_chr()
 {
-	//cerr << "Pair get_curr_chr" << endl;
-	return refs.at(bam.RefID).RefName;
+    //cerr << "Pair get_curr_chr" << endl;
+    return refs.at(bam.RefID).RefName;
 }
 //}}}
 
@@ -126,7 +126,7 @@ CHR_POS
 SV_BamReader::
 get_curr_pos()
 {
-	return bam.Position;
+    return bam.Position;
 }
 //}}}
 
@@ -135,7 +135,7 @@ void
 SV_BamReader::
 set_statics()
 {
-	// the statics will be set while the input is being proccessed
+    // the statics will be set while the input is being proccessed
 }
 //}}}
 
@@ -145,7 +145,7 @@ void
 SV_BamReader::
 process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 {
-	exit(1);
+    exit(1);
 }
 //}}}
 #endif
@@ -155,11 +155,11 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 void
 SV_BamReader::
 process_input( BamAlignment &_bam,
-			   RefVector &_refs,
-			   string header,
-			   UCSCBins<SV_BreakPoint*> &r_bin)
+               RefVector &_refs,
+               string header,
+               UCSCBins<SV_BreakPoint*> &r_bin)
 {
-	exit(1);
+    exit(1);
 }
 //}}}
 #endif
@@ -169,9 +169,9 @@ process_input( BamAlignment &_bam,
 void
 SV_BamReader::
 process_input_chr(string chr,
-				  UCSCBins<SV_BreakPoint*> &r_bin)
+                  UCSCBins<SV_BreakPoint*> &r_bin)
 {
-	exit(1);
+    exit(1);
 }
 //}}}
 #endif
@@ -180,21 +180,21 @@ process_input_chr(string chr,
 void
 SV_BamReader::
 process_input_chr_pos(string chr,
-					  CHR_POS pos,
-					  UCSCBins<SV_BreakPoint*> &r_bin)
+                      CHR_POS pos,
+                      UCSCBins<SV_BreakPoint*> &r_bin)
 {
-	string last_file = "";
-	SV_EvidenceReader *last_reader;
+    string last_file = "";
+    SV_EvidenceReader *last_reader;
 
-	// Process this chr, or the next chr 
-	while ( has_next_alignment &&
-			( chr.compare( refs.at(bam.RefID).RefName) == 0 ) &&
-			( bam.Position < pos ) ) {
-		curr_reader = (*bam_evidence_readers)[bam.Filename];
-		last_file = bam.Filename;
+    // Process this chr, or the next chr
+    while ( has_next_alignment &&
+            ( chr.compare( refs.at(bam.RefID).RefName) == 0 ) &&
+            ( bam.Position < pos ) ) {
+        curr_reader = (*bam_evidence_readers)[bam.Filename];
+        last_file = bam.Filename;
 
         /*
-         * IsMapped     IsPaired    IsMateMapped   F            R    
+         * IsMapped     IsPaired    IsMateMapped   F            R
          * T            T           T              T&!(T&!T)    T
          * T            T           F              T&!(T&!F)    F
          * T            F           T              T&!(F&!T)    T
@@ -203,25 +203,25 @@ process_input_chr_pos(string chr,
          *
          */
         if ( bam.IsMapped() &&
-             !(bam.IsPaired() && !(bam.IsMateMapped())) )
-		    curr_reader->process_input(bam,refs,inter_chrom_reads,r_bin);
-		last_reader = curr_reader;
+                !(bam.IsPaired() && !(bam.IsMateMapped())) )
+            curr_reader->process_input(bam,refs,inter_chrom_reads,r_bin);
+        last_reader = curr_reader;
 
-		has_next_alignment = bam_reader.GetNextAlignment(bam);
+        has_next_alignment = bam_reader.GetNextAlignment(bam);
 
-		if ( bam.RefID < 0 )
-			has_next_alignment = false;
-	}
+        if ( bam.RefID < 0 )
+            has_next_alignment = false;
+    }
 }
 //}}}
 
 //{{{ void SV_BamReader:: terminate()
-void 
+void
 SV_BamReader::
 terminate()
 {
-	bam_reader.Close();
-	inter_chrom_reads.Close();
+    bam_reader.Close();
+    inter_chrom_reads.Close();
 }
 //}}}
 
@@ -230,15 +230,15 @@ string
 SV_BamReader::
 get_source_file_name()
 {
-	return "";
+    return "";
 }
 //}}}
 
 //{{{ void SV_BamReader:: set_inter_chrom_file_name()
-void 
+void
 SV_BamReader::
 set_inter_chrom_file_name(string file_name)
 {
-	tmp_file_name = file_name;
+    tmp_file_name = file_name;
 }
 //}}}

@@ -22,13 +22,12 @@
 SV_BedpeReader::
 SV_BedpeReader()
 {
-	bedpe_file = "";
-	distro_file = "";
-	back_distance = 0;
-	weight = 0;
-	id = -1;
-	sample_id = SV_EvidenceReader::counter;
-	SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
+    bedpe_file = "";
+    //distro_file = "";
+    weight = 0;
+    id = -1;
+    sample_id = SV_EvidenceReader::counter;
+    SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
 }
 //}}}
 
@@ -37,20 +36,21 @@ string
 SV_BedpeReader::
 check_params()
 {
-	string msg = "";
+    string msg = "";
 
-	if (bedpe_file.compare("") == 0)
-		msg.append("bedpe_file ");
-	if (distro_file.compare("") == 0)
-		msg.append("distro_file ");
-	if (back_distance == 0)
-		msg.append("back_distance ");
-	if (weight == 0)
-		msg.append("weight ");
-	if (id == -1)
-		msg.append("id ");
+    if (bedpe_file.compare("") == 0)
+        msg.append("bedpe_file ");
+    /*
+    if (distro_file.compare("") == 0)
+        msg.append("distro_file ");
+    */
 
-	return msg;
+    if (weight == 0)
+        msg.append("weight ");
+    if (id == -1)
+        msg.append("id ");
+
+    return msg;
 }
 //}}}
 
@@ -59,39 +59,38 @@ bool
 SV_BedpeReader::
 add_param(char *param, char *val)
 {
-		
 
-	if ( strcmp("bedpe_file", param) == 0 )
-		bedpe_file = val;
-	else if ( strcmp("distro_file", param) == 0 )
-		distro_file = val;
-	else if ( strcmp("back_distance", param) == 0 )
-		back_distance = atoi(val);
-	else if ( strcmp("weight", param) == 0 )
-		weight = atoi(val);
-	else if ( strcmp("id", param) == 0 )
-		id = atoi(val);
-	else
-		return false;
 
-	return true;
+    if ( strcmp("bedpe_file", param) == 0 )
+        bedpe_file = val;
+    /*
+    else if ( strcmp("distro_file", param) == 0 )
+        distro_file = val;
+    */
+    else if ( strcmp("weight", param) == 0 )
+        weight = atoi(val);
+    else if ( strcmp("id", param) == 0 )
+        id = atoi(val);
+    else
+        return false;
+
+    return true;
 }
 //}}}
 
 //{{{ struct pair_end_parameters SV_BedpeReader:: get_pair_end_parameters()
-struct bedpe_parameters 
-SV_BedpeReader::
+struct bedpe_parameters
+        SV_BedpeReader::
 get_bedpe_parameters()
 {
-	struct bedpe_parameters bedpe_param;
+    struct bedpe_parameters bedpe_param;
 
-	bedpe_param.bedpe_file = bedpe_file;
-	bedpe_param.distro_file = distro_file;
-	bedpe_param.back_distance = back_distance;
-	bedpe_param.weight = weight;
-	bedpe_param.id = id;
+    bedpe_param.bedpe_file = bedpe_file;
+    //bedpe_param.distro_file = distro_file;
+    bedpe_param.weight = weight;
+    bedpe_param.id = id;
 
-	return bedpe_param;
+    return bedpe_param;
 }
 //}}}
 
@@ -101,12 +100,12 @@ SV_BedpeReader::
 set_statics()
 {
 #if 0
-	SV_Bedpe::distro_size = read_distro_file(distro_file,
-											 &(SV_Bedpe::distro),
-											 &(SV_Bedpe::distro_start),
-											 &(SV_Bedpe::distro_end));
+    SV_Bedpe::distro_size = read_distro_file(distro_file,
+                            &(SV_Bedpe::distro),
+                            &(SV_Bedpe::distro_start),
+                            &(SV_Bedpe::distro_end));
 
-	SV_Bedpe::back_distance = back_distance;
+    SV_Bedpe::back_distance = back_distance;
 #endif
 }
 //}}}
@@ -116,7 +115,7 @@ void
 SV_BedpeReader::
 unset_statics()
 {
-	//free(SV_Bedpe::distro);
+    //free(SV_Bedpe::distro);
 }
 //}}}
 
@@ -125,16 +124,17 @@ void
 SV_BedpeReader::
 initialize()
 {
-	distro_size = read_distro_file(distro_file,
-								   &distro,
-								   &distro_start,
-								   &distro_end);
+    /*
+    distro_size = read_distro_file(distro_file,
+                                   &distro,
+                                   &distro_start,
+                                   &distro_end);
+    */
+    bedpe= new BedFilePE(bedpe_file);
 
-	bedpe= new BedFilePE(bedpe_file);
-
-	lineNum = 0;
-	bedpe->Open();
-	bedpeStatus = bedpe->GetNextBedPE(bedpeEntry, lineNum);
+    lineNum = 0;
+    bedpe->Open();
+    bedpeStatus = bedpe->GetNextBedPE(bedpeEntry, lineNum);
 
 }
 //}}}
@@ -144,19 +144,19 @@ void
 SV_BedpeReader::
 process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 {
-	while (	bedpeStatus != BED_INVALID) {  
-		if (bedpeStatus == BED_VALID) {
-			SV_Bedpe::process_bedpe(&bedpeEntry,
-									r_bin,
-									weight,
-									id,
-									sample_id,
-									this);
-			bedpeEntry = nullBedpe;
-		}
+    while (	bedpeStatus != BED_INVALID) {
+        if (bedpeStatus == BED_VALID) {
+            SV_Bedpe::process_bedpe(&bedpeEntry,
+                                    r_bin,
+                                    weight,
+                                    id,
+                                    sample_id,
+                                    this);
+            bedpeEntry = nullBedpe;
+        }
 
-		bedpeStatus = bedpe->GetNextBedPE(bedpeEntry, lineNum);
-	}
+        bedpeStatus = bedpe->GetNextBedPE(bedpeEntry, lineNum);
+    }
 }
 //}}}
 
@@ -165,7 +165,7 @@ string
 SV_BedpeReader::
 get_curr_chr()
 {
-	return bedpeEntry.chrom1;
+    return bedpeEntry.chrom1;
 }
 //}}}
 
@@ -174,10 +174,10 @@ CHR_POS
 SV_BedpeReader::
 get_curr_pos()
 {
-	if (bedpeEntry.start1 < bedpeEntry.start2)
-		return bedpeEntry.start1;
-	else
-		return bedpeEntry.start2;
+    if (bedpeEntry.start1 < bedpeEntry.start2)
+        return bedpeEntry.start1;
+    else
+        return bedpeEntry.start2;
 }
 //}}}
 
@@ -185,64 +185,62 @@ get_curr_pos()
 void
 SV_BedpeReader::
 process_input_chr(string chr,
-				  UCSCBins<SV_BreakPoint*> &r_bin)
+                  UCSCBins<SV_BreakPoint*> &r_bin)
 {
 
-	while ( ( bedpeStatus != BED_INVALID ) &&
-			( chr.compare( get_curr_chr() ) == 0 ) ) {
-			
+    while ( ( bedpeStatus != BED_INVALID ) &&
+            ( chr.compare( get_curr_chr() ) == 0 ) ) {
 
-		if (bedpeStatus == BED_VALID) {
-			SV_Bedpe::process_bedpe(&bedpeEntry,
-									r_bin,
-									weight,
-									id,
-									sample_id,
-									this);
-			bedpeEntry = nullBedpe;
-		}
 
-		bedpeStatus = bedpe->GetNextBedPE(bedpeEntry, lineNum);
-	}
+        if (bedpeStatus == BED_VALID) {
+            SV_Bedpe::process_bedpe(&bedpeEntry,
+                                    r_bin,
+                                    weight,
+                                    id,
+                                    sample_id,
+                                    this);
+            bedpeEntry = nullBedpe;
+        }
+
+        bedpeStatus = bedpe->GetNextBedPE(bedpeEntry, lineNum);
+    }
 }
 //}}}
-
 
 //{{{ void SV_BedpeReader:: process_input_chr_pos(string chr,
 void
 SV_BedpeReader::
 process_input_chr_pos(string chr,
-					  CHR_POS pos,
-					  UCSCBins<SV_BreakPoint*> &r_bin)
+                      CHR_POS pos,
+                      UCSCBins<SV_BreakPoint*> &r_bin)
 {
 
-	while ( ( bedpeStatus != BED_INVALID ) &&
-			( chr.compare( get_curr_chr() ) == 0 ) &&
-			( bedpeEntry.start1  < pos ) && 
-			( bedpeEntry.start2  < pos ) ) {
-			
-		if (bedpeStatus == BED_VALID) {
-			SV_Bedpe::process_bedpe(&bedpeEntry,
-									r_bin,
-									weight,
-									id,
-									sample_id,
-									this);
-			bedpeEntry = nullBedpe;
-		}
+    while ( ( bedpeStatus != BED_INVALID ) &&
+            ( chr.compare( get_curr_chr() ) == 0 ) &&
+            ( bedpeEntry.start1  < pos ) &&
+            ( bedpeEntry.start2  < pos ) ) {
 
-		bedpeStatus = bedpe->GetNextBedPE(bedpeEntry, lineNum);
-	}
+        if (bedpeStatus == BED_VALID) {
+            SV_Bedpe::process_bedpe(&bedpeEntry,
+                                    r_bin,
+                                    weight,
+                                    id,
+                                    sample_id,
+                                    this);
+            bedpeEntry = nullBedpe;
+        }
+
+        bedpeStatus = bedpe->GetNextBedPE(bedpeEntry, lineNum);
+    }
 }
 //}}}
 
-
 //{{{ void SV_BedpeReader:: terminate()
-void 
+void
 SV_BedpeReader::
 terminate()
 {
-	bedpe->Close();
+    bedpe->Close();
 }
 //}}}
 
@@ -251,6 +249,6 @@ bool
 SV_BedpeReader::
 has_next()
 {
-	return  (bedpeStatus != BED_INVALID);
+    return  (bedpeStatus != BED_INVALID);
 }
 //}}}
