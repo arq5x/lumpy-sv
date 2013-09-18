@@ -79,6 +79,9 @@ initialize()
 	refs = bam_reader.GetReferenceData();
 	header = bam_reader.GetHeader().ToString();
 	has_next_alignment = bam_reader.GetNextAlignment(bam);
+        bam.QueryBases.clear();
+        bam.AlignedBases.clear();
+        bam.Qualities.clear();
 }
 //}}}
 
@@ -250,6 +253,9 @@ process_input_chr_pos(string primary_chr,
 		curr_reader->process_input(bam,refs,r_bin);
 
 		has_next_alignment = bam_reader.GetNextAlignment(bam);
+                bam.QueryBases.clear();
+                bam.AlignedBases.clear();
+                bam.Qualities.clear();
 #if 0
 		curr_reader = (*bam_evidence_readers)[bam.Filename];
 		last_file = bam.Filename;
