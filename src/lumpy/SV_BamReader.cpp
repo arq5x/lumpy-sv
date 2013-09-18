@@ -91,6 +91,9 @@ initialize()
     refs = bam_reader.GetReferenceData();
     header = bam_reader.GetHeader().ToString();
     has_next_alignment = bam_reader.GetNextAlignment(bam);
+    bam.QueryBases.clear();
+    bam.AlignedBases.clear();
+    bam.Qualities.clear();
 
     if ( !inter_chrom_reads.Open(tmp_file_name,
                                  header,
@@ -208,6 +211,9 @@ process_input_chr_pos(string chr,
         last_reader = curr_reader;
 
         has_next_alignment = bam_reader.GetNextAlignment(bam);
+        bam.QueryBases.clear();
+        bam.AlignedBases.clear();
+        bam.Qualities.clear();
 
         if ( bam.RefID < 0 )
             has_next_alignment = false;

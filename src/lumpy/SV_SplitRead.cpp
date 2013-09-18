@@ -665,7 +665,7 @@ process_intra_chrom_split(const BamAlignment &curr,
         if ( curr.HasTag("YP") == true) {
             uint32_t t;
             curr.GetTag("YP", t);
-            if (t > 1)
+            if (t == 2)
                 mapped_splits[curr.Name] = curr;
         }
         else if (clipped >= _reader->min_clip)
