@@ -274,7 +274,7 @@ merge(SV_BreakPoint *p)
         a_overlap_intr = &(p->interval_r);
         b_overlap_intr = &(p->interval_l);
     } else {
-        //{{{ Give error and abort
+        /*
         cerr << "Error in merge(): no correct overlap" << endl <<
              "t:" <<
              interval_l.i.chr << "," <<
@@ -306,9 +306,8 @@ merge(SV_BreakPoint *p)
              "tr-pr:" <<
              does_intersect(&interval_r, &(p->interval_r), true) <<
              endl;
-        //abort();
+        */
         return false;
-        //}}}
     }
 
 #if 1
