@@ -53,16 +53,16 @@ Install novoalign
 
 Install yaha
 ::
-    wget http://faculty.virginia.edu/irahall/support/yaha/YAHA.0.1.72.tar.gz
-    tar zxvf YAHA.0.1.72.tar.gz
+    wget http://faculty.virginia.edu/irahall/support/yaha/YAHA.0.1.79.tar.gz
+    tar zxvf YAHA.0.1.79.tar.gz
     cp yaha /usr/local/bin/.
 
 Install bwa
 ::
-    wget http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.4.tar.bz2
-    bunzip2 bwa-0.7.4.tar.bz2
-    tar xvf bwa-0.7.4.tar
-    cd bwa-0.7.4
+    wget http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.5a.tar.bz2
+    bunzip2 bwa-0.7.5a.tar.bz2
+    tar xvf bwa-0.7.5a.tar
+    cd bwa-0.7.5a
     make
     cp bwa /usr/local/bin/.
 
@@ -196,17 +196,17 @@ aligner (e.g., bwa) for this sample.
         histo_file:<file name>,
 
 Histogram of observed library sizes for the sample.  A script to 
-generate this file is located in scripts/run_histo.sh
+generate this file is located in scripts/pairend_distro.pl
 ::
 
         mean:<value>,
 
-Sample mean library size (can be found using scripts/run_histo.sh)
+Sample mean library size (can be found using scripts/pairend_distro.pl)
 ::
 
         stdev:<value>,
 
-Sample mean library standard deviation (can be found using scripts/run_histo.sh)
+Sample mean library standard deviation (can be found using scripts/pairend_distro.pl)
 ::
 
         read_length:<length>,
@@ -260,11 +260,6 @@ BEDPE (general interface) options
 Position sorted bedpe file containing the breakpoint intervals for this sample.
 ::
 
-        distro_file:<distro_file>,
-
-File containing the values for the breakpoint probability array.
-::
-
         back_distance:<distance>
 
 Distance into the read to add to the breakpoint interval.  
@@ -312,15 +307,17 @@ not part of the lumpy code base, and can be found at
 extracted into the top-level lumpy directory.  The script `test/test.sh` checks
 for the the existence of this directory before running lumpy.
 
-Example Single Sample PE and SR Work flow
+Example Work flow
 ========================================
 
 Assume that the input files are "sample.1.fq" and "sample.2.fq", and the read length is 150.
 
-Paired end alignment
+LUMPY is designed to consider both paired-end and split-read alignments, and can also consider each independently.  There are two strategies for extracting constructing a split-read bam file that are fully explained below.  One option is to first align a fastq file with a paired-end aligned (novoalign or bwa), extract candidate split reads from those alignments, then realign those candidate reads using a split-read aligner (yaha or bwasw).  If you are starting with an aligned file (e.g., a bam file), this is probably your best option since it does not require full realignment.  Another option is to align using bwa-mem, which will produce both paired-end alignments and split-read alignments in a single pass.  Then, you can split this file into a paired-end file and a split-read file.  This is probably the best option when starting from a fastq file.
+
+Paired-end alignment
 -----
 
-We prefer novoalign for paired-end reads:
+Both novoalign and bwa are options for paired-end alignment:
 ::
     novoalign \
         -d hg19.ndx \
@@ -330,8 +327,6 @@ We prefer novoalign for paired-end reads:
         -f sample.1.fq sample.2.fq \
         | samtools view -Sb - > sample.pe.bam
 
-However, bwa is another option:
-::
     bwa aln hg19.fa sample.1.fq > sample.1.sai
     bwa aln hg19.fa sample.2.fq > sample.2.sai
     bwa sampe hg19.fa \
@@ -340,14 +335,16 @@ However, bwa is another option:
         | samtools view -S -b - \
         > sample.pe.bam
 
-Use bamtools to sort since samtools does not correctly flag the resulting bam as coordinate sorted:
+Use bamtools or a recent version of samtools (0.1.19) to sort.  NOTE: the resulting bam file must have the coordinate sort flag set (i.e., @HD VN:1.3  SO:coordinate).
 ::
     bamtools sort -in sample.pe.bam -out sample.pe.sort.bam
+
+    samtools sort sample.pe.bam sample.pe.sort
 
 Split read alignment
 -----
 
-Extract the reads in sample.pe.sort.bam that are either unmapped or have a soft clipped portion of at least 20 base pairs
+From the paired end aligned bam file sample.pe.sort.bam, you can extract the reads that are either unmapped or have a soft clipped portion of at least 20 base pairs
 ::
     samtools view sample.pe.sort.bam \
         | scripts/split_unmapped_to_fasta.pl -b 20 \
@@ -376,16 +373,52 @@ For split reads, bwasw is another option:
         | samtools view -Sb - \
         > sample.sr.bam
 
-Sort the split-read alignments (again, using bamtools):
+Sort the split-read alignments (again, using bamtools or samtools):
 ::
     bamtools sort -in sample.sr.bam -out sample.sr.sort.bam
+
+    samtools sort sample.sr.bam sample.sr.sort
+
+Paired-end and split-read alignment using bwa-mem
+-----
+
+bwa-mem produces a single bam file with both paired-end alignments and split-read alignments
+::
+    bwa mem hg19.fa sample.1.fq sample.2.fq \
+        | samtools view -S -b - \
+        > sample.pesr.bam
+
+extract the paired-end alignments.
+::
+    samtools view -u -F 0x0100 sample.pesr.bam  \
+        | samtools view -u -F 0x0004 - \
+        | samtools view -u -F 0x0008 - \
+        | samtools view -b -F 0x0400 - \
+        > sample.pe.bam
+
+extract the split-read alignments
+::
+    samtools view -h sample.pesr.bam \
+        | scripts/extractSplitReads_BwaMem -i stdin \
+        | samtools view -Sb - \
+        > sample.sr.bam
+
+Sort both alignments (again, using bamtools or samtools):
+::
+    bamtools sort -in sample.pe.bam -out sample.pe.sort.bam
+    bamtools sort -in sample.sr.bam -out sample.sr.sort.bam
+
+    samtools sort sample.pe.bam sample.pe.sort
+    samtools sort sample.sr.bam sample.sr.sort
+
 
 Run lumpy-sv using paired end reads
 -----
 
-Using the paired end mapped reads,  empirically define the paired-end distribution from 10000 proper alignments:
+Using the paired end mapped reads,  empirically define the paired-end distribution from 10000 proper alignments.  It is common practice to skip the first million reads.
 ::    
     samtools view sample.pe.sort.bam \
+        | tail -n+100000 \
         | scripts/pairend_distro.pl \
         -rl 150 \
         -X 4 \
