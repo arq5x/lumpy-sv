@@ -59,7 +59,7 @@ print_usage("No N") if not($N);
 print_usage("No o") if not($o_file);
 
 my $required = 67; # read paired, propper pair, first in pair
-my $restricted = 128; # read unmapped, mate unmapped
+my $restricted = 384; # read unmapped, mate unmapped
 
 my @L;
 my $c = 0;
@@ -69,9 +69,8 @@ while ( defined((my $l = <STDIN>)) && ($c <= $N) ) {
 	my @a = split(/\t/, $l);
 	
 	if ( ( ($a[1] & $required) == $required ) &&
-		 ( ($a[1] & $restricted) != $restricted) &&
+		 ( ($a[1] & $restricted) == 0) &&
 		 ( $a[8] >= 0 ) ) {
-
 
 		 push(@L, $a[8]);
 		 $c++;
