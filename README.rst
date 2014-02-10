@@ -388,13 +388,14 @@ bwa-mem produces a single bam file with both paired-end alignments and split-rea
         | samtools view -S -b - \
         > sample.pesr.bam
 
-extract the paired-end alignments.
+extract the disordant paired-end alignments.
 ::
     samtools view -u -F 0x0100 sample.pesr.bam  \
+        |  samtools view -u -F 0x0100 - \
         | samtools view -u -F 0x0004 - \
         | samtools view -u -F 0x0008 - \
         | samtools view -b -F 0x0400 - \
-        > sample.pe.bam
+        > sample.discordant.pe.bam
 
 extract the split-read alignments
 ::
@@ -405,10 +406,10 @@ extract the split-read alignments
 
 Sort both alignments (again, using bamtools or samtools):
 ::
-    bamtools sort -in sample.pe.bam -out sample.pe.sort.bam
+    bamtools sort -in sample.discordant.pe.bam -out sample.discordant.pe.sort.bam
     bamtools sort -in sample.sr.bam -out sample.sr.sort.bam
 
-    samtools sort sample.pe.bam sample.pe.sort
+    samtools sort sample.discordant.pe.bam sample.discordant.pe.sort
     samtools sort sample.sr.bam sample.sr.sort
 
 
@@ -417,7 +418,7 @@ Run lumpy-sv using paired end reads
 
 Using the paired end mapped reads,  empirically define the paired-end distribution from 10000 proper alignments.  It is common practice to skip the first million reads.
 ::    
-    samtools view sample.pe.sort.bam \
+    samtools view sample.pesr.bam \
         | tail -n+100000 \
         | scripts/pairend_distro.pl \
         -rl 150 \
@@ -433,7 +434,7 @@ To run lumpy with just the paired-end data, We will assume the mean=500 and stde
         -mw 4 \
 	-tt 1e-3 \
 	-pe \
-	bam_file:sample.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+	bam_file:sample.discordant.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
 	> sample.pe.bedpe
 
 Run lumpy-sv using split-reads reads
@@ -457,7 +458,7 @@ Or, we run lumpy with both the paired-end and split-read data:
 		-mw 4 \
 		-tt 1e-3 \
 		-pe \
-		bam_file:sample.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+		bam_file:sample.discordant.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
 		-sr \
 		bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
 		> sample.pesr.bedpe
