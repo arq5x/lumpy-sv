@@ -1,4 +1,0 @@
-GSL_INCLUDE=-I/sw/include/ -I/sw/include/gsl
-#GSL_INCLUDE=-I$HOME/src/gsl/gsl
-GSL_LINK=-L/sw/lib/
-#GSL_LINK=-L$HOME/src/gsl

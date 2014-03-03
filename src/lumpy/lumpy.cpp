@@ -54,7 +54,6 @@ using namespace BamTools;
 #include <time.h>
 
 
-#include <gsl_statistics_int.h>
 
 
 using namespace std;

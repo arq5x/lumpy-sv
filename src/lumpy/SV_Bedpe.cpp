@@ -24,9 +24,6 @@ using namespace BamTools;
 #include <algorithm>
 #include <string>
 #include <math.h>
-#include <gsl_randist.h>
-#include <gsl_cdf.h>
-#include <gsl_statistics_double.h>
 
 using namespace std;
 

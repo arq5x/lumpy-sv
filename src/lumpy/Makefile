@@ -1,4 +1,3 @@
-include ../../defs.local
 UTILITIES_DIR = ../utils/
 OBJ_DIR = ../../obj/
 BIN_DIR = ../../bin/
@@ -17,8 +16,7 @@ INCLUDES = -I$(UTILITIES_DIR)/bedFile/ \
 		   -I$(UTILITIES_DIR)/BamTools-Ancillary \
            -I$(UTILITIES_DIR)/sequenceUtilities \
            -I$(UTILITIES_DIR)/UCSCBins \
-           -I$(UTILITIES_DIR)/sqlite3 \
-           $(GSL_INCLUDE)
+           -I$(UTILITIES_DIR)/sqlite3 
 
 # ----------------------------------
 # define our source and object files
@@ -56,9 +54,9 @@ all: $(PROGRAM)
 $(PROGRAM): $(BUILT_OBJECTS) $(EXT_OBJECTS)
 	@echo "  * linking $(PROGRAM)"
 	@$(CXX) $(LDFLAGS) $(CXXFLAGS) -o $(BIN_DIR)/$@ $^ \
-		$(GSL_LINK) -L$(UTILITIES_DIR)/BamTools/lib/ -lbamtools \
+		-L$(UTILITIES_DIR)/BamTools/lib/ -lbamtools \
 		$(LIBS) \
-		-lz -lgsl  -lm -lgslcblas -ldl -lpthread
+		-lz -lm -ldl -lpthread
 
 $(OBJ_DIR)/%.o: %.cpp
 	@echo "  * compiling" $<
