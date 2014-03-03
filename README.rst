@@ -7,18 +7,12 @@ University of Virginia.
 
 Installation
 ============
-Lumpy installation requires the GNU Scientific Library (GSL). We also recommend
+Lumpy installation does not require any external softwart. We do recommend
 installing samtools, bedtools, bamtools, novoalign (or bwa), yaha, and
 Statistics::Descriptive.  Below is a step-by-step tutorial for how to install
 and use Lumpy. This guide assumes that `/usr/local/bin` is writable and in your
 path.  If either is not true, use another directory that is both writable and
 in your path, or contact your administrator.  If you have questions, email me.
-
-Install the GNU Scientific Libraries (GSL).
-
-    - This is typically quite simple, as one can use package managers.
-        - e.g., for OS X using Homebrew: `brew install gsl`
-        - e.g., for Ubuntu: `apt-get install gsl`
 
 Install samtools
 ::
@@ -76,20 +70,6 @@ Navigate into the lumpy directory
 
   cd lumpy-sv
 
-Edit the `defs.local` file in accordance with your configuration.
-    - Edit the `GSL_INCLUDE` environment variable.
-        * This path depends on where gsl was installed.  The path should
-          contain the "gsl_statistics_int.h" file.  Possibilities are:
-        * if OSX,   set GSL_INCLUDE=-I/usr/local/include/ -I/usr/local/include/gsl
-        * if Linux, set GSL_INCLUDE=-I/usr/include/gsl/
-        * if Windows, sorry this is unsupported.
-    - Edit the `GSL_LINK` environment variable.
-        * This path depends on where gsl was installed.  The path should
-          contain the "libgsl.so.0" file.  Possibilities are:
-        * if OSX,   set GSL_LINK=-L/usr/local/lib/
-        * if Linux, set GSL_LINK=-L/usr/lib/
-        * if Windows, sorry this is unsupported.
-        
 Finally make sure you have the Statistics::Descriptive CPAN package installed for Perl
 ::
 	sudo cpan Statistics::Descriptive
