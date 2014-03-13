@@ -173,7 +173,7 @@ print_evidence(string pre)
         SV_Evidence *sv_e = *it;
         cout << pre;
         SV_BreakPoint *tmp_bp = sv_e->get_bp();
-        tmp_bp->print_bedpe(-1);
+        tmp_bp->print_bedpe(-1,0);
         delete(tmp_bp);
     }
 }
@@ -681,33 +681,35 @@ trim_intervals()
     log_space *l, *r;
     get_mixture(bps, &start_l, &start_r, &end_l, &end_r, &l, &r);
 
-    CHR_POS l_size = end_l - start_l;
+    CHR_POS l_size = end_l - start_l + 1;
     log_space *t = (log_space *) malloc(l_size * sizeof(log_space));
     normalize_ls(l_size, l, t);
 
     int l_trim_start, l_trim_end, r_trim_start, r_trim_end;
 
-    trim_interval(l, l_size, &l_trim_start, &l_trim_end);
+    trim_interval(t, l_size, &l_trim_start, &l_trim_end);
 
     if (l_trim_start > -1)
-        interval_l.i.start = start_l + l_trim_start + 1;
+        interval_l.i.start = start_l + l_trim_start;
 
     if (l_trim_end > -1)
-        interval_l.i.end = interval_l.i.start + l_trim_end;
+        interval_l.i.end = start_l + l_trim_end;
+        //interval_l.i.end = interval_l.i.start + l_trim_end;
 
     free(t);
 
-    CHR_POS r_size = end_r - start_r;
+    CHR_POS r_size = end_r - start_r + 1;
     t = (log_space *) malloc(r_size * sizeof(log_space));
     normalize_ls(r_size, r, t);
 
-    trim_interval(r, r_size, &r_trim_start, &r_trim_end);
+    trim_interval(t, r_size, &r_trim_start, &r_trim_end);
 
     if (r_trim_start > -1)
-        interval_r.i.start = start_r + r_trim_start + 1;
+        interval_r.i.start = start_r + r_trim_start;
 
     if (r_trim_end > -1)
-        interval_r.i.end = interval_r.i.start + r_trim_end;
+        interval_r.i.end = start_r + r_trim_end;
+        //interval_r.i.end = interval_r.i.start + r_trim_end;
 
     free(t);
 
@@ -718,37 +720,11 @@ trim_intervals()
         delete tmp_bp;
     }
 
-    interval_r.i.start = start_r;
-    interval_r.i.end = end_r;
+    //interval_r.i.start = start_r;
+    //interval_r.i.end = end_r;
 
     free(l);
     free(r);
-
-#if 0
-    int a_v_size = interval_l.i.end - interval_l.i.start + 1,
-        b_v_size = interval_r.i.end - interval_r.i.start + 1;
-    log_space *a_v = (log_space *) malloc( a_v_size* sizeof(log_space));
-    log_space *b_v = (log_space *) malloc( b_v_size* sizeof(log_space));
-
-    for (int a = 0; a < a_v_size; ++a)
-        a_v[a] = interval_l.p[a];
-
-    for (int b = 0; b < b_v_size; ++b)
-        b_v[b] = interval_r.p[b];
-
-    for (int b = 0; b < b_v_size; ++b)
-        b_v[b] = interval_r.p[b];
-
-    //cerr << ascii_interval_prob(&interval_l) <<endl;
-    trim_interval(&interval_l, a_v, a_v_size);
-    //cerr << ascii_interval_prob(&interval_l) <<endl;
-    free(a_v);
-
-    //cerr << ascii_interval_prob(&interval_r) <<endl;
-    trim_interval(&interval_r, b_v, b_v_size);
-    //cerr << ascii_interval_prob(&interval_r) <<endl;
-    free(b_v);
-#endif
 }
 //}}}
 
@@ -760,11 +736,44 @@ SV_BreakPoint:: trim_interval(log_space *interval_v,
                               int *trim_end)
 {
     log_space max = -INFINITY;
-    unsigned int i;
+    unsigned int i, max_i;
     for (i = 0; i < size; ++i)
-        if (interval_v[i] > max)
+        if (interval_v[i] > max) {
             max = interval_v[i];
+            max_i = i;
+        }
 
+    float sum = 0;
+    for (i = 0; i < size; ++i)
+        sum = sum + get_p(interval_v[i]);
+
+    
+    log_space total = max;
+    unsigned int l = max_i, r = max_i;
+    /* 
+     * starting at max_i, grow the [l,r] region to include the adjacnet
+     * position with the largest value until the cummulative value is greater
+     * than the given threshold
+     */
+
+    while ( ((l > 0) || (r < size)) && (total < get_ls(p_trim_threshold)) ){
+        if ( l == 0 ) {
+            total = ls_add(total, interval_v[r+1]);
+            ++r;
+        } else if ( r == size ) {
+            total = ls_add(total, interval_v[l-1]);
+            --l;
+        } else if ( interval_v[l-1] > interval_v[r+1] ) {
+            total = ls_add(total, interval_v[l-1]);
+            --l;
+        } else {
+            total = ls_add(total,interval_v[r+1]);
+            ++r;
+        }
+    }
+
+    // Old trim
+    /*
     int v_first = -1;
     for (i = 0; i < size; ++i)
         if (get_p(interval_v[i])/get_p(max) < p_trim_threshold)
@@ -781,6 +790,11 @@ SV_BreakPoint:: trim_interval(log_space *interval_v,
 
     *trim_start = v_first;
     *trim_end = v_last;
+    */
+
+    *trim_start = l;
+    *trim_end = r;
+
     /*
     if ( (v_first != -1) && (v_last != -1) ) {
     	// Adjust the breakpoint intervals
@@ -833,10 +847,81 @@ ascii_prob(log_space *d, int size)
 }
 //}}}
 
+//{{{ void SV_BreakPoint:: print_interval_probabilities()
+void
+SV_BreakPoint::
+print_interval_probabilities()
+{
+    vector<SV_Evidence*>::iterator it;
+    vector<SV_BreakPoint *> bps;
+    for (it = evidence.begin(); it < evidence.end(); ++it) {
+        SV_Evidence *e = *it;
+        SV_BreakPoint *tmp_bp = e->get_bp();
+        tmp_bp->init_interval_probabilities();
+
+        bps.push_back(tmp_bp);
+    }
+
+    CHR_POS start_l = UINT_MAX,
+            start_r = UINT_MAX,
+            end_l = 0,
+            end_r = 0;
+
+    log_space *l, *r;
+    get_mixture(bps, &start_l, &start_r, &end_l, &end_r, &l, &r);
+
+    CHR_POS start_l_diff = interval_l.i.start - start_l,
+            end_l_diff = end_l - interval_l.i.end,
+            start_r_diff = interval_r.i.start - start_r,
+            end_r_diff = end_r - interval_r.i.end;
+
+    CHR_POS l_size = end_l - start_l + 1;
+    log_space *t = (log_space *) malloc(l_size * sizeof(log_space));
+    normalize_ls(l_size, l, t);
+
+    CHR_POS i;
+
+    for (i = start_l_diff; i < l_size - end_l_diff; i++) {
+        if (i != start_l_diff)
+            cout << " ";
+        cout << get_p(t[i]);
+    }
+
+    cout << "\t";
+
+    free(t);
+
+    CHR_POS r_size = end_r - start_r + 1;
+    t = (log_space *) malloc(r_size * sizeof(log_space));
+    normalize_ls(r_size, r, t);
+
+    for (i = start_r_diff; i < r_size - end_r_diff; i++) {
+        if (i != start_r_diff)
+            cout << " ";
+        cout << get_p(t[i]);
+    }
+
+    cout << "\t";
+
+    free(t);
+
+
+    vector<SV_BreakPoint *>::iterator bp_it;
+    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+        SV_BreakPoint *tmp_bp = *bp_it;
+        delete tmp_bp;
+    }
+
+    free(l);
+    free(r);
+}
+//}}}
+
+
 //{{{ void SV_BreakPoint:: print_bedpe(int id)
 void
 SV_BreakPoint::
-print_bedpe(int id)
+print_bedpe(int id, int print_prob)
 {
     map<string,int> uniq_strands;
     vector<SV_Evidence*>::iterator it;
@@ -870,11 +955,11 @@ print_bedpe(int id)
     string sep = "\t";
     cout <<
          interval_l.i.chr << sep <<
-         interval_l.i.start << sep <<
-         (interval_l.i.end + 1) << sep <<
+         (interval_l.i.start - 1)<< sep <<
+         interval_l.i.end  << sep <<
          interval_r.i.chr << sep <<
-         interval_r.i.start << sep<<
-         (interval_r.i.end + 1) << sep;
+         (interval_r.i.start - 1)<< sep<<
+         interval_r.i.end << sep;
 
     if (id == -1)
         cout << this << sep;
@@ -901,8 +986,12 @@ print_bedpe(int id)
 
     cout <<  "\t";
 
-    //ascii_interval_prob(&interval_l) << "\t" <<
-    //ascii_interval_prob(&interval_r) <<
+    if (print_prob > 0)
+        print_interval_probabilities();
+
+    //cout << ascii_interval_prob(&interval_l) << "\t" <<;
+    //cout << ascii_interval_prob(&interval_l) << "\t" <<
+    //ascii_interval_prob(&interval_r) << "\t";
 
     /*
     vector <int> ids = get_evidence_ids();

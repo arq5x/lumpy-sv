@@ -109,7 +109,8 @@ class SV_BreakPoint
 		void trim_intervals();
 		void init_interval_probabilities();
 		void free_interval_probabilities();
-		void print_bedpe(int id);
+		void print_bedpe(int id, int print_prob);
+                void print_interval_probabilities();
 		//void cluster(UCSCBins<SV_BreakPoint*> &l_bin,
 					 //UCSCBins<SV_BreakPoint*> &r_bin);
 		void cluster(UCSCBins<SV_BreakPoint*> &r_bin);

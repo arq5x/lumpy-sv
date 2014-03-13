@@ -136,6 +136,7 @@ int main(int argc, char* argv[])
     bool has_exclude = false;
     string genome_file; 
     bool has_genome_file = false;
+    int print_prob = 0;
     //vector<string> bam_files;
     //}}}
 
@@ -373,6 +374,11 @@ int main(int argc, char* argv[])
             show_evidence = true;
         }
 
+        else if(PARAMETER_CHECK("-P", 2, parameterLength)) {
+            print_prob = 1;
+        }
+
+
         else {
             cerr << endl << "*****ERROR: Unrecognized parameter: " <<
                  argv[i] << " *****" << endl << endl;
@@ -512,7 +518,7 @@ int main(int argc, char* argv[])
                 if ( bp->weight >= min_weight ) {
                     //bp->do_it();
                     bp->trim_intervals();
-                    bp->print_bedpe(++call_id);
+                    bp->print_bedpe(++call_id, print_prob);
                     if (show_evidence)
                         bp->print_evidence("\t");
                 }
@@ -562,7 +568,7 @@ int main(int argc, char* argv[])
         if ( bp->weight >= min_weight ) {
             //bp->do_it();
             bp->trim_intervals();
-            bp->print_bedpe(++call_id);
+            bp->print_bedpe(++call_id, print_prob);
             if (show_evidence)
                 bp->print_evidence("\t");
         }
@@ -690,7 +696,7 @@ int main(int argc, char* argv[])
                     if ( bp->weight >= min_weight ) {
                         //bp->do_it();
                         bp->trim_intervals();
-                        bp->print_bedpe(++call_id);
+                        bp->print_bedpe(++call_id, print_prob);
                         if (show_evidence)
                             bp->print_evidence("\t");
                     }
@@ -726,7 +732,7 @@ int main(int argc, char* argv[])
             if ( bp->weight >= min_weight ) {
                 //bp->do_it();
                 bp->trim_intervals();
-                bp->print_bedpe(++call_id);
+                bp->print_bedpe(++call_id, print_prob);
                 if (show_evidence)
                     bp->print_evidence("\t");
             }
