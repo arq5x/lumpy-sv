@@ -953,12 +953,23 @@ print_bedpe(int id, int print_prob)
 
     // use the address of the current object as the id
     string sep = "\t";
+
+    CHR_POS open_l_start = 0, 
+            open_r_start = 0;
+
+    if (interval_l.i.start > 0)
+        open_l_start = interval_l.i.start - 1;
+
+    if (interval_r.i.start > 0)
+        open_r_start = interval_r.i.start - 1;
+
+
     cout <<
          interval_l.i.chr << sep <<
-         (interval_l.i.start - 1)<< sep <<
+         open_l_start << sep <<
          interval_l.i.end  << sep <<
          interval_r.i.chr << sep <<
-         (interval_r.i.start - 1)<< sep<<
+         open_r_start << sep<<
          interval_r.i.end << sep;
 
     if (id == -1)
