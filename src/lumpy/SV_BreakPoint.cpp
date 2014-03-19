@@ -922,7 +922,8 @@ print_interval_probabilities()
             end_r = 0;
 
     log_space *l, *r;
-    get_mixture(bps, &start_l, &start_r, &end_l, &end_r, &l, &r);
+    //get_mixture(bps, &start_l, &start_r, &end_l, &end_r, &l, &r);
+    get_product(bps, &start_l, &start_r, &end_l, &end_r, &l, &r);
 
     CHR_POS start_l_diff = interval_l.i.start - start_l,
             end_l_diff = end_l - interval_l.i.end,
@@ -1094,51 +1095,6 @@ print_bedpe(int id, int print_prob)
         cout << s_it->first << "," << s_it->second;
     }
     cout << endl;
-}
-//}}}
-
-//{{{ void SV_BreakPoint:: get_distances(vector< SV_BreakPoint*> &new_v)
-void
-SV_BreakPoint::
-get_distances(vector< SV_BreakPoint*> &new_v)
-{
-    vector<SV_BreakPoint*>::iterator it;
-    for (it = new_v.begin(); it != new_v.end(); ++it) {
-        SV_BreakPoint *b = *it;
-        b->init_interval_probabilities();
-    }
-
-    for (it = new_v.begin(); it != new_v.end(); ++it) {
-        vector<SV_BreakPoint*>::iterator jt;
-        SV_BreakPoint *b_i = *it;
-        ostringstream oss;
-        for (jt = new_v.begin(); jt != new_v.end(); ++jt) {
-            CHR_POS product_len, product_start, product_end;
-            log_space *product_prob;
-            SV_BreakPoint *b_j = *jt;
-            interval_product(&(b_i->interval_l),
-                             &(b_j->interval_l),
-                             &product_len,
-                             &product_start,
-                             &product_end,
-                             &product_prob);
-            if (product_len > 0) {
-                log_space distance = -INFINITY;
-                for (unsigned int i = 0; i < product_len; ++i)
-                    distance = ls_add(distance,product_prob[i]);
-                oss << get_p(distance) << "\t";
-                free(product_prob);
-            }
-        }
-        cerr << oss.str() << endl;
-    }
-
-    for (it = new_v.begin(); it != new_v.end(); ++it) {
-        SV_BreakPoint *b = *it;
-        b->free_interval_probabilities();
-    }
-
-
 }
 //}}}
 
@@ -1588,144 +1544,192 @@ get_product(vector<SV_BreakPoint *> &bps,
             log_space **r)
 {
 
-    CHR_POS m_start_l = UINT_MAX,
-            m_start_r = UINT_MAX,
-            m_end_l = 0,
-            m_end_r = 0;
 
-    log_space *m_l, *m_r;
- 
-    // get mixture with absolute possitions
-    // [m_start_l,m_end_l] and [m_start_r, m_end_r]
-    get_mixture(bps, &m_start_l, &m_start_r, &m_end_l, &m_end_r, &m_l, &m_r);
+    // check to see if all of the intervals intersect, if they do find the
+    // product directly, if they don't then identify the region based on those
+    // that intersect the maximum point from the mixture distribution
 
-    // find relative position of max value in left
-    log_space max = -INFINITY;
-    unsigned int i, l_max_i, r_max_i;
-    for (i = 0; i < (m_end_l - m_start_l); ++i) {
-        if (m_l[i] > max) {
-            max = m_l[i];
-            l_max_i = i;
-        }
-    }
-    CHR_POS abs_max_l = m_start_l + l_max_i;
+    CHR_POS t_end_l = UINT_MAX,
+            t_end_r = UINT_MAX,
+            t_start_l = 0,
+            t_start_r = 0;
 
-    //cerr << "abs_max_l:" << abs_max_l << endl;
-
-    // find relative position of max value in right
-    max = -INFINITY;
-    for (i = 0; i < (m_end_r - m_start_r); ++i) {
-        if (m_r[i] > max) {
-            max = m_r[i];
-            r_max_i = i;
-        }
-    }
-
-    CHR_POS abs_max_r = m_start_r + r_max_i;
-
-    //cerr << "abs_max_r:" << abs_max_r << endl;
-
-    // l_max_i is the relative poss of the max element in l
-    // the absolute position of l_max_i is m_start_l + l_max_i
-    
-    // r_max_i is the relative poss of the max element in r
-    // the absolute position of r_max_i is m_start_r + r_max_i
-
-    *end_l = UINT_MAX;
-    *end_r = UINT_MAX,
-    *start_l = 0;
-    *start_r = 0;
-
-    int was_set = 0;
- 
     // find the min common area
     vector<SV_BreakPoint *>::iterator bp_it;
-    for (bp_it = bps.begin() + 1; bp_it < bps.end(); ++bp_it) {
-        SV_BreakPoint *tmp_bp = *bp_it;
-
-        /*
-            cerr << "l.i.start:"<< tmp_bp->interval_l.i.start << " " <<
-                    "l.i.end:"<< tmp_bp->interval_l.i.end << " " <<
-                    abs_max_l << " " <<
-
-                    ((tmp_bp->interval_l.i.start <= abs_max_l) &&
-                    (tmp_bp->interval_l.i.end >= abs_max_l))  << "\t" <<
-
-
-            cerr << "r.i.start:"<< tmp_bp->interval_r.i.start << "\t" <<
-                    "r.i.end:"<< tmp_bp->interval_r.i.end << " " <<
-                    abs_max_r <<  " " <<
-
-                    ((tmp_bp->interval_r.i.start <= abs_max_r) &&
-                     (tmp_bp->interval_r.i.end >= abs_max_r)) <<
-
-                    endl;
-        */
-        // make sure the current breakpoint intervals intersection both the
-        // left max (m_start_l + l_max_i) and the right max
-        // (m_start_r + r_max_i)
-        if ( // left side intersect the abs pos of the max    
-            ((tmp_bp->interval_l.i.start <= abs_max_l) &&
-             (tmp_bp->interval_l.i.end >= abs_max_l)) &&
-            // right side intersects the abs pos of max
-            ((tmp_bp->interval_r.i.start <= abs_max_r) &&
-             (tmp_bp->interval_r.i.end >= abs_max_r)) ) {
-
-            was_set = 1;
-
-            // left side
-
-            if (tmp_bp->interval_l.i.start > *start_l)
-                *start_l = tmp_bp->interval_l.i.start;
-            if (tmp_bp->interval_l.i.end < *end_l)
-                *end_l = tmp_bp->interval_l.i.end;
-
-
-            // right side
-            if (tmp_bp->interval_r.i.start > *start_r)
-                *start_r = tmp_bp->interval_r.i.start;
-            if (tmp_bp->interval_r.i.end < *end_r)
-                *end_r = tmp_bp->interval_r.i.end;
-        } 
-    }
-
-    if (was_set == 0)
-        return 0;
-
-    // initialize the distribution
-    /*
-    cerr << "L:\t" << *start_l << "\t" <<
-        *end_l << "\t" <<
-        (*end_l - *start_l + 1) << endl;
-    */
-
-
-    *l = (log_space *)malloc((*end_l - *start_l + 1)*sizeof(log_space));
-    for (CHR_POS i = 0; i <  (*end_l - *start_l + 1); ++ i)
-        (*l)[i] = get_ls(1);
-
-    /*
-    cerr << "R:\t" << *start_r << "\t" <<
-        *end_r << "\t" <<
-        (*end_r - *start_r + 1) << endl;
-    */
-
-    *r = (log_space *)malloc((*end_r - *start_r + 1)*sizeof(log_space));
-    for (CHR_POS i = 0; i <  (*end_r - *start_r + 1); ++ i)
-        (*r)[i] = get_ls(1);
-
-    // find product
     for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
         SV_BreakPoint *tmp_bp = *bp_it;
-        // make sure the current breakpoint intervals intersection both the
-        // left max (m_start_l + l_max_i) and the right max
-        // (m_start_r + r_max_i)
-        if ( // left side intersect the abs pos of the max    
-            ((tmp_bp->interval_l.i.start <= abs_max_l) &&
-             (tmp_bp->interval_l.i.end >= abs_max_l)) &&
-            // right side intersects the abs pos of max
-            ((tmp_bp->interval_r.i.start <= abs_max_r) &&
-             (tmp_bp->interval_r.i.end >= abs_max_r)) ) {
+
+        // left side
+
+        if (tmp_bp->interval_l.i.start > t_start_l)
+            t_start_l = tmp_bp->interval_l.i.start;
+        if (tmp_bp->interval_l.i.end < t_end_l)
+            t_end_l = tmp_bp->interval_l.i.end;
+
+        // right side
+        if (tmp_bp->interval_r.i.start > t_start_r)
+            t_start_r = tmp_bp->interval_r.i.start;
+        if (tmp_bp->interval_r.i.end < t_end_r)
+            t_end_r = tmp_bp->interval_r.i.end;
+    }
+
+    // some of the intervals did not intersect
+    if ( (t_start_l >= t_end_l) || (t_start_r >= t_end_r) ) {
+
+        CHR_POS m_start_l = UINT_MAX,
+                m_start_r = UINT_MAX,
+                m_end_l = 0,
+                m_end_r = 0;
+
+        log_space *m_l, *m_r;
+ 
+        // get mixture with absolute possitions
+        // [m_start_l,m_end_l] and [m_start_r, m_end_r]
+        get_mixture(bps,
+                    &m_start_l,
+                    &m_start_r,
+                    &m_end_l,
+                    &m_end_r,
+                    &m_l,
+                    &m_r);
+
+        // find relative position of max value in left
+        log_space max = -INFINITY;
+        unsigned int i, l_max_i, r_max_i;
+        for (i = 0; i < (m_end_l - m_start_l); ++i) {
+            if (m_l[i] > max) {
+                max = m_l[i];
+                l_max_i = i;
+            }
+        }
+        CHR_POS abs_max_l = m_start_l + l_max_i;
+
+
+        // find relative position of max value in right
+        max = -INFINITY;
+        for (i = 0; i < (m_end_r - m_start_r); ++i) {
+            if (m_r[i] > max) {
+                max = m_r[i];
+                r_max_i = i;
+            }
+        }
+
+        CHR_POS abs_max_r = m_start_r + r_max_i;
+
+        // l_max_i is the relative poss of the max element in l
+        // the absolute position of l_max_i is m_start_l + l_max_i
+        
+        // r_max_i is the relative poss of the max element in r
+        // the absolute position of r_max_i is m_start_r + r_max_i
+
+        *end_l = UINT_MAX;
+        *end_r = UINT_MAX,
+        *start_l = 0;
+        *start_r = 0;
+
+        int was_set = 0;
+     
+        // find the min common area
+        //vector<SV_BreakPoint *>::iterator bp_it;
+        for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+            SV_BreakPoint *tmp_bp = *bp_it;
+
+            // make sure the current breakpoint intervals intersection both the
+            // left max (m_start_l + l_max_i) and the right max
+            // (m_start_r + r_max_i)
+            if ( // left side intersect the abs pos of the max    
+                ((tmp_bp->interval_l.i.start <= abs_max_l) &&
+                 (tmp_bp->interval_l.i.end >= abs_max_l)) &&
+                // right side intersects the abs pos of max
+                ((tmp_bp->interval_r.i.start <= abs_max_r) &&
+                 (tmp_bp->interval_r.i.end >= abs_max_r)) ) {
+
+                was_set = 1;
+
+                // left side
+
+                if (tmp_bp->interval_l.i.start > *start_l)
+                    *start_l = tmp_bp->interval_l.i.start;
+                if (tmp_bp->interval_l.i.end < *end_l)
+                    *end_l = tmp_bp->interval_l.i.end;
+
+
+                // right side
+                if (tmp_bp->interval_r.i.start > *start_r)
+                    *start_r = tmp_bp->interval_r.i.start;
+                if (tmp_bp->interval_r.i.end < *end_r)
+                    *end_r = tmp_bp->interval_r.i.end;
+            } 
+        }
+
+        if (was_set == 0)
+            return 0;
+
+        *l = (log_space *)malloc((*end_l - *start_l + 1)*sizeof(log_space));
+        for (CHR_POS i = 0; i <  (*end_l - *start_l + 1); ++ i)
+            (*l)[i] = get_ls(1);
+
+        *r = (log_space *)malloc((*end_r - *start_r + 1)*sizeof(log_space));
+        for (CHR_POS i = 0; i <  (*end_r - *start_r + 1); ++ i)
+            (*r)[i] = get_ls(1);
+
+        // find product
+        for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+            SV_BreakPoint *tmp_bp = *bp_it;
+            // make sure the current breakpoint intervals intersection both the
+            // left max (m_start_l + l_max_i) and the right max
+            // (m_start_r + r_max_i)
+            if ( // left side intersect the abs pos of the max    
+                ((tmp_bp->interval_l.i.start <= abs_max_l) &&
+                 (tmp_bp->interval_l.i.end >= abs_max_l)) &&
+                // right side intersects the abs pos of max
+                ((tmp_bp->interval_r.i.start <= abs_max_r) &&
+                 (tmp_bp->interval_r.i.end >= abs_max_r)) ) {
+
+                CHR_POS l_offset = *start_l - tmp_bp->interval_l.i.start;
+
+                CHR_POS l_size = tmp_bp->interval_l.i.end -
+                                 tmp_bp->interval_l.i.start + 1;
+                log_space *t = (log_space *) malloc(l_size * sizeof(log_space));
+                normalize_ls(l_size, tmp_bp->interval_l.p, t);
+
+                for (CHR_POS i = 0; i <  (*end_l - *start_l + 1); ++ i)
+                    (*l)[i] = ls_multiply((*l)[i], t[i + l_offset]);
+
+                free(t);
+
+                CHR_POS r_offset = *start_r - tmp_bp->interval_r.i.start;
+
+                CHR_POS r_size = tmp_bp->interval_r.i.end -
+                                 tmp_bp->interval_r.i.start + 1;
+                t = (log_space *) malloc(r_size * sizeof(log_space));
+                normalize_ls(r_size, tmp_bp->interval_r.p, t);
+
+                for (CHR_POS i = 0; i <  (*end_r - *start_r + 1); ++ i)
+                    (*r)[i] = ls_multiply((*r)[i], t[i + r_offset]);
+
+                free(t);
+            }
+        }
+    } else {
+
+        *start_l = t_start_l;
+        *end_l = t_end_l;
+
+        *start_r = t_start_r;
+        *end_r = t_end_r;
+
+        *l = (log_space *)malloc((*end_l - *start_l + 1)*sizeof(log_space));
+        for (CHR_POS i = 0; i <  (*end_l - *start_l + 1); ++ i)
+            (*l)[i] = get_ls(1);
+
+        *r = (log_space *)malloc((*end_r - *start_r + 1)*sizeof(log_space));
+        for (CHR_POS i = 0; i <  (*end_r - *start_r + 1); ++ i)
+            (*r)[i] = get_ls(1);
+
+        // find product
+        for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+            SV_BreakPoint *tmp_bp = *bp_it;
 
             CHR_POS l_offset = *start_l - tmp_bp->interval_l.i.start;
 
@@ -2034,5 +2038,50 @@ get_matrix()
     return m;
 }
 ///}}}
+
+//{{{ void SV_BreakPoint:: get_distances(vector< SV_BreakPoint*> &new_v)
+void
+SV_BreakPoint::
+get_distances(vector< SV_BreakPoint*> &new_v)
+{
+    vector<SV_BreakPoint*>::iterator it;
+    for (it = new_v.begin(); it != new_v.end(); ++it) {
+        SV_BreakPoint *b = *it;
+        b->init_interval_probabilities();
+    }
+
+    for (it = new_v.begin(); it != new_v.end(); ++it) {
+        vector<SV_BreakPoint*>::iterator jt;
+        SV_BreakPoint *b_i = *it;
+        ostringstream oss;
+        for (jt = new_v.begin(); jt != new_v.end(); ++jt) {
+            CHR_POS product_len, product_start, product_end;
+            log_space *product_prob;
+            SV_BreakPoint *b_j = *jt;
+            interval_product(&(b_i->interval_l),
+                             &(b_j->interval_l),
+                             &product_len,
+                             &product_start,
+                             &product_end,
+                             &product_prob);
+            if (product_len > 0) {
+                log_space distance = -INFINITY;
+                for (unsigned int i = 0; i < product_len; ++i)
+                    distance = ls_add(distance,product_prob[i]);
+                oss << get_p(distance) << "\t";
+                free(product_prob);
+            }
+        }
+        cerr << oss.str() << endl;
+    }
+
+    for (it = new_v.begin(); it != new_v.end(); ++it) {
+        SV_BreakPoint *b = *it;
+        b->free_interval_probabilities();
+    }
+
+
+}
+//}}}
 #endif
 

@@ -441,7 +441,6 @@ int main(int argc, char* argv[])
 
     //}}} end parsing 
 
-
     //{{{ Test if there lines to process in each input file
     for ( i_er = evidence_readers.begin();
             i_er != evidence_readers.end();
