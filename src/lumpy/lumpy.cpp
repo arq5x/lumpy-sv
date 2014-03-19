@@ -517,10 +517,12 @@ int main(int argc, char* argv[])
                 // current chrom
                 if ( bp->weight >= min_weight ) {
                     //bp->do_it();
-                    bp->trim_intervals();
-                    bp->print_bedpe(++call_id, print_prob);
-                    if (show_evidence)
-                        bp->print_evidence("\t");
+                    // make sure there was not an error with trimming
+                    if (bp->trim_intervals() > 0) {
+                        bp->print_bedpe(++call_id, print_prob);
+                        if (show_evidence)
+                            bp->print_evidence("\t");
+                    }
                 }
 
                 if (r_bin.remove(*it, false, false, true) != 0) {
@@ -567,10 +569,11 @@ int main(int argc, char* argv[])
 
         if ( bp->weight >= min_weight ) {
             //bp->do_it();
-            bp->trim_intervals();
-            bp->print_bedpe(++call_id, print_prob);
-            if (show_evidence)
-                bp->print_evidence("\t");
+            if (bp->trim_intervals() > 0) {
+                bp->print_bedpe(++call_id, print_prob);
+                if (show_evidence)
+                    bp->print_evidence("\t");
+            }
         }
 
         if (r_bin.remove(*it, false, false, true) != 0) {
@@ -695,10 +698,11 @@ int main(int argc, char* argv[])
                     SV_BreakPoint *bp = it->value;
                     if ( bp->weight >= min_weight ) {
                         //bp->do_it();
-                        bp->trim_intervals();
-                        bp->print_bedpe(++call_id, print_prob);
-                        if (show_evidence)
-                            bp->print_evidence("\t");
+                        if (bp->trim_intervals() > 0) {
+                            bp->print_bedpe(++call_id, print_prob);
+                            if (show_evidence)
+                                bp->print_evidence("\t");
+                        }
                     }
 
                     if (r_bin.remove(*it, false, false, true) != 0) {
@@ -731,10 +735,11 @@ int main(int argc, char* argv[])
             SV_BreakPoint *bp = it->value;
             if ( bp->weight >= min_weight ) {
                 //bp->do_it();
-                bp->trim_intervals();
-                bp->print_bedpe(++call_id, print_prob);
-                if (show_evidence)
-                    bp->print_evidence("\t");
+                if (bp->trim_intervals() > 0) {
+                    bp->print_bedpe(++call_id, print_prob);
+                    if (show_evidence)
+                        bp->print_evidence("\t");
+                }
             }
 
             if (r_bin.remove(*it, false, false, true) != 0) {

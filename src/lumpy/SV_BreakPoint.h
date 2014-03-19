@@ -90,6 +90,15 @@ class SV_BreakPoint
                                 log_space **l,
                                 log_space **r);
 
+        static int get_product(vector<SV_BreakPoint *> &bps,
+                                CHR_POS *start_l,
+                                CHR_POS *start_r,
+                                CHR_POS *end_l,
+                                CHR_POS *end_r,
+                                log_space **l,
+                                log_space **r);
+
+
 
 		static bool does_intersect(struct breakpoint_interval *a,
 								   struct breakpoint_interval *b,
@@ -106,7 +115,7 @@ class SV_BreakPoint
 										CHR_POS *merged_end,
 										log_space **merged_prob);
 		void print_evidence(string pre);
-		void trim_intervals();
+		int trim_intervals();
 		void init_interval_probabilities();
 		void free_interval_probabilities();
 		void print_bedpe(int id, int print_prob);
