@@ -1774,7 +1774,8 @@ get_score( vector<SV_BreakPoint *> &bps,
             end_r = 0;
 
     log_space *l, *r;
-    get_mixture(bps, &start_l, &start_r, &end_l, &end_r, &l, &r);
+    //get_mixture(bps, &start_l, &start_r, &end_l, &end_r, &l, &r);
+    get_product(bps, &start_l, &start_r, &end_l, &end_r, &l, &r);
 
     /*
     log_space sum_r = -INFINITY, sum_l = -INFINITY;
