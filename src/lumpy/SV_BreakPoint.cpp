@@ -482,98 +482,6 @@ merge(SV_BreakPoint *p)
 }
 //}}}
 
-//{{{void interval_product(struct interval *curr_intr,
-void
-SV_BreakPoint::
-interval_product(struct breakpoint_interval *a_intr,
-                 struct breakpoint_interval *b_intr,
-                 CHR_POS *product_len,
-                 CHR_POS *product_start,
-                 CHR_POS *product_end,
-                 log_space **product_prob)
-{
-
-    // if the those intervals do not intersect, then set the len to zero and
-    // return
-    if ( (a_intr->i.end < b_intr->i.start) ||
-            (a_intr->i.start > b_intr->i.end) ) {
-        *product_len = 0;
-        return;
-    }
-
-
-    // Find how much to clip from the start of the current break point (this)
-    // or the new break point (p)
-    // Case 1:
-    // curr:   |---------------...
-    // new:        |-----------...
-    // c_clip  ||||
-    // Case 2:
-    // curr:       |-------...
-    // new:    |-----------...
-    // n_clip  ||||
-
-
-    CHR_POS curr_clip_start = 0;
-    CHR_POS new_clip_start = 0;
-    if (a_intr->i.start < b_intr->i.start) // Case 1
-        curr_clip_start = b_intr->i.start - a_intr->i.start;
-    else if (a_intr->i.start > b_intr->i.start) // Case 2
-        new_clip_start = a_intr->i.start - b_intr->i.start;
-
-    // Find how much to clip from the end of the current break point (this)
-    // or the new bre ak point (p)
-    // Case 1:
-    // curr:   ...--------|
-    // new:    ...----|
-    // c_clip          ||||
-    // Case 2:
-    // curr:   ...----|
-    // new:    ...--------|
-    // n_clip          ||||
-    CHR_POS curr_clip_end = 0;
-    if (a_intr->i.end > b_intr->i.end) // Case 1
-        curr_clip_end = a_intr->i.end - b_intr->i.end;
-
-
-    // Length of the new break point interval
-    unsigned int new_len = (a_intr->i.end - curr_clip_end) -
-                           (a_intr->i.start + curr_clip_start) + 1;
-
-    // Before we acutally merge these two breakpoints, we need to test if the
-    // merged probability is greater than zero, if it is not, then we should
-    // not merge the two
-    unsigned int i = 0;
-
-    *product_start = a_intr->i.start + curr_clip_start;
-    *product_end = a_intr->i.end - curr_clip_end;
-
-    log_space *curr_p = (log_space *)
-                        malloc( (a_intr->i.end - a_intr->i.start + 1) *
-                                sizeof(log_space));
-    normalize_ls((a_intr->i.end - a_intr->i.start + 1),
-                 a_intr->p,
-                 curr_p);
-
-    log_space *new_p = (log_space *)
-                       malloc( (b_intr->i.end - b_intr->i.start + 1) *
-                               sizeof(log_space));
-    normalize_ls((b_intr->i.end - b_intr->i.start + 1),
-                 b_intr->p,
-                 new_p);
-
-    *product_prob = (log_space *) malloc(new_len * sizeof(log_space));
-
-    for (i = 0; i < new_len; ++i)
-        (*product_prob)[i] = ls_multiply(a_intr->p[i + curr_clip_start],
-                                         b_intr->p[i + new_clip_start]);
-
-    *product_len = new_len;
-
-    free(curr_p);
-    free(new_p);
-}
-//}}}
 
 //{{{bool test_interval_merge(struct interval *curr_intr,
 bool
@@ -936,13 +844,15 @@ print_interval_probabilities()
 
     CHR_POS i;
 
+    cout << "PROBS:";
+
     for (i = start_l_diff; i < l_size - end_l_diff; i++) {
         if (i != start_l_diff)
-            cout << " ";
+            cout << ",";
         cout << get_p(t[i]);
     }
 
-    cout << "\t";
+    cout << ";";
 
     free(t);
 
@@ -952,7 +862,7 @@ print_interval_probabilities()
 
     for (i = start_r_diff; i < r_size - end_r_diff; i++) {
         if (i != start_r_diff)
-            cout << " ";
+            cout << ",";
         cout << get_p(t[i]);
     }
 
@@ -969,6 +879,50 @@ print_interval_probabilities()
 
     free(l);
     free(r);
+}
+//}}}
+
+//{{{ void SV_BreakPoint:: get_interval_probabilities(log_space *l, 
+void
+SV_BreakPoint::
+get_interval_probabilities(log_space **l, log_space **r)
+{
+    vector<SV_Evidence*>::iterator it;
+    vector<SV_BreakPoint *> bps;
+    for (it = evidence.begin(); it < evidence.end(); ++it) {
+        SV_Evidence *e = *it;
+        SV_BreakPoint *tmp_bp = e->get_bp();
+        tmp_bp->init_interval_probabilities();
+
+        bps.push_back(tmp_bp);
+    }
+
+    CHR_POS start_l = UINT_MAX,
+            start_r = UINT_MAX,
+            end_l = 0,
+            end_r = 0;
+
+    log_space *t_l, *t_r;
+    //get_mixture(bps, &start_l, &start_r, &end_l, &end_r, &l, &r);
+    get_product(bps, &start_l, &start_r, &end_l, &end_r, &t_l, &t_r);
+
+    CHR_POS l_size = end_l - start_l + 1;
+    *l = (log_space *) malloc(l_size * sizeof(log_space));
+    normalize_ls(l_size, t_l, *l);
+
+    free(t_l);
+
+    CHR_POS r_size = end_r - start_r + 1;
+    *r = (log_space *) malloc(r_size * sizeof(log_space));
+    normalize_ls(r_size, t_r, *r);
+
+    free(t_r);
+
+    vector<SV_BreakPoint *>::iterator bp_it;
+    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+        SV_BreakPoint *tmp_bp = *bp_it;
+        delete tmp_bp;
+    }
 }
 //}}}
 
@@ -1051,24 +1005,6 @@ print_bedpe(int id, int print_prob)
 
     cout <<  "\t";
 
-    if (print_prob > 0)
-        print_interval_probabilities();
-
-    //cout << ascii_interval_prob(&interval_l) << "\t" <<;
-    //cout << ascii_interval_prob(&interval_l) << "\t" <<
-    //ascii_interval_prob(&interval_r) << "\t";
-
-    /*
-    vector <int> ids = get_evidence_ids();
-    vector <int>::iterator i;
-    cout << "ids:";
-    for (i=ids.begin(); i!=ids.end(); ++i) {
-    	if (i != ids.begin())
-    		cout << ",";
-    	cout << *i;
-    }
-    */
-
     map<int, int>::iterator ids_it;
     vector<int> _ids;
     for ( ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
@@ -1094,6 +1030,137 @@ print_bedpe(int id, int print_prob)
             cout <<  ";";
         cout << s_it->first << "," << s_it->second;
     }
+
+
+    cout << "\t";
+
+
+    // Get the most likley posistions
+
+    log_space *l,*r;
+    get_interval_probabilities(&l,&r);
+
+    // find relative position of max value in left
+    log_space max = -INFINITY;
+    unsigned int i, l_max_i = 0, r_max_i = 0;
+    for (i = 0; i < (interval_l.i.end - interval_l.i.start + 1); ++i) {
+        if (l[i] > max) {
+            max = l[i];
+            l_max_i = i;
+        }
+    }
+
+    CHR_POS abs_max_l = interval_l.i.start + l_max_i;
+
+
+    // find relative position of max value in right
+    max = -INFINITY;
+    for (i = 0; i < (interval_r.i.end - interval_r.i.start + 1); ++i) {
+        if (r[i] > max) {
+            max = r[i];
+            r_max_i = i;
+        }
+    }
+
+    CHR_POS abs_max_r = interval_r.i.start + r_max_i;
+
+    cout << "MAX:" << interval_l.i.chr << ":" << abs_max_l << ";"<<
+        interval_r.i.chr << ":" << abs_max_r;
+
+    cout << "\t";
+
+    
+    // Get the area that includes the max and 95% of the probabitliy
+    log_space p_95 = get_ls(0.95);
+
+    log_space total = l[l_max_i];
+    CHR_POS l_l_i = l_max_i, 
+            l_r_i = l_max_i,
+            t_last = interval_l.i.end - interval_l.i.start;
+
+    while ( ((l_l_i > 0) || (l_r_i < t_last)) && (total < p_95) ){
+        if ( l_l_i == 0 ) {
+            total = ls_add(total, l[l_r_i+1]);;
+            ++l_r_i;
+        } else if ( l_r_i == t_last ) {
+            total = ls_add(total, l[l_l_i-1]);
+            --l_l_i;
+        } else if ( l[l_l_i-1] == l[l_r_i+1] ) {
+            total = ls_add(total, l[l_r_i+1]);
+            total = ls_add(total, l[l_l_i-1]);
+            --l_l_i;
+            ++l_r_i;
+        } else if ( l[l_l_i-1] > l[l_r_i+1] ) {
+            total = ls_add(total, l[l_l_i-1]);
+            --l_l_i;
+        } else {
+            total = ls_add(total,l[l_r_i+1]);
+            ++l_r_i;
+        }
+    }
+
+
+    CHR_POS abs_l_l_95 = interval_l.i.start + l_l_i,
+            abs_l_r_95 = interval_l.i.start + l_r_i;
+
+    total = r[r_max_i];
+    CHR_POS r_l_i = r_max_i, 
+            r_r_i = r_max_i;
+    t_last = interval_r.i.end - interval_r.i.start;
+
+    while ( ((r_l_i > 0) || (r_r_i < t_last)) && (total < p_95) ){
+        if ( r_l_i == 0 ) {
+            total = ls_add(total, r[r_r_i+1]);
+            ++r_r_i;
+        } else if ( r_r_i == t_last ) {
+            total = ls_add(total, r[r_l_i-1]);
+            --r_l_i;
+        } else if ( r[r_l_i-1] == r[r_r_i+1] ) {
+            total = ls_add(total, r[r_r_i+1]);
+            total = ls_add(total, r[r_l_i-1]);
+            --r_l_i;
+            ++r_r_i;
+        } else if ( r[r_l_i-1] > r[r_r_i+1] ) {
+            total = ls_add(total, r[r_l_i-1]);
+            --r_l_i;
+        } else {
+            total = ls_add(total,r[r_r_i+1]);
+            ++r_r_i;
+        }
+    }
+
+
+    CHR_POS abs_r_l_95 = interval_r.i.start + r_l_i,
+            abs_r_r_95 = interval_r.i.start + r_r_i;
+
+
+
+
+    cout << "95:" << 
+        interval_l.i.chr << ":" << abs_l_l_95 << "-"<< abs_l_r_95 <<";"<<
+        interval_r.i.chr << ":" << abs_r_l_95 << "-"<< abs_r_r_95;
+
+    if (print_prob > 0) {
+        cout << "\tP:";
+
+        for (i = 0; i < (interval_l.i.end - interval_l.i.start + 1); ++i) {
+            if (i != 0)
+                cout << ",";
+            cout << get_p(l[i]);
+        }
+
+        cout << "\tP;";
+
+        for (i = 0; i < (interval_r.i.end - interval_r.i.start + 1); ++i) {
+            if (i != 0)
+                cout << ",";
+            cout << get_p(r[i]);
+        }
+
+    }
+
+    free(l);
+    free(r);
     cout << endl;
 }
 //}}}
@@ -2082,6 +2149,99 @@ get_distances(vector< SV_BreakPoint*> &new_v)
     }
 
 
+}
+//}}}
+
+//{{{void interval_product(struct interval *curr_intr,
+void
+SV_BreakPoint::
+interval_product(struct breakpoint_interval *a_intr,
+                 struct breakpoint_interval *b_intr,
+                 CHR_POS *product_len,
+                 CHR_POS *product_start,
+                 CHR_POS *product_end,
+                 log_space **product_prob)
+{
+
+    // if the those intervals do not intersect, then set the len to zero and
+    // return
+    if ( (a_intr->i.end < b_intr->i.start) ||
+            (a_intr->i.start > b_intr->i.end) ) {
+        *product_len = 0;
+        return;
+    }
+
+
+    // Find how much to clip from the start of the current break point (this)
+    // or the new break point (p)
+    // Case 1:
+    // curr:   |---------------...
+    // new:        |-----------...
+    // c_clip  ||||
+    // Case 2:
+    // curr:       |-------...
+    // new:    |-----------...
+    // n_clip  ||||
+
+
+    CHR_POS curr_clip_start = 0;
+    CHR_POS new_clip_start = 0;
+    if (a_intr->i.start < b_intr->i.start) // Case 1
+        curr_clip_start = b_intr->i.start - a_intr->i.start;
+    else if (a_intr->i.start > b_intr->i.start) // Case 2
+        new_clip_start = a_intr->i.start - b_intr->i.start;
+
+    // Find how much to clip from the end of the current break point (this)
+    // or the new bre ak point (p)
+    // Case 1:
+    // curr:   ...--------|
+    // new:    ...----|
+    // c_clip          ||||
+    // Case 2:
+    // curr:   ...----|
+    // new:    ...--------|
+    // n_clip          ||||
+    CHR_POS curr_clip_end = 0;
+    if (a_intr->i.end > b_intr->i.end) // Case 1
+        curr_clip_end = a_intr->i.end - b_intr->i.end;
+
+
+    // Length of the new break point interval
+    unsigned int new_len = (a_intr->i.end - curr_clip_end) -
+                           (a_intr->i.start + curr_clip_start) + 1;
+
+    // Before we acutally merge these two breakpoints, we need to test if the
+    // merged probability is greater than zero, if it is not, then we should
+    // not merge the two
+    unsigned int i = 0;
+
+    *product_start = a_intr->i.start + curr_clip_start;
+    *product_end = a_intr->i.end - curr_clip_end;
+
+    log_space *curr_p = (log_space *)
+                        malloc( (a_intr->i.end - a_intr->i.start + 1) *
+                                sizeof(log_space));
+    normalize_ls((a_intr->i.end - a_intr->i.start + 1),
+                 a_intr->p,
+                 curr_p);
+
+    log_space *new_p = (log_space *)
+                       malloc( (b_intr->i.end - b_intr->i.start + 1) *
+                               sizeof(log_space));
+    normalize_ls((b_intr->i.end - b_intr->i.start + 1),
+                 b_intr->p,
+                 new_p);
+
+    *product_prob = (log_space *) malloc(new_len * sizeof(log_space));
+
+    for (i = 0; i < new_len; ++i)
+        (*product_prob)[i] = ls_multiply(a_intr->p[i + curr_clip_start],
+                                         b_intr->p[i + new_clip_start]);
+
+    *product_len = new_len;
+
+    free(curr_p);
+    free(new_p);
 }
 //}}}
 #endif
