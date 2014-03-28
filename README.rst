@@ -370,7 +370,7 @@ bwa-mem produces a single bam file with both paired-end alignments and split-rea
 
 extract the disordant paired-end alignments.
 ::
-    samtools view -u -F 0x0100 sample.pesr.bam  \
+    samtools view -u -F 0x0002 sample.pesr.bam  \
         |  samtools view -u -F 0x0100 - \
         | samtools view -u -F 0x0004 - \
         | samtools view -u -F 0x0008 - \
