@@ -320,7 +320,7 @@ int main(int argc, char* argv[])
 
         else if(PARAMETER_CHECK("-tt", 3, parameterLength)) {
             if ((i+1) < argc) {
-                trim_threshold = atof(argv[i + 1]);
+                trim_threshold = 1 - atof(argv[i + 1]);
                 i++;
             }
         }
