@@ -157,7 +157,7 @@ CHR_POS
 SV_EvidenceReader::
 get_curr_pos()
 {
-	CHR_POS x;
+	CHR_POS x = 0;
 	return x;
 }
 //}}}

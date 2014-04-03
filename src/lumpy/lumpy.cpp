@@ -136,6 +136,7 @@ int main(int argc, char* argv[])
     bool has_exclude = false;
     string genome_file; 
     bool has_genome_file = false;
+    int print_prob = 0;
     //vector<string> bam_files;
     //}}}
 
@@ -319,7 +320,7 @@ int main(int argc, char* argv[])
 
         else if(PARAMETER_CHECK("-tt", 3, parameterLength)) {
             if ((i+1) < argc) {
-                trim_threshold = atof(argv[i + 1]);
+                trim_threshold = 1 - atof(argv[i + 1]);
                 i++;
             }
         }
@@ -372,6 +373,11 @@ int main(int argc, char* argv[])
         else if(PARAMETER_CHECK("-e", 2, parameterLength)) {
             show_evidence = true;
         }
+
+        else if(PARAMETER_CHECK("-P", 2, parameterLength)) {
+            print_prob = 1;
+        }
+
 
         else {
             cerr << endl << "*****ERROR: Unrecognized parameter: " <<
@@ -434,7 +440,6 @@ int main(int argc, char* argv[])
     }
 
     //}}} end parsing 
-
 
     //{{{ Test if there lines to process in each input file
     for ( i_er = evidence_readers.begin();
@@ -511,10 +516,12 @@ int main(int argc, char* argv[])
                 // current chrom
                 if ( bp->weight >= min_weight ) {
                     //bp->do_it();
-                    bp->trim_intervals();
-                    bp->print_bedpe(++call_id);
-                    if (show_evidence)
-                        bp->print_evidence("\t");
+                    // make sure there was not an error with trimming
+                    if (bp->trim_intervals() > 0) {
+                        bp->print_bedpe(++call_id, print_prob);
+                        if (show_evidence)
+                            bp->print_evidence("\t");
+                    }
                 }
 
                 if (r_bin.remove(*it, false, false, true) != 0) {
@@ -561,10 +568,11 @@ int main(int argc, char* argv[])
 
         if ( bp->weight >= min_weight ) {
             //bp->do_it();
-            bp->trim_intervals();
-            bp->print_bedpe(++call_id);
-            if (show_evidence)
-                bp->print_evidence("\t");
+            if (bp->trim_intervals() > 0) {
+                bp->print_bedpe(++call_id, print_prob);
+                if (show_evidence)
+                    bp->print_evidence("\t");
+            }
         }
 
         if (r_bin.remove(*it, false, false, true) != 0) {
@@ -689,10 +697,11 @@ int main(int argc, char* argv[])
                     SV_BreakPoint *bp = it->value;
                     if ( bp->weight >= min_weight ) {
                         //bp->do_it();
-                        bp->trim_intervals();
-                        bp->print_bedpe(++call_id);
-                        if (show_evidence)
-                            bp->print_evidence("\t");
+                        if (bp->trim_intervals() > 0) {
+                            bp->print_bedpe(++call_id, print_prob);
+                            if (show_evidence)
+                                bp->print_evidence("\t");
+                        }
                     }
 
                     if (r_bin.remove(*it, false, false, true) != 0) {
@@ -725,10 +734,11 @@ int main(int argc, char* argv[])
             SV_BreakPoint *bp = it->value;
             if ( bp->weight >= min_weight ) {
                 //bp->do_it();
-                bp->trim_intervals();
-                bp->print_bedpe(++call_id);
-                if (show_evidence)
-                    bp->print_evidence("\t");
+                if (bp->trim_intervals() > 0) {
+                    bp->print_bedpe(++call_id, print_prob);
+                    if (show_evidence)
+                        bp->print_evidence("\t");
+                }
             }
 
             if (r_bin.remove(*it, false, false, true) != 0) {

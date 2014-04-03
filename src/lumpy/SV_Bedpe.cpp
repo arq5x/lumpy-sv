@@ -174,9 +174,9 @@ get_bp_interval_probability(char strand,
                             int distro_size,
                             double *distro)
 {
-    int size = distro_size;
+    CHR_POS size = distro_size;
     log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
-    unsigned int j;
+    CHR_POS j;
     for (j = 0; j < size; ++j) {
         if (strand == '+')
             tmp_p[j] = get_ls(distro[j]);
@@ -254,16 +254,17 @@ void
 SV_Bedpe::
 set_bp_interval_probability(struct breakpoint_interval *i)
 {
-    int size = i->i.end - i->i.start + 1;
+    CHR_POS size = i->i.end - i->i.start + 1;
     log_space *tmp_p = (log_space *) malloc(size * sizeof(log_space));
-    log_space *src_p;
+    //log_space *src_p;
 
     double v = 1.0 / ((double )size);
 
-    int offset = i->i.start_clip;
-    unsigned int j;
+    //int offset = i->i.start_clip;
+    CHR_POS j;
     for (j = 0; j < size; ++j) {
-        tmp_p[j] = src_p[j + offset];
+        //tmp_p[j] = src_p[j + offset];
+        tmp_p[j] = get_ls(v);
     }
 
     i->p = tmp_p;
