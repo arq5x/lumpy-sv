@@ -29,8 +29,8 @@ print 'track type=bedGraph name="' + options.name + '"'
 
 for l in f:
     A = l.rstrip().split('\t')
-    L=[float(x) for x in A[11].split()] 
-    R=[float(x) for x in A[12].split()] 
+    L=[float(x) for x in A[15][2:].split(',')] 
+    R=[float(x) for x in A[16][2:].split(',')] 
 
     l_chr = A[0]
     l_start = int(A[1])
