@@ -103,7 +103,7 @@ Usage
 General options
 ::
 
-    -e  Show evidence for each call
+    -e  
 
 The default output reports the predicted breakpoint.  This option includes the
 evidence supporting each call.
@@ -119,6 +119,13 @@ set.  The sum of weights in the evidence set must be above this value.
 
 Each predicted breakpoint interval has a probability array associated with it.
 The intervals can be trimmed of values that are below some trimming percentile.
+NOTE: We recommend "-tt 0.0" (no trimming) since LUMPY now reports both the 95%
+confidence interval and the most probable single base for each breakpoint.
+::
+
+    -P 
+
+Print the breakpoint probability array.
 ::
 
     -x excluded regions bed file
@@ -273,10 +280,12 @@ Tab separated::
 	11. type 
 	12. id of samples containing evidence for this breakpoint
         13. strand configurations observed in the evidence set
+        14. point within the two breakpoint with the maximum probability
+        15. segmetn of each breakpoint that contains 95% of the probability
 
 Example::
 
-        chr1    34971904    34971945    chr1    34976002    34976043    0x7f9eb0917210  0.0110386   +   -   TYPE:DELETION   IDS:11,1    STRANDS:+-,1
+        chr1	547154	547462	chr1	547265	547569	1	0.00254453	+	-	TYPE:DELETION	IDS:10,6	STRANDS:+-,6	MAX:chr1:547175;chr1:547569	95:chr1:547169-547225;chr1:547266-547569
 
 Test data sets
 ==============
@@ -412,7 +421,7 @@ To run lumpy with just the paired-end data, We will assume the mean=500 and stde
 ::
     ../bin/lumpy \
         -mw 4 \
-	-tt 1e-3 \
+	-tt 0.0 \
 	-pe \
 	bam_file:sample.discordant.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
 	> sample.pe.bedpe
@@ -424,7 +433,7 @@ We can run lumpy with just the split-read data too:
 ::    
     ../bin/lumpy \
         -mw 4 \
-	-tt 1e-3 \
+	-tt 0.0 \
 	-sr \
 	bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
 	> sample.sr.bedpe
@@ -436,7 +445,7 @@ Or, we run lumpy with both the paired-end and split-read data:
 ::
 	../bin/lumpy \
 		-mw 4 \
-		-tt 1e-3 \
+		-tt 0.0 \
 		-pe \
 		bam_file:sample.discordant.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
 		-sr \
@@ -450,7 +459,7 @@ We can run lumpy with paired-end data from a matched tumor/normal samples
 ::
 	../bin/lumpy \
 	        -mw 4 \
-	        -tt 1e-3 \
+	        -tt 0.0 \
 	        -pe \
 	        bam_file:tumor.pe.sort.bam,histo_file:tumor.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
 	        -pe \
@@ -486,7 +495,7 @@ We now rerun lumpy with the exclude (-x) option
 ::
 	../bin/lumpy \
 		-mw 4 \
-		-tt 1e-3 \
+		-tt 0.0 \
                 -x exclude.bed \
 		-pe \
 		bam_file:sample.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
