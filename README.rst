@@ -16,6 +16,7 @@ in your path, or contact your administrator.  If you have questions, email me.
 
 Install samtools
 ::
+
     git clone git://github.com/samtools/samtools.git
     cd samtools
     make
@@ -23,6 +24,7 @@ Install samtools
 
 Install bedtools
 ::
+
     git clone git@github.com:arq5x/bedtools.git    
     cd bedtools
     make
@@ -30,6 +32,7 @@ Install bedtools
 
 Install bamtools
 ::
+
     git clone git://github.com/pezmaster31/bamtools.git
     cd bamtools
     mkdir build
