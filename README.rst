@@ -373,7 +373,7 @@ Paired-end and split-read alignment using bwa-mem
 
 bwa-mem produces a single bam file with both paired-end alignments and split-read alignments
 ::
-    bwa mem hg19.fa sample.1.fq sample.2.fq \
+    bwa mem hg19.fa sample.1.fq sample.2.fq -M \
         | samtools view -S -b - \
         > sample.pesr.bam
 
