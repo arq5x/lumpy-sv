@@ -34,6 +34,8 @@ SV_PairReader(struct pair_end_parameters pair_end_param)
     weight = pair_end_param.weight;
     id = pair_end_param.id;
     min_mapping_threshold = pair_end_param.min_mapping_threshold;
+    fragment_min = pair_end_param.fragment_min;
+    fragment_max = pair_end_param.fragment_max;
 }
 //}}}
 
@@ -54,6 +56,8 @@ SV_PairReader()
     min_mapping_threshold = 0;
     sample_id = SV_EvidenceReader::counter;
     SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
+    fragment_min = -1;
+    fragment_max = -1;
 
     inited = false;
 }
@@ -70,9 +74,9 @@ check_params()
         msg.append("bam_file ");
     if (histo_file.compare("") == 0)
         msg.append("histo_file ");
-    if (mean == 0)
+    if ( (mean == 0) && ( (fragment_min == -1) || (fragment_max == -1)) )
         msg.append("mean ");
-    if (stdev == 0)
+    if ( (stdev == 0) && ( (fragment_min == -1) || (fragment_max == -1)) )
         msg.append("stdev ");
     if (read_length == 0)
         msg.append("read_length ");
@@ -104,6 +108,10 @@ add_param(char *param, char *val)
         mean = atof(val);
     else if ( strcmp("stdev", param) == 0 )
         stdev = atof(val);
+    else if ( strcmp("min", param) == 0 )
+        fragment_min = atof(val);
+    else if ( strcmp("max", param) == 0 )
+        fragment_max = atof(val);
     else if ( strcmp("read_length", param) == 0 )
         read_length = atoi(val);
     else if ( strcmp("min_non_overlap", param) == 0 )
@@ -143,6 +151,9 @@ get_pair_end_parameters()
     pair_end_param.weight = weight;
     pair_end_param.id = id;
     pair_end_param.min_mapping_threshold = min_mapping_threshold;
+
+    pair_end_param.fragment_min = fragment_min;
+    pair_end_param.fragment_max = fragment_max;
 
     return pair_end_param;
 }

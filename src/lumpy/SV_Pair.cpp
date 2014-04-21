@@ -224,13 +224,25 @@ is_aberrant()
     if ( read_l.strand == '-')
         return true;
 
-    if ( (read_r.end - read_l.start) >=
-            reader->mean + (reader->discordant_z*reader->stdev) )
-        return true;
+    if (reader->fragment_max == -1) {
+        if ( (read_r.end - read_l.start) >=
+                reader->mean + (reader->discordant_z*reader->stdev) )
+            return true;
+    } else {
+        if ( (read_r.end - read_l.start) >= reader->fragment_max)
+            return true;
 
-    if ( (read_r.end - read_l.start) <=
-            reader->mean - (reader->discordant_z*reader->stdev) )
-        return true;
+    }
+
+    if (reader->fragment_min == -1) {
+        if ( (read_r.end - read_l.start) <=
+                reader->mean - (reader->discordant_z*reader->stdev) )
+            return true;
+    } else {
+        if ( (read_r.end - read_l.start) <= reader->fragment_min) {
+            return true;
+        }
+    }
 
     return false;
 }

@@ -33,7 +33,7 @@ using namespace BamTools;
 struct pair_end_parameters {
 	string bam_file,
 		   histo_file;
-	double mean, stdev;
+	double mean, stdev,fragment_min, fragment_max;
 	unsigned int read_length,
 				 min_non_overlap,
 				 discordant_z,
@@ -49,7 +49,7 @@ class SV_PairReader : public SV_EvidenceReader
 	public:
 		string bam_file,
 			   histo_file;
-		double mean, stdev;
+		double mean, stdev, fragment_min, fragment_max;
 		unsigned int read_length,
 					 min_non_overlap,
 					 discordant_z,
