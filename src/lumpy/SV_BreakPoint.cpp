@@ -173,7 +173,7 @@ print_evidence(string pre)
         SV_Evidence *sv_e = *it;
         cout << pre;
         SV_BreakPoint *tmp_bp = sv_e->get_bp();
-        tmp_bp->print_bedpe(-1,0);
+        tmp_bp->print_bedpe(-1,1);
         delete(tmp_bp);
     }
 }
