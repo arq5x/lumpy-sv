@@ -16,6 +16,7 @@ in your path, or contact your administrator.  If you have questions, email me.
 
 Install samtools
 ::
+
     git clone git://github.com/samtools/samtools.git
     cd samtools
     make
@@ -23,6 +24,7 @@ Install samtools
 
 Install bedtools
 ::
+
     git clone git@github.com:arq5x/bedtools.git    
     cd bedtools
     make
@@ -30,6 +32,7 @@ Install bedtools
 
 Install bamtools
 ::
+
     git clone git://github.com/pezmaster31/bamtools.git
     cd bamtools
     mkdir build
@@ -47,12 +50,14 @@ Install novoalign
 
 Install yaha
 ::
+
     wget http://faculty.virginia.edu/irahall/support/yaha/YAHA.0.1.79.tar.gz
     tar zxvf YAHA.0.1.79.tar.gz
     cp yaha /usr/local/bin/.
 
 Install bwa
 ::
+
     wget http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.5a.tar.bz2
     bunzip2 bwa-0.7.5a.tar.bz2
     tar xvf bwa-0.7.5a.tar
@@ -90,6 +95,7 @@ to run each of the lumpy version
 If all works well, and you have bedtools installed in your path you should see
 the following
 ::
+
     Testing lumpy paired-end
     Simulated:1000  Predicted:40    True:40 False:0
     Testing lumpy split-read
@@ -103,7 +109,7 @@ Usage
 General options
 ::
 
-    -e  Show evidence for each call
+    -e  
 
 The default output reports the predicted breakpoint.  This option includes the
 evidence supporting each call.
@@ -119,6 +125,13 @@ set.  The sum of weights in the evidence set must be above this value.
 
 Each predicted breakpoint interval has a probability array associated with it.
 The intervals can be trimmed of values that are below some trimming percentile.
+NOTE: We recommend "-tt 0.0" (no trimming) since LUMPY now reports both the 95%
+confidence interval and the most probable single base for each breakpoint.
+::
+
+    -P 
+
+Print the breakpoint probability array.
 ::
 
     -x excluded regions bed file
@@ -273,10 +286,12 @@ Tab separated::
 	11. type 
 	12. id of samples containing evidence for this breakpoint
         13. strand configurations observed in the evidence set
+        14. point within the two breakpoint with the maximum probability
+        15. segmetn of each breakpoint that contains 95% of the probability
 
 Example::
 
-        chr1    34971904    34971945    chr1    34976002    34976043    0x7f9eb0917210  0.0110386   +   -   TYPE:DELETION   IDS:11,1    STRANDS:+-,1
+        chr1	547154	547462	chr1	547265	547569	1	0.00254453	+	-	TYPE:DELETION	IDS:10,6	STRANDS:+-,6	MAX:chr1:547175;chr1:547569	95:chr1:547169-547225;chr1:547266-547569
 
 Test data sets
 ==============
@@ -299,6 +314,7 @@ Paired-end alignment
 
 Both novoalign and bwa are options for paired-end alignment:
 ::
+
     novoalign \
         -d hg19.ndx \
         -o SAM \
@@ -317,6 +333,7 @@ Both novoalign and bwa are options for paired-end alignment:
 
 Use bamtools or a recent version of samtools (0.1.19) to sort.  NOTE: the resulting bam file must have the coordinate sort flag set (i.e., @HD VN:1.3  SO:coordinate).
 ::
+
     bamtools sort -in sample.pe.bam -out sample.pe.sort.bam
 
     samtools sort sample.pe.bam sample.pe.sort
@@ -326,12 +343,14 @@ Split read alignment
 
 From the paired end aligned bam file sample.pe.sort.bam, you can extract the reads that are either unmapped or have a soft clipped portion of at least 20 base pairs
 ::
+
     samtools view sample.pe.sort.bam \
         | scripts/split_unmapped_to_fasta.pl -b 20 \
 	> sample.um.fq
 
 Use a split-read aligner on the unmapped/soft clipped reads; we prefer yaha:
 ::
+
     # index first
     yaha -g hg19.fa  -L 11
     
@@ -348,13 +367,15 @@ Use a split-read aligner on the unmapped/soft clipped reads; we prefer yaha:
 	> sample.sr.bam
 
 For split reads, bwasw is another option:
-::    
+::   
+
     bwa bwasw -H -t 20 hg19.fa sample.um.fq \
         | samtools view -Sb - \
         > sample.sr.bam
 
 Sort the split-read alignments (again, using bamtools or samtools):
 ::
+
     bamtools sort -in sample.sr.bam -out sample.sr.sort.bam
 
     samtools sort sample.sr.bam sample.sr.sort
@@ -364,12 +385,14 @@ Paired-end and split-read alignment using bwa-mem
 
 bwa-mem produces a single bam file with both paired-end alignments and split-read alignments
 ::
-    bwa mem hg19.fa sample.1.fq sample.2.fq \
+
+    bwa mem hg19.fa sample.1.fq sample.2.fq -M \
         | samtools view -S -b - \
         > sample.pesr.bam
 
 extract the disordant paired-end alignments.
 ::
+
     samtools view -u -F 0x0002 sample.pesr.bam  \
         |  samtools view -u -F 0x0100 - \
         | samtools view -u -F 0x0004 - \
@@ -379,6 +402,7 @@ extract the disordant paired-end alignments.
 
 extract the split-read alignments
 ::
+
     samtools view -h sample.pesr.bam \
         | scripts/extractSplitReads_BwaMem -i stdin \
         | samtools view -Sb - \
@@ -386,6 +410,7 @@ extract the split-read alignments
 
 Sort both alignments (again, using bamtools or samtools):
 ::
+
     bamtools sort -in sample.discordant.pe.bam -out sample.discordant.pe.sort.bam
     bamtools sort -in sample.sr.bam -out sample.sr.sort.bam
 
@@ -397,7 +422,8 @@ Run lumpy-sv using paired end reads
 -----
 
 Using the paired end mapped reads,  empirically define the paired-end distribution from 10000 proper alignments.  It is common practice to skip the first million reads.
-::    
+::   
+
     samtools view sample.pesr.bam \
         | tail -n+100000 \
         | scripts/pairend_distro.pl \
@@ -410,11 +436,12 @@ The above script (scripts/pairend_distro.pl) will display mean and stdev to scre
 
 To run lumpy with just the paired-end data, We will assume the mean=500 and stdev=50:
 ::
+
     ../bin/lumpy \
         -mw 4 \
-	-tt 1e-3 \
+	-tt 0.0 \
 	-pe \
-	bam_file:sample.discordant.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+	bam_file:sample.discordant.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:20\
 	> sample.pe.bedpe
 
 Run lumpy-sv using split-reads reads
@@ -422,11 +449,12 @@ Run lumpy-sv using split-reads reads
 
 We can run lumpy with just the split-read data too:
 ::    
+
     ../bin/lumpy \
         -mw 4 \
-	-tt 1e-3 \
+	-tt 0.0 \
 	-sr \
-	bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
+	bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:2,min_mapping_threshold:20 \
 	> sample.sr.bedpe
 
 Run lumpy-sv using both paired and split reads
@@ -434,13 +462,14 @@ Run lumpy-sv using both paired and split reads
 
 Or, we run lumpy with both the paired-end and split-read data:
 ::
+
 	../bin/lumpy \
 		-mw 4 \
-		-tt 1e-3 \
+		-tt 0.0 \
 		-pe \
-		bam_file:sample.discordant.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+		bam_file:sample.discordant.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:20\
 		-sr \
-		bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
+		bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:2,min_mapping_threshold:20 \
 		> sample.pesr.bedpe
 
 Run lumpy-sv using matched samples
@@ -448,13 +477,14 @@ Run lumpy-sv using matched samples
 
 We can run lumpy with paired-end data from a matched tumor/normal samples
 ::
+
 	../bin/lumpy \
 	        -mw 4 \
-	        -tt 1e-3 \
+	        -tt 0.0 \
 	        -pe \
 	        bam_file:tumor.pe.sort.bam,histo_file:tumor.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
 	        -pe \
-	        bam_file:normal.pe.sort.bam,histo_file:normal.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+	        bam_file:normal.pe.sort.bam,histo_file:normal.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:2,min_mapping_threshold:1\
 	        > tumor_v_normal.pe.bedpe
 
 Run lumpy-sv with regions of very high coverage excluded
@@ -465,6 +495,7 @@ coverage.  First we use the get_coverages.py script to find the min, max, and
 mean coverages of the the sr and pe bam files, and to create coverage profiles
 for both files.
 ::
+
         python ../scripts/get_coverages.py \
                 sample.pe.sort.bam \
                 sample.sr.sort.bam
@@ -476,6 +507,7 @@ From this output, we will choose to exclude regions that have more than 10x
 coverage.  To create the exclude file we will use the get_exclude_regions.py
 script to create the exclude.bed file
 ::
+
         python ../scripts/get_exclude_regions.py \
                 10 \
                 exclude.bed \
@@ -484,20 +516,22 @@ script to create the exclude.bed file
         
 We now rerun lumpy with the exclude (-x) option 
 ::
+
 	../bin/lumpy \
 		-mw 4 \
-		-tt 1e-3 \
+		-tt 0.0 \
                 -x exclude.bed \
 		-pe \
 		bam_file:sample.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
 		-sr \
-		bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:1,min_mapping_threshold:1 \
+		bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:2,min_mapping_threshold:1 \
 		> sample.pesr.exclude.bedpe
 
 Troubleshooting
 ============
 All of the bam files that lumpy processes must be position sorted.  To check if your bams are sorted correctly, use the check_sorting.py script
 ::
+
         python ../scripts/check_sorting.py \
                 pe.pos_sorted.bam \
                 sr.pos_sorted.bam \
