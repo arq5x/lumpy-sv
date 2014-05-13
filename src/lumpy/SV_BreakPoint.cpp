@@ -613,9 +613,9 @@ trim_intervals()
     int p_l_trim_start, p_l_trim_end;
     trim_interval(p_t, p_l_size, &p_l_trim_start, &p_l_trim_end);
 
-
+    
     interval_l.i.start = p_start_l + p_l_trim_start;
-    interval_l.i.end = p_start_l + p_l_trim_end;
+    interval_l.i.end = p_start_l + p_l_trim_end - 1;
 
     free(p_t);
 
