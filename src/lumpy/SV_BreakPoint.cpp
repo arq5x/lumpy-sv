@@ -482,7 +482,6 @@ merge(SV_BreakPoint *p)
 }
 //}}}
 
-
 //{{{bool test_interval_merge(struct interval *curr_intr,
 bool
 SV_BreakPoint::
@@ -610,8 +609,10 @@ trim_intervals()
     CHR_POS p_l_size = p_end_l - p_start_l + 1;
     log_space *p_t = (log_space *) malloc(p_l_size * sizeof(log_space));
     normalize_ls(p_l_size, p_l, p_t);
+
     int p_l_trim_start, p_l_trim_end;
     trim_interval(p_t, p_l_size, &p_l_trim_start, &p_l_trim_end);
+
 
     interval_l.i.start = p_start_l + p_l_trim_start;
     interval_l.i.end = p_start_l + p_l_trim_end;
@@ -628,60 +629,6 @@ trim_intervals()
 
     interval_r.i.start = p_start_r + p_r_trim_start;
     interval_r.i.end = p_start_r + p_r_trim_end;
-
-#if 0 
-    CHR_POS l_size = end_l - start_l + 1;
-    log_space *t = (log_space *) malloc(l_size * sizeof(log_space));
-    normalize_ls(l_size, l, t);
-
-    int l_trim_start, l_trim_end, r_trim_start, r_trim_end;
-
-    trim_interval(t, l_size, &l_trim_start, &l_trim_end);
-
-    if (l_trim_start > -1)
-        interval_l.i.start = start_l + l_trim_start;
-
-    if (l_trim_end > -1)
-        interval_l.i.end = start_l + l_trim_end;
-        //interval_l.i.end = interval_l.i.start + l_trim_end;
-
-
-    free(t);
-
-    CHR_POS r_size = end_r - start_r + 1;
-    t = (log_space *) malloc(r_size * sizeof(log_space));
-    normalize_ls(r_size, r, t);
-
-    trim_interval(t, r_size, &r_trim_start, &r_trim_end);
-
-    if (r_trim_start > -1)
-        interval_r.i.start = start_r + r_trim_start;
-
-    if (r_trim_end > -1)
-        interval_r.i.end = start_r + r_trim_end;
-        //interval_r.i.end = interval_r.i.start + r_trim_end;
-
-    free(t);
-
-
-    vector<SV_BreakPoint *>::iterator bp_it;
-    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-        SV_BreakPoint *tmp_bp = *bp_it;
-        delete tmp_bp;
-    }
-
-
-
-    cerr << (1 + interval_l.i.end - interval_l.i.start) << " " <<
-            (1 + interval_r.i.end - interval_r.i.start) << "\t" <<
-            (1 + p_end_l - p_start_l) << " " << 
-            (1 + p_end_r - p_start_r) << endl;
-
-
-
-    //interval_r.i.start = start_r;
-    //interval_r.i.end = end_r;
-#endif
 
     free(p_l);
     free(p_r);
@@ -734,44 +681,9 @@ SV_BreakPoint:: trim_interval(log_space *interval_v,
         }
     }
 
-    // Old trim
-    /*
-    int v_first = -1;
-    for (i = 0; i < size; ++i)
-        if (get_p(interval_v[i])/get_p(max) < p_trim_threshold)
-            v_first=i;
-        else
-            break;
-
-    int v_last = -1;
-    for (i = size - 1; i > 0; --i)
-        if (get_p(interval_v[i])/get_p(max) < p_trim_threshold)
-            v_last=i;
-        else
-            break;
-
-    *trim_start = v_first;
-    *trim_end = v_last;
-    */
 
     *trim_start = l;
     *trim_end = r;
-
-    /*
-    if ( (v_first != -1) && (v_last != -1) ) {
-    	// Adjust the breakpoint intervals
-    	curr_interval->i.start = curr_interval->i.start + v_first;
-    	curr_interval->i.end = curr_interval->i.start + (v_last - v_first);
-
-    	unsigned int v_size = curr_interval->i.end - curr_interval->i.start + 1;
-
-    	free(curr_interval->p);
-    	curr_interval->p = (log_space *) malloc(v_size * sizeof(log_space));
-
-    	for (i = 0; i < v_size; ++i)
-    		curr_interval->p[i] = interval_v[i + v_first];
-    }
-    */
 }
 
 //}}}
@@ -885,7 +797,12 @@ print_interval_probabilities()
 //{{{ void SV_BreakPoint:: get_interval_probabilities(log_space *l, 
 void
 SV_BreakPoint::
-get_interval_probabilities(log_space **l, log_space **r)
+get_interval_probabilities(CHR_POS *start_l,
+                           CHR_POS *start_r,
+                           CHR_POS *end_l,
+                           CHR_POS *end_r,
+                           log_space **l,
+                           log_space **r)
 {
     vector<SV_Evidence*>::iterator it;
     vector<SV_BreakPoint *> bps;
@@ -897,22 +814,29 @@ get_interval_probabilities(log_space **l, log_space **r)
         bps.push_back(tmp_bp);
     }
 
+    /*
     CHR_POS start_l = UINT_MAX,
             start_r = UINT_MAX,
             end_l = 0,
             end_r = 0;
+    */
 
+    *start_l = UINT_MAX;
+    *start_r = UINT_MAX;
+    *end_l = 0;
+    *end_r = 0;
     log_space *t_l, *t_r;
     //get_mixture(bps, &start_l, &start_r, &end_l, &end_r, &l, &r);
-    get_product(bps, &start_l, &start_r, &end_l, &end_r, &t_l, &t_r);
+    //get_product(bps, &start_l, &start_r, &end_l, &end_r, &t_l, &t_r);
+    get_product(bps, start_l, start_r, end_l, end_r, &t_l, &t_r);
 
-    CHR_POS l_size = end_l - start_l + 1;
+    CHR_POS l_size = *end_l - *start_l + 1;
     *l = (log_space *) malloc(l_size * sizeof(log_space));
     normalize_ls(l_size, t_l, *l);
 
     free(t_l);
 
-    CHR_POS r_size = end_r - start_r + 1;
+    CHR_POS r_size = *end_r - *start_r + 1;
     *r = (log_space *) malloc(r_size * sizeof(log_space));
     normalize_ls(r_size, t_r, *r);
 
@@ -1037,32 +961,50 @@ print_bedpe(int id, int print_prob)
 
     // Get the most likley posistions
 
+    CHR_POS start_l, start_r, end_l, end_r;
     log_space *l,*r;
-    get_interval_probabilities(&l,&r);
+    //get_interval_probabilities(&l,&r);
+
+    get_interval_probabilities(&start_l,
+                               &start_r,
+                               &end_l,
+                               &end_r,
+                               &l,
+                               &r);
+
+    // l and r contain the full, untrimmed distribution.  All of the
+    // calculations below must be shifted to the right by an offset so they are
+    // considering the correction area of the pdf
+    
+    CHR_POS l_trim_offset = interval_l.i.start - start_l;
+    CHR_POS r_trim_offset = interval_r.i.start - start_r;
 
     // find relative position of max value in left
     log_space max = -INFINITY;
     unsigned int i, l_max_i = 0, r_max_i = 0;
     for (i = 0; i < (interval_l.i.end - interval_l.i.start + 1); ++i) {
-        if (l[i] > max) {
-            max = l[i];
-            l_max_i = i;
+        if (l[l_trim_offset + i] > max) {
+            max = l[l_trim_offset + i];
+            l_max_i = l_trim_offset + i;
         }
     }
 
-    CHR_POS abs_max_l = interval_l.i.start + l_max_i;
-
+    // need to user start_l here, not interval_l.i.start, since l[0] is at
+    // position start_l, and l_max_i is w.r.t. l[0]
+    CHR_POS abs_max_l = start_l + l_max_i;
 
     // find relative position of max value in right
     max = -INFINITY;
     for (i = 0; i < (interval_r.i.end - interval_r.i.start + 1); ++i) {
-        if (r[i] > max) {
-            max = r[i];
-            r_max_i = i;
+        if (r[r_trim_offset + i] > max) {
+            max = r[r_trim_offset + i];
+            r_max_i = r_trim_offset + i;
         }
     }
 
-    CHR_POS abs_max_r = interval_r.i.start + r_max_i;
+    // need to user start_r here, not interval_r.i.start, since r[0] is at
+    // position start_r, and r_max_i is w.r.t. r[0]
+    CHR_POS abs_max_r = start_r + r_max_i;
 
     cout << "MAX:" << interval_l.i.chr << ":" << abs_max_l << ";"<<
         interval_r.i.chr << ":" << abs_max_r;
@@ -1100,8 +1042,8 @@ print_bedpe(int id, int print_prob)
     }
 
 
-    CHR_POS abs_l_l_95 = interval_l.i.start + l_l_i,
-            abs_l_r_95 = interval_l.i.start + l_r_i;
+    CHR_POS abs_l_l_95 = start_l + l_l_i,
+            abs_l_r_95 = start_l + l_r_i;
 
     total = r[r_max_i];
     CHR_POS r_l_i = r_max_i, 
@@ -1130,10 +1072,8 @@ print_bedpe(int id, int print_prob)
     }
 
 
-    CHR_POS abs_r_l_95 = interval_r.i.start + r_l_i,
-            abs_r_r_95 = interval_r.i.start + r_r_i;
-
-
+    CHR_POS abs_r_l_95 = start_r + r_l_i,
+            abs_r_r_95 = start_r + r_r_i;
 
 
     cout << "95:" << 
@@ -1141,20 +1081,20 @@ print_bedpe(int id, int print_prob)
         interval_r.i.chr << ":" << abs_r_l_95 << "-"<< abs_r_r_95;
 
     if (print_prob > 0) {
-        cout << "\tP:";
+        cout << "\tLP:";
 
         for (i = 0; i < (interval_l.i.end - interval_l.i.start + 1); ++i) {
             if (i != 0)
                 cout << ",";
-            cout << get_p(l[i]);
+            cout << get_p(l[l_trim_offset+i]);
         }
 
-        cout << "\tP;";
+        cout << "\tRP:";
 
         for (i = 0; i < (interval_r.i.end - interval_r.i.start + 1); ++i) {
             if (i != 0)
                 cout << ",";
-            cout << get_p(r[i]);
+            cout << get_p(r[r_trim_offset+i]);
         }
 
     }
