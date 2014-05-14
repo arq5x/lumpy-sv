@@ -355,6 +355,15 @@ set_distro_from_histo (int back_distance,
                        double *histo,
                        double **distro)
 {
+    // It is possible for the histo to contain 0 values at the ends,
+    // to prevent further issues, we will trim them here
+    for (int i = 0; i < histo_end - histo_start + 1; ++i) {
+        if (histo[i] == 0) {
+            histo_end = i-1;
+            break;
+        }
+    }
+
     double lambda = log(0.0001)/(-1 * back_distance);
     // the bp distribution begins SV_Pair::back_distance base pairs back
     // from the end of the read (or begining for the negative strand), then
