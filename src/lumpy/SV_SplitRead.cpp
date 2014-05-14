@@ -366,7 +366,17 @@ get_bp()
 
             new_bp->interval_r.i.end = side_r.end + reader->back_distance;
         } else {
-            abort();
+            cerr << "Cannot determine BP type:" <<
+                    "side_l.start:" << side_l.start << "\t" <<
+                    "side_l.end:" << side_l.end << "\t" <<
+                    "side_r.start:" << side_r.start << "\t" <<
+                    "side_r.end:" << side_r.end << "\t" <<
+                    "query_l.qs_pos:" << query_l.qs_pos << "\t" <<
+                    "query_r.qs_pos:" << query_r.qs_pos<< "\t" <<
+                    "side_l.strand:" << side_l.strand<< "\t" <<
+                    "side_r.strand:" << side_r.strand<< endl;
+            return NULL;
+            //abort();
         }
     } else if (type == SV_BreakPoint::DELETION) {
 
@@ -419,7 +429,17 @@ get_bp()
 
         new_bp->interval_r.i.end = side_r.end + reader->back_distance;
     }  else {
-        abort();
+        cerr << "Cannot determine BP type:" <<
+                "side_l.start:" << side_l.start << "\t" <<
+                "side_l.end:" << side_l.end << "\t" <<
+                "side_r.start:" << side_r.start << "\t" <<
+                "side_r.end:" << side_r.end << "\t" <<
+                "query_l.qs_pos:" << query_l.qs_pos << "\t" <<
+                "query_r.qs_pos:" << query_r.qs_pos<< "\t" <<
+                "side_l.strand:" << side_l.strand<< "\t" <<
+                "side_r.strand:" << side_r.strand<< endl;
+        return NULL;
+        //abort();
     }
 
     if ( (new_bp->interval_l.i.chr.compare(side_r.chr) == 0 ) &&
@@ -628,9 +648,12 @@ process_split(const BamAlignment &curr,
             if (new_split_read->is_sane()) {
                 new_bp = new_split_read->get_bp();
 
-                vector<SV_Evidence*>::iterator it;
-
-                new_bp->cluster(r_bin);
+                if (new_bp != NULL) {
+                    new_bp->cluster(r_bin);
+                } else {
+                    cerr << "Alignment name:" << curr.Name << endl;
+                    free(new_split_read);
+                }
             } else
                 free(new_split_read);
 
@@ -683,9 +706,12 @@ process_intra_chrom_split(const BamAlignment &curr,
                 if (new_split_read->is_sane()) {
                     new_bp = new_split_read->get_bp();
 
-                    vector<SV_Evidence*>::iterator it;
-
-                    new_bp->cluster(r_bin);
+                    if (new_bp != NULL) {
+                        new_bp->cluster(r_bin);
+                    } else {
+                        cerr << "Alignment name:" << curr.Name << endl;
+                        free(new_split_read);
+                    }
                 } else
                     free(new_split_read);
 
