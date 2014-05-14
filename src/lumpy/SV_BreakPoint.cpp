@@ -613,7 +613,7 @@ trim_intervals()
     int p_l_trim_start, p_l_trim_end;
     trim_interval(p_t, p_l_size, &p_l_trim_start, &p_l_trim_end);
 
-    
+   
     interval_l.i.start = p_start_l + p_l_trim_start;
     interval_l.i.end = p_start_l + p_l_trim_end - 1;
 
@@ -625,6 +625,7 @@ trim_intervals()
     int p_r_trim_start, p_r_trim_end;
     trim_interval(p_t, p_r_size, &p_r_trim_start, &p_r_trim_end);
 
+ 
     free(p_t);
 
     interval_r.i.start = p_start_r + p_r_trim_start;
@@ -646,11 +647,12 @@ SV_BreakPoint:: trim_interval(log_space *interval_v,
 {
     log_space max = -INFINITY;
     unsigned int i, max_i;
-    for (i = 0; i < size; ++i)
+    for (i = 0; i < size; ++i) {
         if (interval_v[i] > max) {
             max = interval_v[i];
             max_i = i;
         }
+    }
 
     float sum = 0;
     for (i = 0; i < size; ++i)
@@ -672,7 +674,7 @@ SV_BreakPoint:: trim_interval(log_space *interval_v,
         } else if ( r == size ) {
             total = ls_add(total, interval_v[l-1]);
             --l;
-        } else if ( interval_v[l-1] > interval_v[r+1] ) {
+        } else if ( interval_v[l] > interval_v[r+1] ) {
             total = ls_add(total, interval_v[l-1]);
             --l;
         } else {
@@ -681,6 +683,8 @@ SV_BreakPoint:: trim_interval(log_space *interval_v,
         }
     }
 
+    if ((l == r) && (l == max_i))
+        r+=1;
 
     *trim_start = l;
     *trim_end = r;
