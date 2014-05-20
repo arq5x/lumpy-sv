@@ -343,7 +343,7 @@ print_bedpe(int score)
 }
 //}}}
 
-//{{{void set_sv_pair_distro()
+//{{{ set_distro_from_histo (int back_distance,
 // We will assume that the distrobution to upsstream will follow the histogram
 // and downstream will be follow an exponetial decay distribution based on the
 // back_distance
@@ -357,12 +357,14 @@ set_distro_from_histo (int back_distance,
 {
     // It is possible for the histo to contain 0 values at the ends,
     // to prevent further issues, we will trim them here
+    /*
     for (int i = 0; i < histo_end - histo_start + 1; ++i) {
         if (histo[i] == 0) {
             histo_end = i-1;
             break;
         }
     }
+    */
 
     double lambda = log(0.0001)/(-1 * back_distance);
     // the bp distribution begins SV_Pair::back_distance base pairs back
@@ -384,6 +386,27 @@ set_distro_from_histo (int back_distance,
         (*distro)[i + back_distance] = histo[i - histo_start] + last;
         last = (*distro)[i + back_distance];
     }
+
+
+    int zero_i = -1;
+    for (int i = 0; i < distro_size; ++i) {
+        if ((*distro)[i] == 0) {
+            cerr << i << "\t" << (*distro)[i] << endl;
+            zero_i = i;
+            break;
+        }
+    }
+
+    if (zero_i != -1) {
+        distro_size = zero_i;
+        double *new_distro = (double *) malloc(distro_size * sizeof(double));
+        for (int i = 0; i < distro_size; ++i) {
+            new_distro[i] = (*distro)[i];
+        }
+        free(*distro);
+        *distro = new_distro;
+    }
+
 
     return distro_size;
 }

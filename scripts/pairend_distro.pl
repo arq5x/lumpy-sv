@@ -99,12 +99,7 @@ for (my $i = 0; $i < $c; $i++) {
 
 open(FILE, "> $o_file");
 for (my $i = 0; $i < ($end - $start); $i++) {
-    #print FILE "$i\t" . ($H[$i]/$sum) . "\n";
-    if ($H[$i]/$sum == 0) {
-        last;
-    } else {
-	print FILE "$i\t" . ($H[$i]/$sum) . "\n";
-    }
+    print FILE "$i\t" . ($H[$i]/$sum) . "\n";
 }
 
 close(FILE);
