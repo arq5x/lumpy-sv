@@ -73,7 +73,7 @@ void ShowHelp(void);
 //{{{ void ShowHelp(void)
 void ShowHelp(void)
 {
-    cerr << endl << "Program: " << PROGRAM_NAME << " (v 0.2.3)" <<
+    cerr << endl << "Program: " << PROGRAM_NAME << " (v 0.2.4)" <<
          endl <<
          "Author:  Ryan Layer (rl6sf@virginia.edu)" << endl <<
          "Summary: Find structural variations in various signals." << endl <<
