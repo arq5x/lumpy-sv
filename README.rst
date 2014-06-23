@@ -8,11 +8,11 @@ University of Virginia.
 Installation
 ============
 Lumpy installation does not require any external softwart. We do recommend
-installing samtools, bedtools, bamtools, novoalign (or bwa), yaha, and
-Statistics::Descriptive.  Below is a step-by-step tutorial for how to install
-and use Lumpy. This guide assumes that `/usr/local/bin` is writable and in your
-path.  If either is not true, use another directory that is both writable and
-in your path, or contact your administrator.  If you have questions, email me.
+installing samtools, bedtools, bamtools, novoalign (or bwa), and yaha.  Below
+is a step-by-step tutorial for how to install and use Lumpy. This guide assumes
+that `/usr/local/bin` is writable and in your path.  If either is not true, use
+another directory that is both writable and in your path, or contact your
+administrator.  If you have questions, email me.
 
 Install samtools
 ::
@@ -189,17 +189,17 @@ aligner (e.g., bwa) for this sample.
         histo_file:<file name>,
 
 Histogram of observed library sizes for the sample.  A script to 
-generate this file is located in scripts/pairend_distro.pl
+generate this file is located in scripts/pairend_distro.py
 ::
 
         mean:<value>,
 
-Sample mean library size (can be found using scripts/pairend_distro.pl)
+Sample mean library size (can be found using scripts/pairend_distro.py)
 ::
 
         stdev:<value>,
 
-Sample mean library standard deviation (can be found using scripts/pairend_distro.pl)
+Sample mean library standard deviation (can be found using scripts/pairend_distro.py)
 ::
 
         read_length:<length>,
@@ -426,13 +426,13 @@ Using the paired end mapped reads,  empirically define the paired-end distributi
 
     samtools view sample.pesr.bam \
         | tail -n+100000 \
-        | scripts/pairend_distro.pl \
+        | scripts/pairend_distro.py \
         -rl 150 \
         -X 4 \
         -N 10000 \
         -o sample.pe.histo
 
-The above script (scripts/pairend_distro.pl) will display mean and stdev to screen.
+The above script (scripts/pairend_distro.py) will display mean and stdev to screen.
 
 To run lumpy with just the paired-end data, We will assume the mean=500 and stdev=50:
 ::
