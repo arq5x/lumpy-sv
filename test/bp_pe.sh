@@ -19,8 +19,8 @@ OUT_DIR=`dirname $PE_BAM`
 OUT_FILE=`basename $PE_BAM .bam`
 
 MEAN_STDEV=`samtools view $PE_BAM \
-				| ../scripts/pairend_distro.pl \
-					-rl $READ_LENGTH \
+				| ../scripts/pairend_distro.py \
+					-r $READ_LENGTH \
 					-X $Z \
 					-N 10000 \
 					-o $OUT_DIR/$OUT_FILE.histo`
