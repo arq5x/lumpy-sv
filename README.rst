@@ -191,7 +191,7 @@ aligner (e.g., bwa) for this sample.
         histo_file:<file name>,
 
 Histogram of observed library sizes for the sample.  A script to 
-generate this file is located in scripts/pairend_distro.py
+generate this file is located in scripts/pairend_distro.py (NOTE: the output of this script is the breakpoint probability distortion, not the fragment size distribution)
 ::
 
         mean:<value>,
@@ -424,6 +424,7 @@ Run lumpy-sv using paired end reads
 -----
 
 Using the paired end mapped reads,  empirically define the paired-end distribution from 10000 proper alignments.  It is common practice to skip the first million reads.
+(NOTE: the output of this script is the breakpoint probability distortion, not the fragment size distribution)
 ::   
 
     samtools view sample.pesr.bam \
