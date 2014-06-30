@@ -75,9 +75,6 @@ Navigate into the lumpy directory
 
   cd lumpy-sv
 
-Finally make sure you have the Statistics::Descriptive CPAN package installed for Perl
-::
-	sudo cpan Statistics::Descriptive
 
 At this point, you should be ready to compile lumpy
 ::
@@ -96,12 +93,17 @@ If all works well, and you have bedtools installed in your path you should see
 the following
 ::
 
-    Testing lumpy paired-end
-    Simulated:1000  Predicted:40    True:40 False:0
-    Testing lumpy split-read
-    Simulated:1000  Predicted:44    True:44 False:0
-    Testing lumpy paired-end and split-read
-    Simulated:1000  Predicted:95    True:93 False:0
+	Testing lumpy paired-end
+	549	0
+	chr10	1000000
+	Simulated:    1000	Predicted:      40	True:      40	False:       0
+	Testing lumpy split-read
+	chr10	1000000
+	Simulated:    1000	Predicted:      44	True:      43	False:       1
+	Testing lumpy paired-end and split-read
+	549	0
+	chr10	1000000
+	Simulated:    1000	Predicted:      95	True:      92	False:       1
 
 Usage
 =====
