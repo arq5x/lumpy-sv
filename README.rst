@@ -8,12 +8,23 @@ University of Virginia.
 Installation
 ============
 Lumpy installation does not require any external softwart. We do recommend
-installing samtools, bedtools, bamtools, novoalign (or bwa), and yaha.  Below
+installing numpy, samtools, bedtools, bamtools, novoalign (or bwa), and yaha.  Below
 is a step-by-step tutorial for how to install and use Lumpy. This guide assumes
 that `/usr/local/bin` is writable and in your path.  If either is not true, use
 another directory that is both writable and in your path, or contact your
 administrator.  If you have questions, email me.
 
+Install numpy (One of the following commands should work.  If not, then visit http://docs.scipy.org/doc/numpy/user/install.html for more informaiton.)
+::
+
+	pip install numpy
+	
+	# Ubuntu & Debian
+	sudo apt-get install python-numpy
+	
+	# Fedora
+	sudo yum install numpy 
+	
 Install samtools
 ::
 
