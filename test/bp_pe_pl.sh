@@ -20,7 +20,7 @@ OUT_FILE=`basename $PE_BAM .bam`
 
 MEAN_STDEV=`samtools view $PE_BAM \
 				| ../scripts/pairend_distro.pl \
-					-r $READ_LENGTH \
+					-rl $READ_LENGTH \
 					-X $Z \
 					-N 10000 \
 					-o $OUT_DIR/$OUT_FILE.histo`
