@@ -441,7 +441,7 @@ Using the paired end mapped reads,  empirically define the paired-end distributi
     samtools view sample.pesr.bam \
         | tail -n+100000 \
         | scripts/pairend_distro.py \
-        -rl 150 \
+        -r 150 \
         -X 4 \
         -N 10000 \
         -o sample.pe.histo
