@@ -534,11 +534,8 @@ is_sane()
     if ( v.size() > 0 )
         return false;
 
-
-
     if ( min_mapping_quality < reader->min_mapping_threshold )
         return false;
-
 
     if (side_l.strand != side_r.strand)
         ;
@@ -560,8 +557,7 @@ is_sane()
         return false;
     }
 
-
-    return (side_l.end < side_r.start);
+    return (side_l.chr != side_r.chr) || (side_l.end < side_r.start);
 }
 //}}}
 
@@ -635,6 +631,7 @@ process_split(const BamAlignment &curr,
             mapped_splits[curr.Name] = curr;
     } else {
         try {
+            cerr << curr.Name << endl;
             SV_SplitRead *new_split_read =
                 new SV_SplitRead(mapped_splits[curr.Name],
                                  curr,
@@ -654,8 +651,11 @@ process_split(const BamAlignment &curr,
                     cerr << "Alignment name:" << curr.Name << endl;
                     free(new_split_read);
                 }
-            } else
+            } else {
+                cerr << "not sane" << endl;
+
                 free(new_split_read);
+            }
 
         } catch (int) {
             cerr << "Error creating split read: " << endl;
