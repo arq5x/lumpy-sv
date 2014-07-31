@@ -631,7 +631,6 @@ process_split(const BamAlignment &curr,
             mapped_splits[curr.Name] = curr;
     } else {
         try {
-            cerr << curr.Name << endl;
             SV_SplitRead *new_split_read =
                 new SV_SplitRead(mapped_splits[curr.Name],
                                  curr,
