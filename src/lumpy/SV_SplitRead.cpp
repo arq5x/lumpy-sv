@@ -651,7 +651,7 @@ process_split(const BamAlignment &curr,
                     free(new_split_read);
                 }
             } else {
-                cerr << "not sane" << endl;
+                //cerr << "not sane" << endl;
 
                 free(new_split_read);
             }
