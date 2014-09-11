@@ -13,6 +13,12 @@ import numpy as np
 from operator import itemgetter
 from optparse import OptionParser
 
+# some constants for sam/bam field ids
+SAM_FLAG = 1
+SAM_REFNAME = 2
+SAM_MATE_REFNAME = 6
+SAM_ISIZE = 8
+
 parser = OptionParser()
 
 parser.add_option("-r",
@@ -35,6 +41,21 @@ parser.add_option("-o",
     dest="output_file",
     help="Output file")
 
+parser.add_option("-m",
+    dest="mads",
+    type="int",
+    default=10,
+    help="Outlier cutoff in # of median absolute deviations (unscaled, upper only)")
+
+
+def unscaled_upper_mad(xs):
+    """Return a tuple consisting of the median of xs followed by the
+    unscaled median absolute deviation of the values in xs that lie
+    above the median.
+    """
+    med = np.median(xs)
+    return med, np.median(xs[xs > med] - med)
+
 
 (options, args) = parser.parse_args()
 
@@ -53,6 +74,7 @@ if not options.output_file:
 
 required = 67
 restricted = 384
+flag_mask = required | restricted
 
 L = []
 c = 0
@@ -62,12 +84,27 @@ for l in sys.stdin:
         break
 
     A = l.rstrip().split('\t')
+    flag = int(A[SAM_FLAG])
+    refname = A[SAM_REFNAME]
+    mate_refname = A[SAM_MATE_REFNAME]
+    isize = int(A[SAM_ISIZE])
 
-    if ( ((int(A[1]) & required) == required) and \
-          (int(A[1]) & restricted == 0 ) and \
-          (int(A[8]) >= 0) ):
-        L.append(float(A[8]))
+    want = mate_refname == "=" and flag & flag_mask == required and isize >= 0
+    if want:
         c += 1
+        L.append(isize)
+
+# Remove outliers
+L = np.array(L)
+L.sort()
+med, umad = unscaled_upper_mad(L)
+upper_cutoff = med + options.mads * umad
+L = L[L < upper_cutoff]
+new_len = len(L)
+removed = c - new_len
+sys.stderr.write("Removed %d outliers with isize >= %d\n" %
+    (removed, upper_cutoff))
+c = new_len
 
 mean = np.mean(L)
 stdev = np.std(L)
@@ -78,10 +115,10 @@ end = int(mean + options.X*stdev)
 H = [0] * (end - start + 1)
 s = 0
 
-for i in range(c):
-    if (L[i] >= start) and (L[i] <= end):
-        j = int(L[i] - start)
-        H[j] = H[ int(L[i] - start) ] + 1
+for x in L:
+    if (x >= start) and (x <= end):
+        j = int(x - start)
+        H[j] = H[ int(x - start) ] + 1
         s += 1
 
 f = open(options.output_file, 'w')
@@ -93,4 +130,4 @@ for i in range(end - start):
 
 f.close()
 
-print 'mean:' + str(mean) + '\tstdev:' + str(stdev)
+print('mean:' + str(mean) + '\tstdev:' + str(stdev))
