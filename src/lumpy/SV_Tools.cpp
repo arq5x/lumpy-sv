@@ -547,3 +547,18 @@ void parse_exclude_file(string exclude_bed_file,
     bed_file->Close();
 }
 //}}}
+
+uint32_t
+count_clipped(vector< CigarOp > cigar_data)
+{
+    uint32_t match_count = 0;
+    vector< CigarOp >::iterator i;
+    for (i = cigar_data.begin(); i != cigar_data.end(); ++i) {
+        if ( (i->Type == 'M') || (i->Type == 'S') ) {
+            uint32_t l = i->Length;
+            match_count += l;
+        }
+    }
+
+    return match_count;
+}

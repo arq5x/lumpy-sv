@@ -19,6 +19,7 @@ using namespace BamTools;
 #include "SV_SplitReadReader.h"
 #include "SV_BreakPoint.h"
 #include "SV_SplitRead.h"
+#include "SV_Tools.h"
 #include "log_space.h"
 #include "bedFilePE.h"
 
@@ -641,7 +642,9 @@ process_split(const BamAlignment &curr,
                                  _reader);
 
             SV_BreakPoint *new_bp = NULL;
-            if (new_split_read->is_sane()) {
+            if (new_split_read->is_sane() &&
+                (count_clipped(curr.CigarData) > 0) &&
+                (count_clipped(mapped_splits[curr.Name].CigarData) > 0) ) {
                 new_bp = new_split_read->get_bp();
 
                 if (new_bp != NULL) {

@@ -19,6 +19,7 @@ using namespace BamTools;
 #include "SV_PairReader.h"
 #include "SV_BreakPoint.h"
 #include "SV_Pair.h"
+#include "SV_Tools.h"
 #include "log_space.h"
 
 #include <iostream>
@@ -434,11 +435,29 @@ process_pair(const BamAlignment &curr,
                                         id,
                                         sample_id,
                                         reader);
-        if ( new_pair->is_sane() &&  new_pair->is_aberrant() ) {
+        //cerr << count_clipped(curr.CigarData) << "\t" <<
+                //count_clipped(mapped_pairs[curr.Name].CigarData) << endl;
+                
+        if ( new_pair->is_sane() &&  
+             new_pair->is_aberrant() &&
+             (count_clipped(curr.CigarData) > 0) &&
+             (count_clipped(mapped_pairs[curr.Name].CigarData) > 0) ) {
             SV_BreakPoint *new_bp = new_pair->get_bp();
 
 #ifdef TRACE
-            cerr << "PE\t" << *new_bp << endl;
+
+            cerr << "READ\t" << 
+                    refs.at(mapped_pairs[curr.Name].RefID).RefName << "," <<
+                    mapped_pairs[curr.Name].Position << "," <<
+                    (mapped_pairs[curr.Name].GetEndPosition(false, false) - 1)
+                        << "\t" <<
+                    refs.at(curr.RefID).RefName << "," <<
+                    curr.Position << "," <<
+                    (curr.GetEndPosition(false, false) - 1)
+                        <<
+                    endl;
+
+            cerr << "\tPE\t" << *new_bp << endl;
 #endif
             new_bp->cluster(r_bin);
         } else {
