@@ -58,7 +58,7 @@ print_usage("No X") if not($X);
 print_usage("No N") if not($N);
 print_usage("No o") if not($o_file);
 
-my $required = 67; # read paired, propper pair, first in pair
+my $required = 65; # read paired, first in pair
 my $restricted = 384; # read unmapped, mate unmapped
 
 my @L;
