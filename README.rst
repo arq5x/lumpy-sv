@@ -61,9 +61,9 @@ Install novoalign
 
 Install yaha
 ::
-
-    wget http://faculty.virginia.edu/irahall/support/yaha/YAHA.0.1.79.tar.gz
-    tar zxvf YAHA.0.1.79.tar.gz
+    
+    git clone git://github.com/GregoryFaust/yaha.git
+    cd yaha
     cp yaha /usr/local/bin/.
 
 Install bwa
