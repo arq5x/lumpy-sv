@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python -u
 import sys
 import numpy as np
 import glob
@@ -16,10 +16,15 @@ class breakpoint:
     end_l = 0
     p_l = []
 
+    v_id = 0
+    score = 0
+    ids_str = ''
+    strands_str = ''
+    max_str = ''
+    nine_five_str = ''
     sv_type = ''
-
     evidence_size = 0
-
+    src_file = ''
 
     def __init__(self, line):
         A = l.rstrip().split('\t')
@@ -31,12 +36,24 @@ class breakpoint:
         self.start_r = int(A[4])
         self.end_r = int(A[5])
 
-        self.sv_type = A[6]
+        self.v_id = A[6]
+        self.score = A[7]
+        self.strand_l = A[8]
+        self.strand_r = A[9]
 
-        self.evidence_size = A[7]
+        self.sv_type = A[10]
 
-        self.p_l = [float(x) for x in A[8].split(',')]
-        self.p_r = [float(x) for x in A[9].split(',')]
+        #for ec in A[11][4:].split(';'):
+            #e,c = ec.split(',')
+            #self.evidence_size += int(c)
+
+        self.ids_str = A[11]
+        self.strands_str = A[12]
+        self.max_str = A[13]
+        self.nine_five_str = A[14]
+
+        self.p_l = [float(x) for x in A[15][3:].split(',')]
+        self.p_r = [float(x) for x in A[16][3:].split(',')]
 
     def __str__(self):
         return '\t'.join([self.chr_l, \
@@ -84,7 +101,22 @@ def align_intervals(I):
         new_I.append(new_i)
         
     return [start, end, new_I]
-            
+
+def trim(A):
+    clip_start = 0
+    for i in range(len(A)):
+        if A[i] == 0:
+            clip_start += 1
+        else:
+            break
+
+    clip_end = 0
+    for i in range(len(A)-1,-1,-1):
+        if A[i] == 0:
+            clip_end += 1
+        else:
+            break               
+    return [clip_start, clip_end]
 
 def cluster(BP):
     R = []
@@ -96,7 +128,6 @@ def cluster(BP):
     [start_R, end_R, a_R] = align_intervals(R)
     [start_L, end_L, a_L] = align_intervals(L)
 
-    
     sum_L = [sum(x) for x in zip(*a_L)]
     sum_R = [sum(x) for x in zip(*a_R)]
 
@@ -120,8 +151,46 @@ def cluster(BP):
         else:
             out_BP.append(b_i)
 
-    for b_i in in_BP:
+    if len(in_BP) > 0:
+        p_L = [1] * len(a_L[0])
+        p_R = [1] * len(a_R[0])
 
+        for b_i in in_BP:
+            for i in range(len(a_L[b_i])):
+                p_L[i] = p_L[i] * a_L[b_i][i]
+
+            for i in range(len(a_R[b_i])):
+                p_R[i] = p_R[i] * a_R[b_i][i]
+
+        [clip_start_L, clip_end_L] = trim(p_L)
+        [clip_start_R, clip_end_R] = trim(p_R)
+
+        new_start_L = start_L + clip_start_L
+        new_end_L = end_L - clip_end_L
+
+        new_start_R = start_R + clip_start_R
+        new_end_R = end_R - clip_end_R
+
+        chr_L = BP[0].chr_l
+        chr_R = BP[0].chr_r
+
+        print '\t'.join([\
+                chr_L, \
+                str(new_start_L), \
+                str(new_end_L), \
+                chr_R, \
+                str(new_start_R), \
+                str(new_end_R), \
+                "0", \
+                str(len(in_BP)), \
+                BP[0].strand_l, \
+                BP[0].strand_r, \
+                BP[0].sv_type, \
+                "LP:" + ','.join(\
+                    [str(x) for x in p_L[clip_start_L:len(p_L)-clip_end_L]]), \
+                "RP:" + ','.join(\
+                    [str(x) for x in p_R[clip_start_R:len(p_R)-clip_end_R]])\
+                ])
 
 parser = OptionParser()
 
@@ -144,6 +213,8 @@ BP_ends_l = []
 for l in f:
     bp = breakpoint(l)
 
+    #print len(BP_l),
+
     if (len(BP_l) == 0) or \
         (sum(BP_starts_l)/len(BP_starts_l) <= bp.end_l and \
          sum(BP_ends_l)/len(BP_ends_l) >= bp.start_l):
@@ -164,7 +235,8 @@ for l in f:
                 BP_r.append(bp_l)
                 BP_starts_r.append(bp_l.start_l)
                 BP_ends_r.append(bp_l.end_l)
-            else:
+            else:    
+                #print
                 cluster(BP_r)
                 BP_r = []
                 BP_starts_r = []
@@ -173,16 +245,17 @@ for l in f:
                 BP_starts_r.append(bp_l.start_l)
                 BP_ends_r.append(bp_l.end_l)
         if len(BP_r) > 0:
+            #print
             cluster(BP_r)
 
-        BP = []
+        BP_l = []
         BP_starts_l = []
         BP_ends_l = []
-        BP.append(bp)
+        BP_l.append(bp)
         BP_starts_l.append(bp.start_l)
         BP_ends_l.append(bp.end_l)
 
-if len(BP) > 0:
+if len(BP_l) > 0:
     BP_r = []
     BP_starts_r = []
     BP_ends_r = []
@@ -194,6 +267,7 @@ if len(BP) > 0:
             BP_starts_r.append(bp_l.start_l)
             BP_ends_r.append(bp_l.end_l)
         else:
+            #print
             cluster(BP_r)
             BP_r = []
             BP_starts_r = []
@@ -202,6 +276,7 @@ if len(BP) > 0:
             BP_starts_r.append(bp_l.start_l)
             BP_ends_r.append(bp_l.end_l)
     if len(BP_r) > 0:
+        #print
         cluster(BP_r)
 
 

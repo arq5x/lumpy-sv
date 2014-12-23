@@ -8,17 +8,23 @@ class breakpoint:
     chr_l = ''
     start_l = 0
     end_l = 0
+    strand_l = ''
     p_l = []
 
     chr_l = ''
     start_l = 0
     end_l = 0
+    strand_r = ''
     p_l = []
 
+    v_id = 0
+    score = 0
+    ids_str = ''
+    strands_str = ''
+    max_str = ''
+    nine_five_str = ''
     sv_type = ''
-
     evidence_size = 0
-
     src_file = ''
 
 
@@ -34,16 +40,28 @@ class breakpoint:
         self.start_r = int(A[4])
         self.end_r = int(A[5])
 
-        self.sv_type = A[10][5:]
+        self.v_id = A[6]
+        self.score = A[7]
+        self.strand_l = A[8]
+        self.strand_r = A[9]
 
-        for ec in A[11][4:].split(';'):
-            e,c = ec.split(',')
-            self.evidence_size += int(c)
 
-        #self.p_l = [float(x) for x in A[15][3:].split(',')]
-        #self.p_r = [float(x) for x in A[16][3:].split(',')]
-        self.p_l = A[15][3:]
-        self.p_r = A[16][3:]
+        #self.sv_type = A[10][5:]
+        self.sv_type = A[10]
+
+        #for ec in A[11][4:].split(';'):
+            #e,c = ec.split(',')
+            #self.evidence_size += int(c)
+
+        self.ids_str = A[11]
+        self.strands_str = A[12]
+        self.max_str = A[13]
+        self.nine_five_str = A[14]
+
+        #self.p_l = A[15][3:]
+        #self.p_r = A[16][3:]
+        self.p_l = A[15]
+        self.p_r = A[16]
 
     def __str__(self):
         return '\t'.join([self.chr_l, \
@@ -52,8 +70,15 @@ class breakpoint:
                          self.chr_r, \
                          str(self.start_r), \
                          str(self.end_r), \
+                         self.v_id,\
+                         self.score,\
+                         self.strand_l,\
+                         self.strand_r,\
                          self.sv_type, \
-                         str(self.evidence_size),
+                         self.ids_str, \
+                         self.strands_str, \
+                         self.max_str, \
+                         self.nine_five_str, \
                          self.p_l,\
                          self.p_r ]) 
     def __cmp__(self,other):
