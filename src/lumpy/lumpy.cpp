@@ -177,7 +177,7 @@ int main(int argc, char* argv[])
                     char *val = strtok_r(NULL, ":", &brkb);
 
                     if (val == NULL) {
-                        cerr << "Parameter requied for " << param << endl;
+                        cerr << "Parameter required for " << param << endl;
                         ShowHelp();
                     }
 
