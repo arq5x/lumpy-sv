@@ -57,5 +57,7 @@ void normalize_ls(CHR_POS size, log_space *o, log_space *r);
 
 void parse_exclude_file(string exclude_bed_file,
                         UCSCBins<int> &exclude_regions);
+uint32_t
+count_clipped(vector< CigarOp > cigar_data);
 
 #endif

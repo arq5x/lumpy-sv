@@ -347,10 +347,18 @@ merge(SV_BreakPoint *p)
 
     CHR_POS l_merged_start, l_merged_end, r_merged_start, r_merged_end;
 
+
     l_merged_start = l_start_sum / evidence.size();
     l_merged_end = l_end_sum / evidence.size();
     r_merged_start = r_start_sum / evidence.size();
     r_merged_end = r_end_sum / evidence.size();
+
+    /* 
+    cerr << "l_merged_start:" << l_merged_start << " " <<
+            "l_merged_end:" << l_merged_end << "\t" <<
+            "r_merged_start:" << r_merged_start << " " <<
+            "r_merged_end:" << r_merged_end << endl;
+    */
 
     interval_l.i.start = l_merged_start;
     interval_l.i.end = l_merged_end;
@@ -1248,7 +1256,7 @@ void
 SV_BreakPoint::
 insert(UCSCBins<SV_BreakPoint*> &r_bin)
 {
-    //cerr << *this << endl;
+    //cerr << "insert:"<< *this << endl;
     r_bin.add(interval_r.i.chr,
               interval_r.i.start,
               interval_r.i.end,
