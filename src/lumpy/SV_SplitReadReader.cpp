@@ -72,6 +72,8 @@ add_param(char *param, char *val)
 		min_mapping_threshold = atoi(val);
 	else if ( strcmp("min_clip", param) == 0 )
 		min_clip = atoi(val);
+	else if ( strcmp("read_group", param) == 0 )
+		read_group.push_back(val);
 	else 
 		return false;
 
