@@ -34,7 +34,7 @@ class SV_BamReader : public SV_EvidenceReader
 {
 	private:
 		bool is_open, has_next_alignment;
-		map<string, SV_EvidenceReader*> *bam_evidence_readers;
+		map<pair<string,string>, SV_EvidenceReader*> *bam_evidence_readers;
 		BamMultiReader bam_reader;
 		BamAlignment bam;
 		string header;
@@ -46,7 +46,7 @@ class SV_BamReader : public SV_EvidenceReader
 		RefVector refs;
 		SV_BamReader();
 		~SV_BamReader();
-		SV_BamReader(map<string, SV_EvidenceReader*> *_bam_evidence_readers);
+		SV_BamReader(map<pair<string,string>, SV_EvidenceReader*> *_bam_evidence_readers);
 
 		bool add_param(char *param, char *val);
 		string check_params();

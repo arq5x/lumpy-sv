@@ -34,6 +34,7 @@ SV_PairReader(struct pair_end_parameters pair_end_param)
     weight = pair_end_param.weight;
     id = pair_end_param.id;
     min_mapping_threshold = pair_end_param.min_mapping_threshold;
+    read_group = pair_end_param.read_group;
 }
 //}}}
 
@@ -118,6 +119,8 @@ add_param(char *param, char *val)
         id = atoi(val);
     else if ( strcmp("min_mapping_threshold", param) == 0 )
         min_mapping_threshold = atoi(val);
+    else if ( strcmp("read_group", param) == 0 )
+        read_group.push_back(val);
     else
         return false;
 
@@ -143,6 +146,7 @@ get_pair_end_parameters()
     pair_end_param.weight = weight;
     pair_end_param.id = id;
     pair_end_param.min_mapping_threshold = min_mapping_threshold;
+    pair_end_param.read_group = read_group;
 
     return pair_end_param;
 }
@@ -161,6 +165,7 @@ set_statics()
     SV_Pair::insert_Z = discordant_z;
     SV_Pair::back_distance = back_distance;
     SV_Pair::read_length = read_length;
+    SV_Pair::read_group = read_group;
 
     int distro_size;
     unsigned int start, end;

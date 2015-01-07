@@ -34,7 +34,7 @@ class SV_InterChromBamReader : public SV_EvidenceReader
 {
 	private:
 		bool is_open, has_next_alignment;
-		map<string, SV_EvidenceReader*> *bam_evidence_readers;
+		map<pair<string,string>, SV_EvidenceReader*> *bam_evidence_readers;
 		BamReader bam_reader;
 		RefVector refs;
 		BamAlignment bam;
@@ -55,7 +55,7 @@ class SV_InterChromBamReader : public SV_EvidenceReader
 		~SV_InterChromBamReader();
 		SV_InterChromBamReader(
 				string _inter_chrom_bam_file,
-				map<string, SV_EvidenceReader*> *_bam_evidence_readers);
+				map<pair<string,string>, SV_EvidenceReader*> *_bam_evidence_readers);
 
 		void process_input_chr_pos(string primary_chr,
 								   string secondary_chr,

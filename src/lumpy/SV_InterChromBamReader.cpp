@@ -32,7 +32,7 @@ SV_InterChromBamReader()
 //{{{ SV_InterChromBamReader:: SV_InterChromBamReader(string _inter_chrom_bam..
 SV_InterChromBamReader::
 SV_InterChromBamReader(string _inter_chrom_bam_file,
-					   map<string, SV_EvidenceReader*> *_bam_evidence_readers)
+		       map<pair<string,string>, SV_EvidenceReader*> *_bam_evidence_readers)
 {
 	inter_chrom_bam_file = _inter_chrom_bam_file,
 	bam_evidence_readers = _bam_evidence_readers;
@@ -244,13 +244,30 @@ process_input_chr_pos(string primary_chr,
 			( get_curr_primary_pos() < pos ) ) {
 
 		//get the name of the current reader from the LS tag
-		
 		string file_name;
 		bam.GetTag("LS",file_name);
-		SV_EvidenceReader *curr_reader = (*bam_evidence_readers)[file_name];
 
-		//cerr << curr_reader->get_source_file_name() << endl;
-		curr_reader->process_input(bam,refs,r_bin);
+		// get the name of the current read_group from the RG tag
+		string curr_read_group = "";
+		bam.GetTag("RG",curr_read_group);
+		pair<string,string> ev_pair (file_name,curr_read_group);
+
+		SV_EvidenceReader *curr_reader;
+		// first search for matching bamfile,read_group SV_EvidenceReader
+		map<pair<string,string>, SV_EvidenceReader*>::iterator it;
+		it = (*bam_evidence_readers).find(ev_pair);
+		if (it != (*bam_evidence_readers).end()) {
+		    curr_reader = it->second;
+		    curr_reader->process_input(bam,refs,r_bin);
+		}
+		else {
+		  // then search for matching bamfile SV_EvidenceReader
+		  it = (*bam_evidence_readers).find(pair<string,string> (file_name,""));
+		  if (it != (*bam_evidence_readers).end()) {
+		      curr_reader = it->second;
+		      curr_reader->process_input(bam,refs,r_bin);
+		  }
+		}
 
 		has_next_alignment = bam_reader.GetNextAlignment(bam);
                 bam.QueryBases.clear();

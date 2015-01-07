@@ -188,6 +188,13 @@ Weight of each piece of evidence from this sample.
         id:<sample id>
 
 Sample id.
+::
+
+        read_group:<string>
+
+Read group IDs to consider from the BAM file. This parameter may be specified
+multiple times for multiple read groups. In the absence of this parameter,
+all read groups are considered.
 
 Paired-end options
 ::
@@ -254,7 +261,13 @@ Weight of each piece of evidence from this sample.
         id:<sample id>
 
 Sample id.
+::
 
+        read_group:<string>
+
+Read group IDs to consider from the BAM file. This parameter may be specified
+multiple times for multiple read groups. In the absence of this parameter,
+all read groups are considered.
 
 
 BEDPE (general interface) options

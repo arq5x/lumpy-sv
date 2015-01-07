@@ -89,11 +89,12 @@ void ShowHelp(void)
          "\t-t"	"\ttemp file prefix, must be to a writeable directory" <<
          endl <<
          "\t-sr"     "\tbam_file:<file name>," << endl <<
-         "\t\tback_distance:<distance>" << endl <<
-         "\t\tmin_mapping_threshold:<mapping quality>" << endl <<
-         "\t\tweight:<sample weight>" << endl <<
-         "\t\tid:<sample id>" << endl <<
-         "\t\tmin_clip:<minimum clip length>" << endl <<
+         "\t\tback_distance:<distance>," << endl <<
+         "\t\tmin_mapping_threshold:<mapping quality>," << endl <<
+         "\t\tweight:<sample weight>," << endl <<
+         "\t\tid:<sample id>," << endl <<
+         "\t\tmin_clip:<minimum clip length>," << endl <<
+         "\t\tread_group:<string>" << endl <<
          endl <<
          "\t-pe"     "\tbam_file:<file name>," << endl <<
          "\t\thisto_file:<file name>," << endl <<
@@ -102,13 +103,14 @@ void ShowHelp(void)
          "\t\tread_length:<length>," << endl <<
          "\t\tmin_non_overlap:<length>," << endl <<
          "\t\tdiscordant_z:<z value>," << endl <<
-         "\t\tback_distance:<distance>" << endl <<
-         "\t\tmin_mapping_threshold:<mapping quality>" << endl <<
-         "\t\tweight:<sample weight>" << endl <<
-         "\t\tid:<sample id>" << endl <<
+         "\t\tback_distance:<distance>," << endl <<
+         "\t\tmin_mapping_threshold:<mapping quality>," << endl <<
+         "\t\tweight:<sample weight>," << endl <<
+         "\t\tid:<sample id>," << endl <<
+         "\t\tread_group:<string>" << endl <<
          endl <<
          "\t-bedpe"  "\tbedpe_file:<bedpe file>," << endl <<
-         "\t\tweight:<sample weight>" << endl <<
+         "\t\tweight:<sample weight>," << endl <<
          "\t\tid:<sample id>" << endl <<
          endl;
     // end the program here
@@ -156,7 +158,7 @@ int main(int argc, char* argv[])
 
     //{{{ do some parsing and setup
     vector<SV_EvidenceReader*> evidence_readers;
-    map<string, SV_EvidenceReader*> bam_evidence_readers;
+    map<pair<string,string>, SV_EvidenceReader*> bam_evidence_readers;
 
     for(int i = 1; i < argc; i++) {
         int parameterLength = (int)strlen(argv[i]);
@@ -177,7 +179,7 @@ int main(int argc, char* argv[])
                     char *val = strtok_r(NULL, ":", &brkb);
 
                     if (val == NULL) {
-                        cerr << "Parameter requied for " << param << endl;
+                        cerr << "Parameter required for " << param << endl;
                         ShowHelp();
                     }
 
@@ -191,7 +193,7 @@ int main(int argc, char* argv[])
             string msg = pe_r->check_params();
             if ( msg.compare("") == 0 ) {
                 // Add to list of readers
-                // Set the ditro map
+                // Set the distro map
 
                 pe_r->initialize();
                 SV_Evidence::distros[pe_r->sample_id] =
@@ -208,7 +210,17 @@ int main(int argc, char* argv[])
                 ShowHelp();
             }
 
-            bam_evidence_readers[pe_r->get_source_file_name()] = pe_r;
+	    // create SV_EvidenceReaders by (BAM, read_group) pairs
+	    if (pe_r->read_group.size() == 0)
+	        bam_evidence_readers[pair<string,string> (pe_r->get_source_file_name(),"")] = pe_r;
+	    else {
+	        for (vector<string>::iterator it = pe_r->read_group.begin();
+		     it != pe_r->read_group.end();
+		     ++it) {
+		    pair<string,string> ev_pair (pe_r->get_source_file_name(),*it);
+		    bam_evidence_readers[ev_pair] = pe_r;
+		}
+	    }
 
             i++;
             //}}}
@@ -311,8 +323,17 @@ int main(int argc, char* argv[])
                 ShowHelp();
             }
 
-            //bam_files.push_back(sr_r->get_source_file_name());
-            bam_evidence_readers[sr_r->get_source_file_name()] = sr_r;
+	    // create SV_EvidenceReaders by (BAM, read_group) pairs
+	    if (sr_r->read_group.size() == 0)
+	        bam_evidence_readers[pair<string,string> (sr_r->get_source_file_name(),"")] = sr_r;
+	    else {
+	        for (vector<string>::iterator it = sr_r->read_group.begin();
+		     it != sr_r->read_group.end();
+		     ++it) {
+		    pair<string,string> ev_pair (sr_r->get_source_file_name(),*it);
+		    bam_evidence_readers[ev_pair] = sr_r;
+		}
+	    }
 
             i++;
             //}}}

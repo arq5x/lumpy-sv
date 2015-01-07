@@ -31,9 +31,9 @@ SV_BamReader()
 }
 //}}}
 
-//{{{ SV_BamReader:: SV_BamReader(map<string, SV_EvidenceReader*>
+//{{{ SV_BamReader:: SV_BamReader(map<pair<string,string>, SV_EvidenceReader*>
 SV_BamReader::
-SV_BamReader(map<string, SV_EvidenceReader*> *_bam_evidence_readers)
+SV_BamReader(map<pair<string,string>, SV_EvidenceReader*> *_bam_evidence_readers)
 {
     bam_evidence_readers = _bam_evidence_readers;
     curr_reader = NULL;
@@ -45,7 +45,7 @@ SV_BamReader(map<string, SV_EvidenceReader*> *_bam_evidence_readers)
 SV_BamReader::
 ~SV_BamReader()
 {
-    map<string, SV_EvidenceReader*>::iterator it;
+    map<pair<string,string>, SV_EvidenceReader*>::iterator it;
     for (it = bam_evidence_readers->begin();
             it != bam_evidence_readers->end();
             ++it)
@@ -77,11 +77,17 @@ SV_BamReader::
 initialize()
 {
     vector<string> bam_files;
-    map<string, SV_EvidenceReader*>::iterator it;
+    map<pair<string,string>, SV_EvidenceReader*>::iterator it;
+    vector<string>::iterator bam_it;
     for (it = bam_evidence_readers->begin();
-            it != bam_evidence_readers->end();
-            ++it)
-        bam_files.push_back(it->first);
+	 it != bam_evidence_readers->end();
+	 ++it) {
+        // only add bam_file is not already in multi-reader
+	if (find(bam_files.begin(),
+		 bam_files.end(),
+		 it->first.first) == bam_files.end())
+	    bam_files.push_back(it->first.first);
+    }
 
     if ( !bam_reader.Open(bam_files) ) {
         cerr << "Could not open input BAM files: " <<
@@ -186,29 +192,43 @@ process_input_chr_pos(string chr,
                       CHR_POS pos,
                       UCSCBins<SV_BreakPoint*> &r_bin)
 {
-    string last_file = "";
-    SV_EvidenceReader *last_reader;
-
     // Process this chr, or the next chr
     while ( has_next_alignment &&
             ( chr.compare( refs.at(bam.RefID).RefName) == 0 ) &&
             ( bam.Position < pos ) ) {
-        curr_reader = (*bam_evidence_readers)[bam.Filename];
-        last_file = bam.Filename;
+        string curr_read_group = "";
+	pair<string,string> ev_pair;
+        bam.GetTag("RG",curr_read_group);
+	ev_pair = make_pair(bam.Filename,curr_read_group);
 
-        /*
-         * IsMapped     IsPaired    IsMateMapped   F            R
-         * T            T           T              T&!(T&!T)    T
-         * T            T           F              T&!(T&!F)    F
-         * T            F           T              T&!(F&!T)    T
-         * T            F           F              T&!(F&!F)    T
-         * F            .           .              F&!(.&!.)    F
-         *
-         */
-        if ( bam.IsMapped() &&
-                !(bam.IsPaired() && !(bam.IsMateMapped())) )
-            curr_reader->process_input(bam,refs,inter_chrom_reads,r_bin);
-        last_reader = curr_reader;
+	// first search for matching bamfile,read_group SV_EvidenceReader
+	map<pair<string,string>, SV_EvidenceReader*>::iterator it;
+	it = (*bam_evidence_readers).find(ev_pair);
+        if (it != (*bam_evidence_readers).end()) {
+	    curr_reader = it->second;
+	    if ( bam.IsMapped() &&
+		 !(bam.IsPaired() && !(bam.IsMateMapped())) )
+	        curr_reader->process_input(bam,refs,inter_chrom_reads,r_bin);
+	}
+	else {
+	    // then search for matching bamfile SV_EvidenceReader
+	    it = (*bam_evidence_readers).find(pair<string,string> (bam.Filename,""));
+	    if (it != (*bam_evidence_readers).end()) {
+	        curr_reader = it->second;
+		if ( bam.IsMapped() &&
+		     !(bam.IsPaired() && !(bam.IsMateMapped())) )
+		    curr_reader->process_input(bam,refs,inter_chrom_reads,r_bin);
+	    }
+	}
+	/*
+	 * IsMapped     IsPaired    IsMateMapped   F            R
+	 * T            T           T              T&!(T&!T)    T
+	 * T            T           F              T&!(T&!F)    F
+	 * T            F           T              T&!(F&!T)    T
+	 * T            F           F              T&!(F&!F)    T
+	 * F            .           .              F&!(.&!.)    F
+	 *
+	 */
 
         has_next_alignment = bam_reader.GetNextAlignment(bam);
         bam.QueryBases.clear();
