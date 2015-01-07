@@ -206,8 +206,8 @@ process_input_chr_pos(string chr,
 	it = (*bam_evidence_readers).find(ev_pair);
         if (it != (*bam_evidence_readers).end()) {
 	    curr_reader = it->second;
-	    if ( bam.IsMapped() &&
-		 !(bam.IsPaired() && !(bam.IsMateMapped())) )
+	    //if ( bam.IsMapped() && !(bam.IsPaired() && !(bam.IsMateMapped())) ) {
+	    if ( bam.IsMapped() )
 	        curr_reader->process_input(bam,refs,inter_chrom_reads,r_bin);
 	}
 	else {
@@ -215,8 +215,8 @@ process_input_chr_pos(string chr,
 	    it = (*bam_evidence_readers).find(pair<string,string> (bam.Filename,""));
 	    if (it != (*bam_evidence_readers).end()) {
 	        curr_reader = it->second;
-		if ( bam.IsMapped() &&
-		     !(bam.IsPaired() && !(bam.IsMateMapped())) )
+		//if ( bam.IsMapped() && !(bam.IsPaired() && !(bam.IsMateMapped())) )
+		if ( bam.IsMapped() )
 		    curr_reader->process_input(bam,refs,inter_chrom_reads,r_bin);
 	    }
 	}
