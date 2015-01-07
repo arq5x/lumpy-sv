@@ -637,7 +637,8 @@ trim_intervals()
     free(p_t);
 
     interval_r.i.start = p_start_r + p_r_trim_start;
-    interval_r.i.end = p_start_r + p_r_trim_end;
+    interval_r.i.end = p_start_r + p_r_trim_end - 1;
+
 
     free(p_l);
     free(p_r);
