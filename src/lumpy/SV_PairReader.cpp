@@ -24,6 +24,7 @@ SV_PairReader(struct pair_end_parameters pair_end_param)
 {
     is_open = false;
     bam_file = pair_end_param.bam_file;
+    sample_name = pair_end_param.sample_name;
     histo_file = pair_end_param.histo_file;
     mean = pair_end_param.mean;
     stdev = pair_end_param.stdev;
@@ -43,6 +44,7 @@ SV_PairReader::
 SV_PairReader()
 {
     bam_file = "";
+    sample_name = "";
     histo_file = "";
     mean = 0;
     stdev = 0;
@@ -69,6 +71,8 @@ check_params()
 
     if (bam_file.compare("") == 0)
         msg.append("bam_file ");
+    if (sample_name.compare("") == 0)
+        msg.append("sample_name ");
     if (histo_file.compare("") == 0)
         msg.append("histo_file ");
     if (mean == 0)
@@ -99,6 +103,8 @@ add_param(char *param, char *val)
 {
     if ( strcmp("bam_file", param) == 0 )
         bam_file = val;
+    else if ( strcmp("sample_name", param) == 0 )
+        sample_name = val;
     else if ( strcmp("histo_file", param) == 0 )
         histo_file = val;
     else if ( strcmp("mean", param) == 0 )
@@ -136,6 +142,7 @@ get_pair_end_parameters()
     struct pair_end_parameters pair_end_param;
 
     pair_end_param.bam_file = bam_file;
+    pair_end_param.sample_name = sample_name;
     pair_end_param.histo_file = histo_file;
     pair_end_param.mean = mean;
     pair_end_param.stdev = stdev;

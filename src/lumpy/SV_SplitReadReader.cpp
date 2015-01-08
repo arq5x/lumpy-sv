@@ -22,6 +22,7 @@ SV_SplitReadReader::
 SV_SplitReadReader()
 {
 	bam_file = "";
+	sample_name = "";
 	back_distance = 0;
 	min_non_overlap = 25;
 	weight = -1;
@@ -42,6 +43,8 @@ check_params()
 
 	if (bam_file.compare("") == 0)
 		msg.append("bam_file ");
+	if (sample_name.compare("") == 0)
+		msg.append("sample_name ");
 	if (back_distance == 0)
 		msg.append("back_distance ");
 	if (weight == 0)
@@ -60,6 +63,8 @@ add_param(char *param, char *val)
 {
 	if ( strcmp("bam_file", param) == 0 )
 		bam_file = val;
+	else if ( strcmp("sample_name", param) == 0 )
+		sample_name = val;
 	else if ( strcmp("min_non_overlap", param) == 0 )
 		min_non_overlap = atoi(val);
 	else if ( strcmp("back_distance", param) == 0 )

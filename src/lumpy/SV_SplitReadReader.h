@@ -31,7 +31,8 @@ using namespace BamTools;
 
 //{{{ struct split_read_parameters {
 struct split_read_parameters {
-	string bam_file;
+	string bam_file,
+		sample_name;
 	unsigned int min_non_overlap,
 				 back_distance,
 				 min_mapping_threshold,
@@ -45,7 +46,8 @@ struct split_read_parameters {
 class SV_SplitReadReader : public SV_EvidenceReader
 {
 	public:
-		string bam_file;
+		string bam_file,
+			sample_name;
 		unsigned int min_non_overlap,
 					 back_distance,
 					 min_mapping_threshold,

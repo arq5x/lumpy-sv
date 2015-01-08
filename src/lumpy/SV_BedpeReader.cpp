@@ -23,6 +23,7 @@ SV_BedpeReader::
 SV_BedpeReader()
 {
     bedpe_file = "";
+    sample_name = "";
     //distro_file = "";
     weight = 0;
     id = -1;
@@ -40,6 +41,8 @@ check_params()
 
     if (bedpe_file.compare("") == 0)
         msg.append("bedpe_file ");
+    if (sample_name.compare("") == 0)
+        msg.append("sample_name ");
     /*
     if (distro_file.compare("") == 0)
         msg.append("distro_file ");
@@ -63,6 +66,8 @@ add_param(char *param, char *val)
 
     if ( strcmp("bedpe_file", param) == 0 )
         bedpe_file = val;
+    else if ( strcmp("sample_name", param) == 0 )
+        sample_name = val;
     /*
     else if ( strcmp("distro_file", param) == 0 )
         distro_file = val;
@@ -86,6 +91,7 @@ get_bedpe_parameters()
     struct bedpe_parameters bedpe_param;
 
     bedpe_param.bedpe_file = bedpe_file;
+    bedpe_param.sample_name = sample_name;
     //bedpe_param.distro_file = distro_file;
     bedpe_param.weight = weight;
     bedpe_param.id = id;

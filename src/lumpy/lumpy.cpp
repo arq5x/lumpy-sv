@@ -81,14 +81,17 @@ void ShowHelp(void)
          "Usage:   " << PROGRAM_NAME << " [OPTIONS] " << endl << endl <<
          "Options: " << endl <<
          "\t-g"	"\tGenome file (defines chromosome order)" << endl <<
-         "\t-e"	"\tShow evidnece for each call" << endl <<
+         "\t-e"	"\tShow evidence for each call" << endl <<
          "\t-w"	"\tFile read windows size (default 1000000)" << endl <<
          "\t-mw"	"\tminimum weight for a call" << endl <<
          "\t-tt"	"\ttrim threshold" << endl <<
          "\t-x"	"\texclude file bed file" <<  endl <<
          "\t-t"	"\ttemp file prefix, must be to a writeable directory" <<
+         "\t-P"	"\toutput probability curve for each variant" <<
+         "\t-b"	"\toutput BEDPE instead of VCF" <<
          endl <<
          "\t-sr"     "\tbam_file:<file name>," << endl <<
+         "\t\tsample_name:<sample name>," << endl <<
          "\t\tback_distance:<distance>," << endl <<
          "\t\tmin_mapping_threshold:<mapping quality>," << endl <<
          "\t\tweight:<sample weight>," << endl <<
@@ -97,6 +100,7 @@ void ShowHelp(void)
          "\t\tread_group:<string>" << endl <<
          endl <<
          "\t-pe"     "\tbam_file:<file name>," << endl <<
+         "\t\tsample_name:<sample name>," << endl <<
          "\t\thisto_file:<file name>," << endl <<
          "\t\tmean:<value>," << endl <<
          "\t\tstdev:<value>," << endl <<
@@ -110,6 +114,7 @@ void ShowHelp(void)
          "\t\tread_group:<string>" << endl <<
          endl <<
          "\t-bedpe"  "\tbedpe_file:<bedpe file>," << endl <<
+         "\t\tsample_name:<sample name>," << endl <<
          "\t\tweight:<sample weight>," << endl <<
          "\t\tid:<sample id>" << endl <<
          endl;
@@ -139,6 +144,7 @@ int main(int argc, char* argv[])
     string genome_file; 
     bool has_genome_file = false;
     int print_prob = 0;
+    int bedpe_output = 0;
     //vector<string> bam_files;
     //}}}
 
@@ -399,6 +405,9 @@ int main(int argc, char* argv[])
             print_prob = 1;
         }
 
+	else if(PARAMETER_CHECK("-b", 2, parameterLength)) {
+            bedpe_output = 1;
+        }
 
         else {
             cerr << endl << "*****ERROR: Unrecognized parameter: " <<
