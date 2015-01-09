@@ -30,6 +30,7 @@ class SV_EvidenceReader
 public:
     static int counter;
     int sample_id;
+    string sample_name;
     virtual string check_params();
     virtual bool add_param(char *param, char *val);
 

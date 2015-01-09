@@ -46,8 +46,7 @@ struct split_read_parameters {
 class SV_SplitReadReader : public SV_EvidenceReader
 {
 	public:
-		string bam_file,
-			sample_name;
+		string bam_file;
 		unsigned int min_non_overlap,
 					 back_distance,
 					 min_mapping_threshold,

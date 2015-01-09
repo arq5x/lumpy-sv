@@ -25,7 +25,7 @@ using namespace std;
 //{{{struct bedpe_parameters {
 struct bedpe_parameters {
 	string bedpe_file,
-		sample_name;
+	    sample_name;
         /*
 	string bedpe_file,
 		   distro_file;
@@ -39,8 +39,7 @@ struct bedpe_parameters {
 class SV_BedpeReader : public SV_EvidenceReader
 {
 	public:
-		string bedpe_file,
-			sample_name;
+		string bedpe_file;
                 /* 
 		string bedpe_file,
 			   distro_file;

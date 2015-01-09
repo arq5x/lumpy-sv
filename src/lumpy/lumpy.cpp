@@ -480,6 +480,26 @@ int main(int argc, char* argv[])
     }
     //}}}
 
+    cout << "ev size" << evidence_readers.size() << endl;
+    cout << "bam ev size " << bam_evidence_readers.size() << endl;
+
+    for ( i_er = evidence_readers.begin();
+	  i_er != evidence_readers.end();
+	  ++i_er) {
+	SV_EvidenceReader *er = *i_er;
+	cout << "EVREADER samp: " << er->sample_name << endl;
+    }
+
+    map<pair<string,string>, SV_EvidenceReader*>::iterator bam_itr;
+    for ( bam_itr = bam_evidence_readers.begin();
+	  bam_itr != bam_evidence_readers.end();
+	  ++bam_itr) {
+	cout << "BAM_EVREADER samp: " << bam_itr->second->sample_name << endl;
+    }
+    
+    if (! bedpe_output)
+	print_vcf_header();
+
     //{{{ process the intra-chrom events that were saved to a file
     CHR_POS max_pos = 0;
     string last_min_chr = "";
@@ -538,7 +558,6 @@ int main(int argc, char* argv[])
                 r_bin.values(min_chr, max_pos);
 
             vector< UCSCElement<SV_BreakPoint*> >::iterator it;
-
             for (it = values.begin(); it < values.end(); ++it) {
                 SV_BreakPoint *bp = it->value;
 
@@ -548,9 +567,14 @@ int main(int argc, char* argv[])
                     //bp->do_it();
                     // make sure there was not an error with trimming
                     if (bp->trim_intervals() > 0) {
-                        bp->print_bedpe(++call_id, print_prob);
-                        if (show_evidence)
-                            bp->print_evidence("\t");
+		        if (bedpe_output) {
+			    bp->print_bedpe(++call_id, print_prob);
+			    if (show_evidence)
+			        bp->print_evidence("\t");
+			}
+			else {
+			    bp->print_vcf_variant(++call_id, print_prob);
+			}
                     }
                 }
 

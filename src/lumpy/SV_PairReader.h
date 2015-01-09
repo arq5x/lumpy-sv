@@ -50,7 +50,6 @@ class SV_PairReader : public SV_EvidenceReader
 {
 	public:
 		string bam_file,
-			sample_name,
 			histo_file;
 		double mean, stdev;
 		unsigned int read_length,
