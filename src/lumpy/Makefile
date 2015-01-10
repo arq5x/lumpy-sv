@@ -35,6 +35,7 @@ SOURCES= lumpy.cpp \
 		 SV_EvidenceReader.cpp \
 		 SV_Tools.cpp \
 		 SV_Vcf.cpp \
+		 SV_VcfVariant.cpp \
 		 log_space.cpp
 OBJECTS= $(SOURCES:.cpp=.o)
 _EXT_OBJECTS=BamAncillary.o \
@@ -72,7 +73,7 @@ $(EXT_OBJECTS):
 	@$(MAKE) --no-print-directory -C $(UTILITIES_DIR)/gzstream/
 	@$(MAKE) --no-print-directory -C $(UTILITIES_DIR)/fileType/ 
 	@$(MAKE) --no-print-directory -C $(UTILITIES_DIR)/sqlite3/ 
-	
+
 clean:
 	@echo "Cleaning up."
 	rm -f $(BUILT_OBJECTS)

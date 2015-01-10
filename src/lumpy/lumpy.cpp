@@ -32,6 +32,7 @@
 #include "SV_BamReader.h"
 #include "SV_InterChromBamReader.h"
 #include "SV_Vcf.h"
+#include "SV_VcfVariant.h"
 #include "SV_Tools.h"
 #include "genomeFile.h"
 
@@ -566,9 +567,12 @@ int main(int argc, char* argv[])
 			        bp->print_evidence("\t");
 			}
 			else {
-			    bp->print_vcf_variant(++call_id,
-			    			  print_prob,
-			    			  vcf);
+			    SV_VcfVariant *vcf_var =
+				new SV_VcfVariant(vcf,
+						  bp,
+						  ++call_id,
+						  print_prob);
+			    vcf_var->print_var();
 			}
                     }
                 }

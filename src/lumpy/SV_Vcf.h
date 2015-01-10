@@ -22,15 +22,13 @@ using namespace std;
 class SV_Vcf
 {
  public:
-    vector<string> header_info;
     vector<string> samples;
+    vector<string> active_formats;
+
     void add_sample(string sample_name);
     void print_header();
     void print_variant();
 
-    void add_info(string id);
-    void add_info(string id,
-		  string value);
 };
 
 /* class SV_VcfHeader */

@@ -35,22 +35,6 @@ add_sample(string sample_name)
 
 void
 SV_Vcf::
-add_info(string id)
-{
-}
-
-void
-SV_Vcf::
-add_info(string id,
-	 string value)
-{
-}
-
-
-     
-
-void
-SV_Vcf::
 print_header()
 {
     string sep = "\t";
