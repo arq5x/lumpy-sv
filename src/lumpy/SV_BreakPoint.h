@@ -20,6 +20,7 @@ class SV_Evidence;
 
 #include "log_space.h"
 #include "SV_Evidence.h"
+#include "SV_Vcf.h"
 
 #include <string>
 #include <vector>
@@ -109,7 +110,9 @@ class SV_BreakPoint
                 void init_interval_probabilities();
                 void free_interval_probabilities();
                 void print_bedpe(int id, int print_prob);
-		void print_vcf_variant(int id, int print_prob);
+		void print_vcf_variant(int id,
+				       int print_prob,
+				       SV_Vcf *vcf);
                 void get_interval_probabilities(CHR_POS *start_l,
                                                 CHR_POS *start_r,
                                                 CHR_POS *end_l,

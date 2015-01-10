@@ -34,6 +34,7 @@ SOURCES= lumpy.cpp \
 		 SV_InterChromBamReader.cpp \
 		 SV_EvidenceReader.cpp \
 		 SV_Tools.cpp \
+		 SV_Vcf.cpp \
 		 log_space.cpp
 OBJECTS= $(SOURCES:.cpp=.o)
 _EXT_OBJECTS=BamAncillary.o \

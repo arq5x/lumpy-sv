@@ -1118,10 +1118,14 @@ print_bedpe(int id, int print_prob)
 }
 //}}}
 
-//{{{ void SV_BreakPoint:: print_vcf_variant(int id, int print_prob)
+// {{{ void SV_BreakPoint:: print_vcf_variant(int id,
+// 					   int print_prob,
+// 					   SV_Vcf vcf)
 void
 SV_BreakPoint::
-print_vcf_variant(int id, int print_prob)
+print_vcf_variant(int id,
+		  int print_prob,
+		  SV_Vcf *vcf)
 {
     map<string,int> uniq_strands;
     vector<SV_Evidence*>::iterator it;
@@ -1239,11 +1243,39 @@ print_vcf_variant(int id, int print_prob)
     cout <<
 	"." << sep <<
 	"." << sep;
-    
-    cout << "MAX:" << interval_l.i.chr << ":" << abs_max_l << ";"<<
-        interval_r.i.chr << ":" << abs_max_r;
+
+    // INFO
+    cout << "SVTYPE=";
+    if (interval_l.i.chr.compare(interval_r.i.chr) != 0)
+        cout << "BND";
+    else if (type == DELETION )
+        cout << "DEL";
+    else if (type == DUPLICATION)
+        cout << "DUP";
+    else if (type == INVERSION)
+        cout << "INV";
+    else
+        cout <<  "???";
+    cout << ";";
+
+    cout << "SVLEN=";
+    int64_t svlen = abs_max_l - abs_max_r;
+    cout << svlen << ";";
+
+    cout << "END=" << abs_max_r << ";";
+
+
+    // cout << "MAX:" << interval_l.i.chr << ":" << abs_max_l << ";"<<
+    //     interval_r.i.chr << ":" << abs_max_r;
 
     cout << "\t";
+
+    // FORMAT
+    cout << "GT:SUP:PE:SR";
+
+    cout << "\t";
+
+    // SAMPLE columns
 
     
     // Get the area that includes the max and 95% of the probabitliy
