@@ -22,6 +22,7 @@ const unsigned int SORT_DEFAULT_MAX_BUFFER_COUNT  = 500000;
 const unsigned int SORT_DEFAULT_MAX_BUFFER_MEMORY = 1024; 
 
 #include "SV_Tools.h"
+#include "SV_EvidenceReader.h"
 
 #include "bedFile.h"
 
@@ -564,9 +565,11 @@ count_clipped(vector< CigarOp > cigar_data)
 }
 
 void
-// print_vcf_header(    map<string,BamReader*> bam_readers;)
+// print_vcf_header()
 print_vcf_header()
 {
+    string sep = "\t";
+    
     cout << "##fileformat=VCFv4.2" << endl << 
 	// "##INFO=<ID=TOOL,Number=1,Type=String,Description=\"Tool used to generate variant call\">" << endl <<
 	"##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">" << endl <<
@@ -602,7 +605,7 @@ print_vcf_header()
 	"##FORMAT=<ID=SUP,Number=1,Type=Integer,Description=\"Number of pieces of evidence supporting the variant\">" << endl <<
 	"##FORMAT=<ID=PE,Number=1,Type=Integer,Description=\"Number of paired-end reads supporting the variant\">" << endl <<
 	"##FORMAT=<ID=SR,Number=1,Type=Integer,Description=\"Number of split reads supporting the variant\">" << endl <<
-	"##FORMAT=<ID=GQ,Number=1,Type=Float,Description=\"Genotype quality\">" << endl <<
+	"##FORMAT=<ID=GQ,Number=1,Type=Float,Description=\"Genotype quality\">" << endl;
 	// "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">" << endl <<
 	// "##FORMAT=<ID=CN,Number=1,Type=Integer,Description=\"Copy number genotype for imprecise events\">" << endl <<
 	// "##FORMAT=<ID=CNQ,Number=1,Type=Float,Description=\"Copy number genotype quality for imprecise events\">" << endl <<
@@ -610,5 +613,24 @@ print_vcf_header()
 	// "##FORMAT=<ID=NQ,Number=1,Type=Integer,Description=\"Phred style probability score that the variant is novel\">" << endl <<
 	// "##FORMAT=<ID=HAP,Number=1,Type=Integer,Description=\"Unique haplotype identifier\">" << endl <<
 	// "##FORMAT=<ID=AHAP,Number=1,Type=Integer,Description=\"Unique identifier of ancestral haplotype\">" << endl <<
-	"#CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  NA12878" << endl;
+
+    cout <<
+	"#CHROM" << sep <<
+	"POS" << sep <<
+	"ID" << sep <<
+	"REF" << sep <<
+	"ALT" << sep <<
+	"QUAL" << sep <<
+	"FILTER" << sep <<
+	"INFO" << sep <<
+	"FORMAT";
+    
+    map<int,string>::iterator samp_itr;
+    for (samp_itr = SV_EvidenceReader::sample_names.begin();
+	 samp_itr != SV_EvidenceReader::sample_names.end();
+	 ++samp_itr) {
+	cout << sep <<
+	    samp_itr->second;
+    }
+    cout << endl;
 }

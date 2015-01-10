@@ -35,7 +35,9 @@ SV_PairReader(struct pair_end_parameters pair_end_param)
     weight = pair_end_param.weight;
     id = pair_end_param.id;
     min_mapping_threshold = pair_end_param.min_mapping_threshold;
-    read_group = pair_end_param.read_group;
+    sample_id = SV_EvidenceReader::counter;
+    SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
+    SV_EvidenceReader::sample_names[sample_id] = sample_name;
 }
 //}}}
 
@@ -57,6 +59,7 @@ SV_PairReader()
     min_mapping_threshold = 0;
     sample_id = SV_EvidenceReader::counter;
     SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
+    SV_EvidenceReader::sample_names[sample_id] = sample_name;
 
     inited = false;
 }
@@ -103,8 +106,10 @@ add_param(char *param, char *val)
 {
     if ( strcmp("bam_file", param) == 0 )
         bam_file = val;
-    else if ( strcmp("sample_name", param) == 0 )
+    else if ( strcmp("sample_name", param) == 0 ) {
         sample_name = val;
+	SV_EvidenceReader::sample_names[sample_id] = sample_name;
+    }
     else if ( strcmp("histo_file", param) == 0 )
         histo_file = val;
     else if ( strcmp("mean", param) == 0 )

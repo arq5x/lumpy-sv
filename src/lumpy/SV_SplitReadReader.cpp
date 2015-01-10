@@ -30,7 +30,8 @@ SV_SplitReadReader()
 	id = -1;
 	sample_id = SV_EvidenceReader::counter;
 	SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
-    min_clip = 20;
+	SV_EvidenceReader::sample_names[sample_id] = sample_name;
+	min_clip = 20;
 }
 //}}}
 
@@ -63,8 +64,10 @@ add_param(char *param, char *val)
 {
 	if ( strcmp("bam_file", param) == 0 )
 		bam_file = val;
-	else if ( strcmp("sample_name", param) == 0 )
+	else if ( strcmp("sample_name", param) == 0 ) {
 		sample_name = val;
+		SV_EvidenceReader::sample_names[sample_id] = sample_name;
+	}
 	else if ( strcmp("min_non_overlap", param) == 0 )
 		min_non_overlap = atoi(val);
 	else if ( strcmp("back_distance", param) == 0 )

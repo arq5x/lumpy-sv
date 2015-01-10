@@ -29,6 +29,7 @@ SV_BedpeReader()
     id = -1;
     sample_id = SV_EvidenceReader::counter;
     SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
+    SV_EvidenceReader::sample_names[sample_id] = sample_name;
 }
 //}}}
 
@@ -66,8 +67,10 @@ add_param(char *param, char *val)
 
     if ( strcmp("bedpe_file", param) == 0 )
         bedpe_file = val;
-    else if ( strcmp("sample_name", param) == 0 )
+    else if ( strcmp("sample_name", param) == 0 ) {
         sample_name = val;
+	SV_EvidenceReader::sample_names[sample_id] = sample_name;
+    }
     /*
     else if ( strcmp("distro_file", param) == 0 )
         distro_file = val;

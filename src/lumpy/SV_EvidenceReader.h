@@ -16,6 +16,7 @@
 #define __SV_EVIDENCEREADER_H__
 
 #include <string>
+#include <map>
 #include "ucsc_bins.hpp"
 #include "SV_BreakPoint.h"
 #include "api/BamReader.h"
@@ -31,6 +32,7 @@ public:
     static int counter;
     int sample_id;
     string sample_name;
+    static map<int, string> sample_names;
     virtual string check_params();
     virtual bool add_param(char *param, char *val);
 

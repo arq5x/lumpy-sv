@@ -480,25 +480,9 @@ int main(int argc, char* argv[])
     }
     //}}}
 
-    cout << "ev size" << evidence_readers.size() << endl;
-    cout << "bam ev size " << bam_evidence_readers.size() << endl;
-
-    for ( i_er = evidence_readers.begin();
-	  i_er != evidence_readers.end();
-	  ++i_er) {
-	SV_EvidenceReader *er = *i_er;
-	cout << "EVREADER samp: " << er->sample_name << endl;
-    }
-
-    map<pair<string,string>, SV_EvidenceReader*>::iterator bam_itr;
-    for ( bam_itr = bam_evidence_readers.begin();
-	  bam_itr != bam_evidence_readers.end();
-	  ++bam_itr) {
-	cout << "BAM_EVREADER samp: " << bam_itr->second->sample_name << endl;
-    }
-    
+    // print VCF header
     if (! bedpe_output)
-	print_vcf_header();
+    	print_vcf_header();
 
     //{{{ process the intra-chrom events that were saved to a file
     CHR_POS max_pos = 0;
