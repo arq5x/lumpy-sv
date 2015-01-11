@@ -43,7 +43,7 @@ SV_Pair(const BamAlignment &bam_a,
         const RefVector &refs,
         int _weight,
         int _id,
-        int _sample_id,
+        int _ev_id,
         SV_PairReader *_reader)
 {
     reader = _reader;
@@ -92,7 +92,7 @@ SV_Pair(const BamAlignment &bam_a,
 
     weight = _weight;
     id = _id;
-    sample_id = _sample_id;
+    ev_id = _ev_id;
 }
 //}}}
 
@@ -422,7 +422,7 @@ process_pair(const BamAlignment &curr,
              UCSCBins<SV_BreakPoint*> &r_bin,
              int weight,
              int id,
-             int sample_id,
+             int ev_id,
              SV_PairReader *reader)
 {
     if (mapped_pairs.find(curr.Name) == mapped_pairs.end())
@@ -433,7 +433,7 @@ process_pair(const BamAlignment &curr,
                                         refs,
                                         weight,
                                         id,
-                                        sample_id,
+                                        ev_id,
                                         reader);
         //cerr << count_clipped(curr.CigarData) << "\t" <<
                 //count_clipped(mapped_pairs[curr.Name].CigarData) << endl;
@@ -479,7 +479,7 @@ process_intra_chrom_pair(const BamAlignment &curr,
                          UCSCBins<SV_BreakPoint*> &r_bin,
                          int weight,
                          int id,
-                         int sample_id,
+                         int ev_id,
                          SV_PairReader *reader)
 {
     if (curr.RefID == curr.MateRefID) {
@@ -490,7 +490,7 @@ process_intra_chrom_pair(const BamAlignment &curr,
                      r_bin,
                      weight,
                      id,
-                     sample_id,
+                     ev_id,
                      reader);
 
     } else if (curr.IsMapped() &&

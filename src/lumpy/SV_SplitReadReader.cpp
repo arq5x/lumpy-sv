@@ -28,9 +28,9 @@ SV_SplitReadReader()
 	weight = -1;
 	min_mapping_threshold = 0;
 	id = -1;
-	sample_id = SV_EvidenceReader::counter;
+	ev_id = SV_EvidenceReader::counter;
 	SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
-	SV_EvidenceReader::sample_names[sample_id] = sample_name;
+	SV_EvidenceReader::sample_names[ev_id] = sample_name;
 	min_clip = 20;
 }
 //}}}
@@ -66,7 +66,7 @@ add_param(char *param, char *val)
 		bam_file = val;
 	else if ( strcmp("sample_name", param) == 0 ) {
 		sample_name = val;
-		SV_EvidenceReader::sample_names[sample_id] = sample_name;
+		SV_EvidenceReader::sample_names[ev_id] = sample_name;
 	}
 	else if ( strcmp("min_non_overlap", param) == 0 )
 		min_non_overlap = atoi(val);
@@ -158,7 +158,7 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 									r_bin,
 									weight,
 									id,
-									sample_id,
+									ev_id,
 									this);
 }
 //}}}
@@ -177,7 +177,7 @@ process_input( BamAlignment &_bam,
 								r_bin,
 								weight,
 								id,
-								sample_id,
+								ev_id,
 								this);
 }
 //}}}
@@ -197,7 +197,7 @@ process_input( BamAlignment &_bam,
 											r_bin,
 											weight,
 											id,
-											sample_id,
+											ev_id,
 											this);
 }
 //}}}
@@ -221,7 +221,7 @@ process_input_chr(string chr,
 									r_bin,
 									weight,
 									id,
-									sample_id,
+									ev_id,
 									this);
 
 		have_next_alignment = reader.GetNextAlignment(bam);
@@ -252,7 +252,7 @@ process_input_chr_pos(string chr,
 									r_bin,
 									weight,
 									id,
-									sample_id,
+									ev_id,
 									this);
 
 		have_next_alignment = reader.GetNextAlignment(bam);

@@ -38,7 +38,7 @@ public:
         static UCSCBins<int> exclude_regions;
         int weight;
         int id;
-        int sample_id;
+        int ev_id;
         int type;
 
         virtual void set_bp_interval_probability(struct breakpoint_interval *i);

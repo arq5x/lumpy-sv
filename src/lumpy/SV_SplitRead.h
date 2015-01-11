@@ -58,7 +58,7 @@ class SV_SplitRead: public SV_Evidence
 					 const RefVector &refs,
 					 int weight,
 					 int id,
-					 int sample_id,
+					 int ev_id,
 					 SV_SplitReadReader *reader);
 
 		SV_SplitRead(const BamAlignment &bam_a,
@@ -66,7 +66,7 @@ class SV_SplitRead: public SV_Evidence
 					 const RefVector &refs,
 					 int _weight,
 					 int _id,
-					 int _sample_id,
+					 int _ev_id,
 					 SV_SplitReadReader *reader);
 
 		/*
@@ -100,7 +100,7 @@ class SV_SplitRead: public SV_Evidence
 								  UCSCBins<SV_BreakPoint*> &r_bin,
 								  int weight,
 								  int id,
-								  int sample_id,
+								  int ev_id,
 								  SV_SplitReadReader *reader);
 
 		static void process_intra_chrom_split(
@@ -111,7 +111,7 @@ class SV_SplitRead: public SV_Evidence
 									UCSCBins<SV_BreakPoint*> &r_bin,
 									int weight,
 									int id,
-									int sample_id,
+									int ev_id,
 									SV_SplitReadReader *reader);
 
 		string evidence_type();

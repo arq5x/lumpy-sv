@@ -105,11 +105,11 @@ SV_SplitRead(vector< BamAlignment > &block,
              const RefVector &refs,
              int _weight,
              int _id,
-             int _sample_id,
+             int _ev_id,
              SV_SplitReadReader *_reader)
 {
     reader = _reader;
-    sample_id = _sample_id;
+    ev_id = _ev_id;
 
     if ( block.at(0).MapQuality < block.at(1).MapQuality )
         min_mapping_quality = block.at(0).MapQuality;
@@ -197,11 +197,11 @@ SV_SplitRead(const BamAlignment &bam_a,
              const RefVector &refs,
              int _weight,
              int _id,
-             int _sample_id,
+             int _ev_id,
              SV_SplitReadReader *_reader)
 {
     reader = _reader;
-    sample_id = _sample_id;
+    ev_id = _ev_id;
 
     if ( bam_a.MapQuality < bam_b.MapQuality )
         min_mapping_quality = bam_a.MapQuality;
@@ -622,7 +622,7 @@ process_split(const BamAlignment &curr,
               UCSCBins<SV_BreakPoint*> &r_bin,
               int weight,
               int id,
-              int sample_id,
+              int ev_id,
               SV_SplitReadReader *_reader)
 {
 
@@ -638,7 +638,7 @@ process_split(const BamAlignment &curr,
                                  refs,
                                  weight,
                                  id,
-                                 sample_id,
+                                 ev_id,
                                  _reader);
 
             SV_BreakPoint *new_bp = NULL;
@@ -678,7 +678,7 @@ process_intra_chrom_split(const BamAlignment &curr,
                           UCSCBins<SV_BreakPoint*> &r_bin,
                           int weight,
                           int id,
-                          int sample_id,
+                          int ev_id,
                           SV_SplitReadReader *_reader)
 {
 
@@ -701,7 +701,7 @@ process_intra_chrom_split(const BamAlignment &curr,
                                      refs,
                                      weight,
                                      id,
-                                     sample_id,
+                                     ev_id,
                                      _reader);
 
                 SV_BreakPoint *new_bp = NULL;

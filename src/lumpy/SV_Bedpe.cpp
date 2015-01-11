@@ -32,12 +32,12 @@ SV_Bedpe::
 SV_Bedpe(const BEDPE *bedpeEntry,
          int _weight,
          int _id,
-         int _sample_id,
+         int _ev_id,
          SV_BedpeReader *_reader)
 {
     reader = _reader;
 
-    sample_id = _sample_id;
+    ev_id = _ev_id;
     struct interval tmp_a, tmp_b;
 
     tmp_a.start = bedpeEntry->start1;
@@ -226,13 +226,13 @@ process_bedpe(const BEDPE *bedpeEntry,
               UCSCBins<SV_BreakPoint*> &r_bin,
               int weight,
               int id,
-              int sample_id,
+              int ev_id,
               SV_BedpeReader *reader)
 {
     SV_Bedpe *new_bedpe = new SV_Bedpe(bedpeEntry,
                                        weight,
                                        id,
-                                       sample_id,
+                                       ev_id,
                                        reader);
 
     SV_BreakPoint *new_bp = new_bedpe->get_bp();

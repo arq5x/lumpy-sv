@@ -43,7 +43,6 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	      int bp_id,
 	      int print_prob)
 {
-    ostringstream convert;
     map<string,int> uniq_strands;
     vector<SV_Evidence*>::iterator it;
     vector<SV_BreakPoint *> bps;
@@ -269,9 +268,10 @@ SV_VcfVariant(SV_BreakPoint *bp,
     sort(_ids.begin(), _ids.end());
 
     vector<int>::iterator _ids_it;
-
     // cout << "IDS:";
-    // for ( _ids_it = _ids.begin(); _ids_it != _ids.end(); ++_ids_it) {
+    // for (_ids_it = _ids.begin();
+    // 	 _ids_it != _ids.end();
+    // 	 ++_ids_it) {
     // 	if (_ids_it != _ids.begin())
     // 	    cout << ";";
     // 	cout << *_ids_it << "," << ids[*_ids_it];
