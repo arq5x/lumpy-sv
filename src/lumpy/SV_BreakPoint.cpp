@@ -1781,6 +1781,7 @@ get_product(vector<SV_BreakPoint *> &bps,
 }
 //}}}
 
+// CC 2014-01-11: get_score is not used in the VCF
 //{{{void SV_BreakPoint:: get_score( vector<SV_BreakPoint *> &bps,
 void
 SV_BreakPoint::
