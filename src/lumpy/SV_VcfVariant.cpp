@@ -264,12 +264,12 @@ SV_VcfVariant(SV_Vcf *_vcf,
 
     map<int, int>::iterator ids_it;
     vector<int> _ids;
-    for ( ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
+    for ( ids_it = bp->ids.begin(); ids_it != bp->ids.end(); ++ids_it)
     	_ids.push_back(ids_it->first);
 
-    // sort(_ids.begin(), _ids.end());
+    sort(_ids.begin(), _ids.end());
 
-    // vector<int>::iterator _ids_it;
+    vector<int>::iterator _ids_it;
 
     // cout << "IDS:";
     // for ( _ids_it = _ids.begin(); _ids_it != _ids.end(); ++_ids_it) {
@@ -300,11 +300,8 @@ SV_VcfVariant(SV_Vcf *_vcf,
 	add_format(*samp_itr, "SP", "20");
     }
 
-
-
     free(l);
     free(r);
-    cout << endl;
 }
 
 void
