@@ -60,4 +60,7 @@ void parse_exclude_file(string exclude_bed_file,
 uint32_t
 count_clipped(vector< CigarOp > cigar_data);
 
+string
+to_string(CHR_POS t);
+
 #endif

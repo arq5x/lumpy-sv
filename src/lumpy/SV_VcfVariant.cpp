@@ -41,9 +41,10 @@ SV_VcfVariant(SV_Vcf *_vcf,
 	      int bp_id,
 	      int print_prob)
 {
-    // set as object variable
+    // set as class variable
     vcf = _vcf;
-    
+
+    ostringstream convert;
     map<string,int> uniq_strands;
     vector<SV_Evidence*>::iterator it;
     vector<SV_BreakPoint *> bps;
@@ -73,7 +74,7 @@ SV_VcfVariant(SV_Vcf *_vcf,
 	delete tmp_bp;
     }
 
-    // Get the most likely posistions
+    // Get the most likely positions
     CHR_POS start_l, start_r, end_l, end_r;
     log_space *l,*r;
     bp->get_interval_probabilities(&start_l,
@@ -116,15 +117,10 @@ SV_VcfVariant(SV_Vcf *_vcf,
     // position start_r, and r_max_i is w.r.t. r[0]
     CHR_POS abs_max_r = start_r + r_max_i;
 
-    // stream to convert ints to strings
-    ostringstream convert;
-
-    // set first 7 VCF columns
+    // set fixed VCF columns
     chrom = bp->interval_l.i.chr;
     pos = abs_max_l;
-    convert.str(string());
-    convert << bp_id;
-    id = convert.str(); // Note: removed the id: -1 control statement
+    id = to_string(bp_id); // Note: removed the id: -1 control statement
     ref = "N";
     if (bp->interval_l.i.chr.compare(bp->interval_r.i.chr) != 0) {
 	alt = "INTERCHROM";
@@ -149,14 +145,10 @@ SV_VcfVariant(SV_Vcf *_vcf,
 
     // INFO: SVLEN
     int64_t svlen = abs_max_l - abs_max_r;
-    convert.str(string());
-    convert << svlen;
-    add_info("SVLEN", convert.str());
+    add_info("SVLEN", to_string(svlen));
 
     // INFO: END
-    convert.str(string());
-    convert << abs_max_r;
-    add_info("END", convert.str());
+    add_info("END", to_string(abs_max_r));
 
     // INFO: LP, RP
     if (print_prob > 0) {
@@ -166,18 +158,14 @@ SV_VcfVariant(SV_Vcf *_vcf,
 	     ++i) {
 	    if (i != 0)
 		lp.append(",");
-	    convert.str(string());
-	    convert << get_p(l[l_trim_offset+i]);
-	    lp.append(convert.str());
+	    lp.append(to_string(get_p(l[l_trim_offset+i])));
 	}
 	for (i = 0;
 	     i < (bp->interval_r.i.end - bp->interval_r.i.start + 1);
 	     ++i) {
 	    if (i != 0)
 		rp.append(",");
-	    convert.str(string());
-	    convert << get_p(r[r_trim_offset+i]);
-	    rp.append(convert.str());
+	    rp.append(to_string(get_p(r[r_trim_offset+i])));
 	}
 	add_info("LP", lp);
 	add_info("RP", rp);
@@ -186,9 +174,8 @@ SV_VcfVariant(SV_Vcf *_vcf,
     // INFO: IMPRECISE
     add_info("IMPRECISE"); // add conditional here
 
-    // Get the area that includes the max and 95% of the probabitliy
+    // INFO: Get the area that includes the max and 95% of the probabitliy
     log_space p_95 = get_ls(0.95);
-
     log_space total = l[l_max_i];
     CHR_POS l_l_i = l_max_i,
 	l_r_i = l_max_i,
@@ -246,10 +233,11 @@ SV_VcfVariant(SV_Vcf *_vcf,
     CHR_POS abs_r_l_95 = start_r + r_l_i,
 	abs_r_r_95 = start_r + r_r_i;
 
-    cout << "95:" <<
-	bp->interval_l.i.chr << ":" << abs_l_l_95 << "-"<< abs_l_r_95 <<";"<<
-	bp->interval_r.i.chr << ":" << abs_r_l_95 << "-"<< abs_r_r_95;
+    add_info("95CI", to_string(abs_l_l_95));
 
+    // cout << "95:" <<
+    // 	bp->interval_l.i.chr << ":" << abs_l_l_95 << "-"<< abs_l_r_95 <<";"<<
+    // 	bp->interval_r.i.chr << ":" << abs_r_l_95 << "-"<< abs_r_r_95;
 
     CHR_POS open_l_start = 0,
 	open_r_start = 0;
@@ -260,16 +248,24 @@ SV_VcfVariant(SV_Vcf *_vcf,
     if (bp->interval_r.i.start > 0)
 	open_r_start = bp->interval_r.i.start - 1;
 
+    // cout <<
+    // 	interval_l.i.chr << sep <<
+    // 	open_l_start << sep <<
+    // 	interval_l.i.end  << sep <<
+    // 	interval_r.i.chr << sep <<
+    // 	open_r_start << sep<<
+    // 	interval_r.i.end << sep;
+    
 
     // cout <<
     // 	(score_l+score_r) << "\t" <<
     // 	bp->interval_l.i.strand << "\t" <<
     // 	bp->interval_r.i.strand << "\t";
 
-    // map<int, int>::iterator ids_it;
-    // vector<int> _ids;
-    // for ( ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
-    // 	_ids.push_back(ids_it->first);
+    map<int, int>::iterator ids_it;
+    vector<int> _ids;
+    for ( ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
+    	_ids.push_back(ids_it->first);
 
     // sort(_ids.begin(), _ids.end());
 
