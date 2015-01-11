@@ -158,8 +158,8 @@ SV_VcfVariant(SV_BreakPoint *bp,
     ci_join.append(to_string(cipos_r));
     set_info("CIPOS", ci_join);
 
-    int ciend_l = bp->interval_l.i.start - abs_max_r;
-    int ciend_r = bp->interval_l.i.end - abs_max_r;
+    int ciend_l = bp->interval_r.i.start - abs_max_r;
+    int ciend_r = bp->interval_r.i.end - abs_max_r;
     ci_join = to_string(ciend_l);
     ci_join.append(",");
     ci_join.append(to_string(ciend_r));
@@ -243,18 +243,24 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	set_info("IMPRECISE");
 
     // FORMAT: initialize appropriate sample fields
+    vector<string> ev_v;
+    ev_v.push_back("PE");
+    ev_v.push_back("SR");
+    ev_v.push_back("BD");
+
     for (samp_it = samples.begin();
     	 samp_it != samples.end();
     	 ++samp_it) {
     	set_sample_field(*samp_it, "GT", "./.");
 	set_sample_field(*samp_it, "SU", "0");
-	string ev_arr[] = {"PE", "SR", "BD"};
-	for (int i = 0; i < 3; ++i) {
+	for (vector<string>::iterator it = ev_v.begin();
+	     it != ev_v.end();
+	     ++it) {
 	    if (find(active_formats.begin(),
 		     active_formats.end(),
-		     ev_arr[i])
+		     *it)
 		!= active_formats.end())
-		set_sample_field(*samp_it, ev_arr[i], "0");
+		set_sample_field(*samp_it, *it, "0");
 	}
     }
 
@@ -288,11 +294,15 @@ SV_VcfVariant(SV_BreakPoint *bp,
     }
     
     // INFO: add variant support across all samples
-    map<string,int>::iterator ev_it;
-    for (ev_it = var_supp.begin();
-	 ev_it != var_supp.end();
+    set_info("SU", to_string(var_supp["SU"]));
+    for (vector<string>::iterator ev_it = ev_v.begin();
+	 ev_it != ev_v.end();
 	 ++ev_it) {
-	set_info(ev_it->first, to_string(ev_it->second));
+	if (find(active_formats.begin(),
+		 active_formats.end(),
+		 *ev_it)
+	    != active_formats.end())
+	    set_info(*ev_it, to_string(var_supp[*ev_it]));
     }
 
     // cout << "STRANDS:";
@@ -467,6 +477,8 @@ print_header()
 	"##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description=\"Imprecise structural variation\">" << endl <<
 	"##INFO=<ID=CIPOS,Number=2,Type=Integer,Description=\"Confidence interval around POS for imprecise variants\">" << endl <<
 	"##INFO=<ID=CIEND,Number=2,Type=Integer,Description=\"Confidence interval around END for imprecise variants\">" << endl <<
+	"##INFO=<ID=CIPOS95,Number=2,Type=Integer,Description=\"Confidence interval (95%) around POS for imprecise variants\">" << endl <<
+	"##INFO=<ID=CIEND95,Number=2,Type=Integer,Description=\"Confidence interval (95%) around END for imprecise variants\">" << endl <<
 	"##INFO=<ID=MATEID,Number=.,Type=String,Description=\"ID of mate breakends\">" << endl <<
 	"##INFO=<ID=EVENT,Number=1,Type=String,Description=\"ID of event associated to breakend\">" << endl <<
 	"##INFO=<ID=SU,Number=.,Type=Integer,Description=\"Number of pieces of evidence supporting the variant across all samples\">" << endl <<
@@ -477,7 +489,7 @@ print_header()
 	"##INFO=<ID=RP,Number=.,Type=String,Description=\"LUMPY probability curve of the right breakend\">" << endl <<
 	// "##INFO=<ID=PRIN,Number=0,Type=Flag,Description=\"Indicates variant as the principal variant in a BEDPE pair\">" << endl <<
 	"##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl <<
-	"##FORMAT=<ID=SP,Number=1,Type=Integer,Description=\"Number of pieces of evidence supporting the variant\">" << endl <<
+	"##FORMAT=<ID=SU,Number=1,Type=Integer,Description=\"Number of pieces of evidence supporting the variant\">" << endl <<
 	"##FORMAT=<ID=PE,Number=1,Type=Integer,Description=\"Number of paired-end reads supporting the variant\">" << endl <<
 	"##FORMAT=<ID=SR,Number=1,Type=Integer,Description=\"Number of split reads supporting the variant\">" << endl;
 
