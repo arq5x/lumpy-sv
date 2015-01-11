@@ -20,6 +20,7 @@ using namespace std;
 
 int  SV_EvidenceReader:: counter = 0;
 map<int,string> SV_EvidenceReader:: sample_names;
+map<int,string> SV_EvidenceReader:: ev_types;
 
 //{{{ SV_EvidenceReader:: ~SV_EvidenceReader()
 //SV_EvidenceReader::

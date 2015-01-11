@@ -39,7 +39,7 @@ SV_BreakPoint(SV_Evidence *e)
 {
     evidence.push_back(e);
 
-    ids[e->id] = 1;
+    ids[e->ev_id] = 1;
 }
 //}}}
 
@@ -1296,7 +1296,7 @@ get_evidence_ids()
     vector<SV_Evidence*>::iterator it;
     for (it = evidence.begin(); it < evidence.end(); ++it) {
         SV_Evidence *e = *it;
-        int id = e->id;
+        int id = e->ev_id;
         ids.push_back(id);
     }
 

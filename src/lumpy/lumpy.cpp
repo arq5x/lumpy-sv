@@ -132,7 +132,9 @@ int main(int argc, char* argv[])
     double merge_threshold = 1e-10;
     int min_weight = 0;
     bool show_evidence = false;
-    bool has_bams = false, has_bedpes = false;
+    bool has_pe_bams = false,
+	has_sr_bams = false,
+	has_bedpes = false;
     CHR_POS window_size = 1000000;
     string inter_chrom_file_prefix = "./";
     int call_id = 0;
@@ -172,7 +174,7 @@ int main(int argc, char* argv[])
 
         if(PARAMETER_CHECK("-pe", 3, parameterLength)) {
             //{{{
-            has_bams = true;
+            has_pe_bams = true;
             SV_PairReader *pe_r = new SV_PairReader();
 
             if ((i+1) < argc) {
@@ -286,7 +288,7 @@ int main(int argc, char* argv[])
 
         else if(PARAMETER_CHECK("-sr", 3, parameterLength)) {
             //{{{
-            has_bams = true;
+            has_sr_bams = true;
             SV_SplitReadReader *sr_r = new SV_SplitReadReader();
 
             if ((i+1) < argc) {
@@ -433,7 +435,7 @@ int main(int argc, char* argv[])
         parse_exclude_file(exclude_bed_file, SV_Evidence::exclude_regions);
 
     SV_BamReader *bam_r;
-    if (has_bams) {
+    if (has_pe_bams || has_sr_bams) {
         bam_r = new SV_BamReader(&bam_evidence_readers);
         bam_r->set_inter_chrom_file_name(inter_chrom_file_prefix + ".bam");
         bam_r->initialize();
@@ -451,7 +453,7 @@ int main(int argc, char* argv[])
             genome_order[*chr_itr] = chr_count;
             chr_count += 1;
         }
-    } else if (has_bams) {
+    } else if (has_pe_bams || has_sr_bams) {
         //map<string, SV_EvidenceReader*> bam_evidence_readers;
         //map<string, SV_EvidenceReader*>::iterator bam_itr;
         //bam_itr = bam_evidence_readers.begin();
@@ -489,6 +491,33 @@ int main(int argc, char* argv[])
 	     s_itr != SV_EvidenceReader::sample_names.end();
 	     ++s_itr)
 	    header_var->add_sample(s_itr->second);
+
+	// add appropriate fields to active_formats
+	header_var->set_sample_field(SV_EvidenceReader::
+				     sample_names.begin()->second,
+				     "GT",
+				     "./.");
+	header_var->set_sample_field(SV_EvidenceReader::
+				     sample_names.begin()->second,
+				     "SU",
+				     "0");
+	
+	if (has_pe_bams)
+	    header_var->set_sample_field(SV_EvidenceReader::
+					 sample_names.begin()->second,
+					 "PE",
+					 "0");
+	if (has_sr_bams)
+	    header_var->set_sample_field(SV_EvidenceReader::
+					 sample_names.begin()->second,
+					 "SR",
+					 "0");
+
+	if (has_bedpes)
+	    header_var->set_sample_field(SV_EvidenceReader::
+					 sample_names.begin()->second,
+					 "BD",
+					 "0");
     	header_var->print_header();
     }
     

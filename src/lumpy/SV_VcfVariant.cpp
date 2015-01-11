@@ -46,6 +46,7 @@ SV_VcfVariant(SV_BreakPoint *bp,
     map<string,int> uniq_strands;
     vector<SV_Evidence*>::iterator it;
     vector<SV_BreakPoint *> bps;
+    vector<string>::iterator samp_it;
 
     for (it = bp->evidence.begin(); it < bp->evidence.end(); ++it) {
 	SV_Evidence *e = *it;
@@ -122,19 +123,19 @@ SV_VcfVariant(SV_BreakPoint *bp,
     ref = "N";
     if (bp->interval_l.i.chr.compare(bp->interval_r.i.chr) != 0) {
 	alt = "INTERCHROM";
-	add_info("SVTYPE", "BND");
+	set_info("SVTYPE", "BND");
     }
     else if (bp->type == bp->DELETION ) {
 	alt = "<DEL>";
-	add_info("SVTYPE", "DEL");
+	set_info("SVTYPE", "DEL");
     }
     else if (bp->type == bp->DUPLICATION) {
 	alt = "<DUP>";
-	add_info("SVTYPE", "DUP");
+	set_info("SVTYPE", "DUP");
     }
     else if (bp->type == bp->INVERSION) {
 	alt = "<INV>";
-	add_info("SVTYPE", "INV");
+	set_info("SVTYPE", "INV");
     }
     else
 	alt = ".";
@@ -143,10 +144,84 @@ SV_VcfVariant(SV_BreakPoint *bp,
 
     // INFO: SVLEN
     int64_t svlen = abs_max_l - abs_max_r;
-    add_info("SVLEN", to_string(svlen));
+    set_info("SVLEN", to_string(svlen));
 
     // INFO: END
-    add_info("END", to_string(abs_max_r));
+    set_info("END", to_string(abs_max_r));
+
+    // FORMAT: initialize appropriate fields
+    for (samp_it = samples.begin();
+    	 samp_it != samples.end();
+    	 ++samp_it) {
+    	set_sample_field(*samp_it, "GT", "./.");
+	set_sample_field(*samp_it, "SU", "0");
+	string ev_arr[] = {"PE", "SR", "BD"};
+	for (int i = 0; i < 3; ++i) {
+	    if (find(active_formats.begin(),
+		     active_formats.end(),
+		     ev_arr[i])
+		!= active_formats.end())
+		set_sample_field(*samp_it, ev_arr[i], "0");
+	}
+    }
+
+    // FORMAT: update variant support
+    map<string,int> var_supp;
+    map<int, int>::iterator ids_it;
+    vector<int> _ids;
+    for (ids_it = bp->ids.begin();
+	 ids_it != bp->ids.end();
+	 ++ids_it)
+    	_ids.push_back(ids_it->first);
+    vector<int>::iterator _ids_it;
+    for (_ids_it = _ids.begin();
+	 _ids_it != _ids.end();
+	 ++_ids_it) {
+	string samp = SV_EvidenceReader::sample_names[*_ids_it];
+	string ev_type = SV_EvidenceReader::ev_types[*_ids_it];
+
+	int samp_supp = atoi(get_sample_field(samp, ev_type).c_str());
+	int ev = atoi(get_sample_field(samp, ev_type).c_str());
+	int new_ev = bp->ids[*_ids_it];
+	
+	ev += new_ev;
+	samp_supp += new_ev;
+
+	var_supp["SU"] += new_ev;
+	var_supp[ev_type] += new_ev;
+	
+	set_sample_field(samp, ev_type, to_string(ev));
+	set_sample_field(samp, "SU", to_string(samp_supp));
+    }
+    
+    // INFO: support
+    map<string,int>::iterator ev_it;
+    for (ev_it = var_supp.begin();
+	 ev_it != var_supp.end();
+	 ++ev_it) {
+	set_info(ev_it->first, to_string(ev_it->second));
+    }
+    
+    // += bp->ids[*_ids_it];
+    // cout << "id: " << *_ids_it << endl;
+    // cout << *_ids_it << ":" << bp->ids[*_ids_it] << endl;
+    // set_sample_field(*samp_it, "SU", to_string(samp_support));
+    // }
+
+    // }
+    
+
+    // cout << "\t";
+
+    // cout << "STRANDS:";
+    // map<string,int>:: iterator s_it;
+    // for ( s_it = uniq_strands.begin(); s_it != uniq_strands.end(); ++s_it) {
+    // 	if (s_it != uniq_strands.begin())
+    // 	    cout <<  ";";
+    // 	cout << s_it->first << "," << s_it->second;
+    // }
+
+    // cout << "\t";
 
     // INFO: LP, RP
     if (print_prob > 0) {
@@ -165,12 +240,12 @@ SV_VcfVariant(SV_BreakPoint *bp,
 		rp.append(",");
 	    rp.append(to_string(get_p(r[r_trim_offset+i])));
 	}
-	add_info("LP", lp);
-	add_info("RP", rp);
+	set_info("LP", lp);
+	set_info("RP", rp);
     }
 
     // INFO: IMPRECISE
-    add_info("IMPRECISE"); // add conditional here
+    set_info("IMPRECISE"); // add conditional here
 
     // INFO: Get the area that includes the max and 95% of the probabitliy
     log_space p_95 = get_ls(0.95);
@@ -231,7 +306,7 @@ SV_VcfVariant(SV_BreakPoint *bp,
     CHR_POS abs_r_l_95 = start_r + r_l_i,
 	abs_r_r_95 = start_r + r_r_i;
 
-    add_info("95CI", to_string(abs_l_l_95));
+    set_info("95CI", to_string(abs_l_l_95));
 
     // cout << "95:" <<
     // 	bp->interval_l.i.chr << ":" << abs_l_l_95 << "-"<< abs_l_r_95 <<";"<<
@@ -259,46 +334,7 @@ SV_VcfVariant(SV_BreakPoint *bp,
     // 	(score_l+score_r) << "\t" <<
     // 	bp->interval_l.i.strand << "\t" <<
     // 	bp->interval_r.i.strand << "\t";
-
-    map<int, int>::iterator ids_it;
-    vector<int> _ids;
-    for ( ids_it = bp->ids.begin(); ids_it != bp->ids.end(); ++ids_it)
-    	_ids.push_back(ids_it->first);
-
-    sort(_ids.begin(), _ids.end());
-
-    vector<int>::iterator _ids_it;
-    // cout << "IDS:";
-    // for (_ids_it = _ids.begin();
-    // 	 _ids_it != _ids.end();
-    // 	 ++_ids_it) {
-    // 	if (_ids_it != _ids.begin())
-    // 	    cout << ";";
-    // 	cout << *_ids_it << "," << ids[*_ids_it];
-    // }
-
-    // cout << "\t";
-
-    // cout << "STRANDS:";
-    // map<string,int>:: iterator s_it;
-    // for ( s_it = uniq_strands.begin(); s_it != uniq_strands.end(); ++s_it) {
-    // 	if (s_it != uniq_strands.begin())
-    // 	    cout <<  ";";
-    // 	cout << s_it->first << "," << s_it->second;
-    // }
-
-    // cout << "\t";
-
-
-    // FORMAT
-    vector<string>::iterator samp_it;
-    for (samp_it = samples.begin();
-    	 samp_it != samples.end();
-    	 ++samp_it) {
-    	add_format(*samp_it, "GT", "./.");
-	add_format(*samp_it, "SP", "20");
-    }
-
+    
     free(l);
     free(r);
 }
@@ -316,7 +352,7 @@ add_sample(string sample_name)
 
 void
 SV_VcfVariant::
-add_info(string id)
+set_info(string id)
 {
     if (info != "")
 	info.append(";");
@@ -325,7 +361,7 @@ add_info(string id)
 
 void
 SV_VcfVariant::
-add_info(string id,
+set_info(string id,
 	 string val)
 {
     if (info != "")
@@ -337,9 +373,9 @@ add_info(string id,
 
 void
 SV_VcfVariant::
-add_format(string sample,
-	   string format,
-	   string value)
+set_sample_field(string sample,
+		 string format,
+		 string value)
 {
     // add to format to active_formats vector
     if (find(active_formats.begin(),
@@ -349,7 +385,15 @@ add_format(string sample,
 	active_formats.push_back(format);
 
     // set the sample's format value
-    var_samples[sample][format] = value;
+    sample_vals[sample][format] = value;
+}
+
+string
+SV_VcfVariant::
+get_sample_field(string sample,
+		 string format)
+{
+    return sample_vals[sample][format];
 }
 
 string
@@ -378,9 +422,14 @@ get_sample_string(string sample)
     for (fmt_it = active_formats.begin();
 	 fmt_it != active_formats.end();
 	 ++fmt_it) {
+	// add delimiter if not first field
 	if (samp_ss.str() != "")
 	    samp_ss << ":";
-	samp_ss << var_samples[sample][*fmt_it];
+	// store "." if no value
+	if (sample_vals[sample][*fmt_it] == "")
+	    samp_ss << ".";
+	else
+	    samp_ss << sample_vals[sample][*fmt_it];
     }
 
     return samp_ss.str();
@@ -428,7 +477,7 @@ print_header()
 	"##INFO=<ID=CIEND,Number=2,Type=Integer,Description=\"Confidence interval around END for imprecise variants\">" << endl <<
 	"##INFO=<ID=MATEID,Number=.,Type=String,Description=\"ID of mate breakends\">" << endl <<
 	"##INFO=<ID=EVENT,Number=1,Type=String,Description=\"ID of event associated to breakend\">" << endl <<
-	"##INFO=<ID=SP,Number=.,Type=Integer,Description=\"Number of pieces of evidence supporting the variant across all samples\">" << endl <<
+	"##INFO=<ID=SU,Number=.,Type=Integer,Description=\"Number of pieces of evidence supporting the variant across all samples\">" << endl <<
 	"##INFO=<ID=PE,Number=.,Type=Integer,Description=\"Number of paired-end reads supporting the variant across all samples\">" << endl <<
 	"##INFO=<ID=SR,Number=.,Type=Integer,Description=\"Number of split reads supporting the variant across all samples\">" << endl <<
 	"##INFO=<ID=EV,Number=.,Type=String,Description=\"Type of LUMPY evidence contributing to the variant call\">" << endl <<

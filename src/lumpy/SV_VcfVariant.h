@@ -42,13 +42,16 @@ class SV_VcfVariant
     string info;
 
     void add_sample(string sample_name);
-    void add_info(string id);
-    void add_info(string id,
+    void set_info(string id);
+    void set_info(string id,
 		  string value);
-    void add_format(string sample,
-		    string format,
-		    string value);
 
+    void set_sample_field(string sample,
+			  string format,
+			  string value);
+    string get_sample_field(string sample,
+			    string format);
+    
     string get_format_string();
     string get_sample_string(string sample);
 
@@ -58,7 +61,7 @@ class SV_VcfVariant
  private:
     static vector<string> samples;
     static vector<string> active_formats;
-    map< string,map<string,string> > var_samples;
+    map< string,map<string,string> > sample_vals;
 };
 
 

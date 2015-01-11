@@ -563,19 +563,3 @@ count_clipped(vector< CigarOp > cigar_data)
 
     return match_count;
 }
-
-string
-to_string(CHR_POS t)
-{
-    stringstream convert;
-    convert << t;
-    return convert.str();
-}
-
-string
-to_string(int64_t t)
-{
-    stringstream convert;
-    convert << t;
-    return convert.str();
-}

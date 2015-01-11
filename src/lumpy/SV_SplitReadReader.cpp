@@ -31,6 +31,7 @@ SV_SplitReadReader()
 	ev_id = SV_EvidenceReader::counter;
 	SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
 	SV_EvidenceReader::sample_names[ev_id] = sample_name;
+	SV_EvidenceReader::ev_types[ev_id] = "SR";
 	min_clip = 20;
 }
 //}}}
@@ -67,6 +68,7 @@ add_param(char *param, char *val)
 	else if ( strcmp("sample_name", param) == 0 ) {
 		sample_name = val;
 		SV_EvidenceReader::sample_names[ev_id] = sample_name;
+		SV_EvidenceReader::ev_types[ev_id] = "SR";
 	}
 	else if ( strcmp("min_non_overlap", param) == 0 )
 		min_non_overlap = atoi(val);

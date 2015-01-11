@@ -30,6 +30,7 @@ SV_BedpeReader()
     ev_id = SV_EvidenceReader::counter;
     SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
     SV_EvidenceReader::sample_names[ev_id] = sample_name;
+    SV_EvidenceReader::ev_types[ev_id] = "BD";
 }
 //}}}
 
@@ -70,6 +71,7 @@ add_param(char *param, char *val)
     else if ( strcmp("sample_name", param) == 0 ) {
         sample_name = val;
 	SV_EvidenceReader::sample_names[ev_id] = sample_name;
+	SV_EvidenceReader::ev_types[ev_id] = "BD";
     }
     /*
     else if ( strcmp("distro_file", param) == 0 )
