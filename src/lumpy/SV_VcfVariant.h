@@ -55,12 +55,10 @@ class SV_VcfVariant
     void print_header();
     void print_var();
 
-    // should be private
-    vector<string> samples;
-    vector<string> active_formats;
+ private:
+    static vector<string> samples;
+    static vector<string> active_formats;
     map< string,map<string,string> > var_samples;
-
- /* private: */
 };
 
 

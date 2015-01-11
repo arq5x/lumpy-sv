@@ -21,6 +21,10 @@
 #include <sstream>
 using namespace std;
 
+// initialize static members
+vector<string> SV_VcfVariant::samples;
+vector<string> SV_VcfVariant::active_formats;
+
 SV_VcfVariant::
 SV_VcfVariant()
 {
@@ -306,11 +310,11 @@ add_format(string sample,
 	   string value)
 {
     // add to VCF's active format vector
-    if (find(SV_VcfVariant::active_formats.begin(),
-	     SV_VcfVariant::active_formats.end(),
+    if (find(active_formats.begin(),
+	     active_formats.end(),
 	     format)
-	== SV_VcfVariant::active_formats.end())
-	SV_VcfVariant::active_formats.push_back(format);
+	== active_formats.end())
+	active_formats.push_back(format);
 
     // set the sample's value
     var_samples[sample][format] = value;
@@ -396,7 +400,7 @@ print_var()
 	 ++samp_it)
 	cout << sep <<
 	    get_sample_string(*samp_it);
-
+    
     cout << endl;
 }
 
