@@ -16,7 +16,6 @@
 #define __SV_VCFVARIANT_H__
 
 #include "SV_BreakPoint.h"
-#include "SV_Vcf.h"
 
 #include <string>
 #include <vector>
@@ -26,14 +25,11 @@ using namespace std;
 class SV_VcfVariant
 {
  public:
-    SV_VcfVariant(SV_Vcf *vcf);
-    SV_VcfVariant(SV_Vcf *vcf,
-		  SV_BreakPoint *bp,
+    SV_VcfVariant();
+    SV_VcfVariant(SV_BreakPoint *bp,
 		  int bp_id,
 		  int print_prob);
     ~SV_VcfVariant();
-
-    SV_Vcf *vcf;
 
     // variant fields
     string chrom;
@@ -45,11 +41,10 @@ class SV_VcfVariant
     string filter;
     string info;
 
-    
+    void add_sample(string sample_name);
     void add_info(string id);
     void add_info(string id,
 		  string value);
-
     void add_format(string sample,
 		    string format,
 		    string value);
@@ -57,11 +52,15 @@ class SV_VcfVariant
     string get_format_string();
     string get_sample_string(string sample);
 
+    void print_header();
     void print_var();
 
- private:
-    // sample->format->value
+    // should be private
+    vector<string> samples;
+    vector<string> active_formats;
     map< string,map<string,string> > var_samples;
+
+ /* private: */
 };
 
 

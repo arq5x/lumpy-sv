@@ -34,7 +34,6 @@ SOURCES= lumpy.cpp \
 		 SV_InterChromBamReader.cpp \
 		 SV_EvidenceReader.cpp \
 		 SV_Tools.cpp \
-		 SV_Vcf.cpp \
 		 SV_VcfVariant.cpp \
 		 log_space.cpp
 OBJECTS= $(SOURCES:.cpp=.o)

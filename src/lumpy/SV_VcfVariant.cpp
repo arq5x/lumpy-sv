@@ -22,9 +22,8 @@
 using namespace std;
 
 SV_VcfVariant::
-SV_VcfVariant(SV_Vcf *_vcf)
+SV_VcfVariant()
 {
-    vcf = _vcf;
     chrom = ".";
     pos = 0;
     id = ".";
@@ -36,14 +35,10 @@ SV_VcfVariant(SV_Vcf *_vcf)
 }
 
 SV_VcfVariant::
-SV_VcfVariant(SV_Vcf *_vcf,
-	      SV_BreakPoint *bp,
+SV_VcfVariant(SV_BreakPoint *bp,
 	      int bp_id,
 	      int print_prob)
 {
-    // set as class variable
-    vcf = _vcf;
-
     ostringstream convert;
     map<string,int> uniq_strands;
     vector<SV_Evidence*>::iterator it;
@@ -292,12 +287,12 @@ SV_VcfVariant(SV_Vcf *_vcf,
 
 
     // FORMAT
-    vector<string>::iterator samp_itr;
-    for (samp_itr = vcf->samples.begin();
-    	 samp_itr != vcf->samples.end();
-    	 ++samp_itr) {
-    	add_format(*samp_itr, "GT", "./.");
-	add_format(*samp_itr, "SP", "20");
+    vector<string>::iterator samp_it;
+    for (samp_it = samples.begin();
+    	 samp_it != samples.end();
+    	 ++samp_it) {
+    	add_format(*samp_it, "GT", "./.");
+	add_format(*samp_it, "SP", "20");
     }
 
     free(l);
@@ -311,8 +306,13 @@ add_format(string sample,
 	   string value)
 {
     // add to VCF's active format vector
-    this->vcf->add_format(format);
+    if (find(SV_VcfVariant::active_formats.begin(),
+	     SV_VcfVariant::active_formats.end(),
+	     format)
+	== SV_VcfVariant::active_formats.end())
+	SV_VcfVariant::active_formats.push_back(format);
 
+    // set the sample's value
     var_samples[sample][format] = value;
     
     // cout << sample << format << value << endl;
@@ -345,8 +345,8 @@ get_format_string()
 {
     ostringstream fmt_ss;
     vector<string>::iterator fmt_it;
-    for (fmt_it = this->vcf->active_formats.begin();
-	 fmt_it != this->vcf->active_formats.end();
+    for (fmt_it = active_formats.begin();
+	 fmt_it != active_formats.end();
 	 ++fmt_it) {
 	if (fmt_ss.str() != "")
 	    fmt_ss << ":";
@@ -362,8 +362,8 @@ get_sample_string(string sample)
 {
     ostringstream samp_ss;
     vector<string>::iterator fmt_it;
-    for (fmt_it = this->vcf->active_formats.begin();
-	 fmt_it != this->vcf->active_formats.end();
+    for (fmt_it = active_formats.begin();
+	 fmt_it != active_formats.end();
 	 ++fmt_it) {
 	if (samp_ss.str() != "")
 	    samp_ss << ":";
@@ -391,12 +391,69 @@ print_var()
 	format;
     
     vector<string>::iterator samp_it;
-    for (samp_it = this->vcf->samples.begin();
-	 samp_it != this->vcf->samples.end();
+    for (samp_it = samples.begin();
+	 samp_it != samples.end();
 	 ++samp_it)
 	cout << sep <<
 	    get_sample_string(*samp_it);
-    
+
     cout << endl;
 }
 
+void
+SV_VcfVariant::
+add_sample(string sample_name)
+{
+    if (find(samples.begin(),
+	     samples.end(),
+	     sample_name)
+	== samples.end())
+	samples.push_back(sample_name);
+}
+
+void
+SV_VcfVariant::
+print_header()
+{
+    string sep = "\t";
+
+    cout << "##fileformat=VCFv4.2" << endl <<
+	"##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">" << endl <<
+	"##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">" << endl <<
+	"##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the variant described in this record\">" << endl <<
+	"##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description=\"Imprecise structural variation\">" << endl <<
+	"##INFO=<ID=CIPOS,Number=2,Type=Integer,Description=\"Confidence interval around POS for imprecise variants\">" << endl <<
+	"##INFO=<ID=CIEND,Number=2,Type=Integer,Description=\"Confidence interval around END for imprecise variants\">" << endl <<
+	"##INFO=<ID=MATEID,Number=.,Type=String,Description=\"ID of mate breakends\">" << endl <<
+	"##INFO=<ID=EVENT,Number=1,Type=String,Description=\"ID of event associated to breakend\">" << endl <<
+	"##INFO=<ID=SP,Number=.,Type=Integer,Description=\"Number of pieces of evidence supporting the variant across all samples\">" << endl <<
+	"##INFO=<ID=PE,Number=.,Type=Integer,Description=\"Number of paired-end reads supporting the variant across all samples\">" << endl <<
+	"##INFO=<ID=SR,Number=.,Type=Integer,Description=\"Number of split reads supporting the variant across all samples\">" << endl <<
+	"##INFO=<ID=EV,Number=.,Type=String,Description=\"Type of LUMPY evidence contributing to the variant call\">" << endl <<
+	"##INFO=<ID=LP,Number=.,Type=String,Description=\"LUMPY probability curve of the left breakend\">" << endl <<
+	"##INFO=<ID=RP,Number=.,Type=String,Description=\"LUMPY probability curve of the right breakend\">" << endl <<
+	// "##INFO=<ID=PRIN,Number=0,Type=Flag,Description=\"Indicates variant as the principal variant in a BEDPE pair\">" << endl <<
+	"##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl <<
+	"##FORMAT=<ID=SP,Number=1,Type=Integer,Description=\"Number of pieces of evidence supporting the variant\">" << endl <<
+	"##FORMAT=<ID=PE,Number=1,Type=Integer,Description=\"Number of paired-end reads supporting the variant\">" << endl <<
+	"##FORMAT=<ID=SR,Number=1,Type=Integer,Description=\"Number of split reads supporting the variant\">" << endl;
+
+    cout <<
+	"#CHROM" << sep <<
+	"POS" << sep <<
+	"ID" << sep <<
+	"REF" << sep <<
+	"ALT" << sep <<
+	"QUAL" << sep <<
+	"FILTER" << sep <<
+	"INFO" << sep <<
+	"FORMAT";
+
+    for (vector<string>::iterator samp_it = samples.begin();
+	 samp_it != samples.end();
+	 ++samp_it) {
+	cout << sep <<
+	    *samp_it;
+    }
+    cout << endl;
+}

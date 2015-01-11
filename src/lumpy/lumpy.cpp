@@ -31,7 +31,6 @@
 #include "SV_BedpeReader.h"
 #include "SV_BamReader.h"
 #include "SV_InterChromBamReader.h"
-#include "SV_Vcf.h"
 #include "SV_VcfVariant.h"
 #include "SV_Tools.h"
 #include "genomeFile.h"
@@ -147,7 +146,6 @@ int main(int argc, char* argv[])
     bool has_genome_file = false;
     int print_prob = 0;
     int bedpe_output = 0;
-    SV_Vcf *vcf;
     //vector<string> bam_files;
     //}}}
 
@@ -485,13 +483,13 @@ int main(int argc, char* argv[])
 
     // print VCF header
     if (! bedpe_output) {
-	vcf = new SV_Vcf();
+	SV_VcfVariant *tmp_var = new SV_VcfVariant();
 	map<int,string>::iterator s_itr;
 	for (s_itr = SV_EvidenceReader::sample_names.begin();
 	     s_itr != SV_EvidenceReader::sample_names.end();
 	     ++s_itr)
-	    vcf->add_sample(s_itr->second);
-    	vcf->print_header();
+	    tmp_var->add_sample(s_itr->second);
+    	tmp_var->print_header();
     }
     
     //{{{ process the intra-chrom events that were saved to a file
@@ -568,8 +566,7 @@ int main(int argc, char* argv[])
 			}
 			else {
 			    SV_VcfVariant *vcf_var =
-				new SV_VcfVariant(vcf,
-						  bp,
+				new SV_VcfVariant(bp,
 						  ++call_id,
 						  print_prob);
 			    vcf_var->print_var();
