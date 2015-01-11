@@ -483,13 +483,13 @@ int main(int argc, char* argv[])
 
     // print VCF header
     if (! bedpe_output) {
-	SV_VcfVariant *tmp_var = new SV_VcfVariant();
+	SV_VcfVariant *header_var = new SV_VcfVariant();
 	map<int,string>::iterator s_itr;
 	for (s_itr = SV_EvidenceReader::sample_names.begin();
 	     s_itr != SV_EvidenceReader::sample_names.end();
 	     ++s_itr)
-	    tmp_var->add_sample(s_itr->second);
-    	tmp_var->print_header();
+	    header_var->add_sample(s_itr->second);
+    	header_var->print_header();
     }
     
     //{{{ process the intra-chrom events that were saved to a file

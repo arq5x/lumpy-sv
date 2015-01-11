@@ -29,7 +29,7 @@ class SV_VcfVariant
     SV_VcfVariant(SV_BreakPoint *bp,
 		  int bp_id,
 		  int print_prob);
-    ~SV_VcfVariant();
+    /* ~SV_VcfVariant(); */
 
     // variant fields
     string chrom;

@@ -305,21 +305,13 @@ SV_VcfVariant(SV_BreakPoint *bp,
 
 void
 SV_VcfVariant::
-add_format(string sample,
-	   string format,
-	   string value)
+add_sample(string sample_name)
 {
-    // add to VCF's active format vector
-    if (find(active_formats.begin(),
-	     active_formats.end(),
-	     format)
-	== active_formats.end())
-	active_formats.push_back(format);
-
-    // set the sample's value
-    var_samples[sample][format] = value;
-    
-    // cout << sample << format << value << endl;
+    if (find(samples.begin(),
+	     samples.end(),
+	     sample_name)
+	== samples.end())
+	samples.push_back(sample_name);
 }
 
 void
@@ -328,7 +320,7 @@ add_info(string id)
 {
     if (info != "")
 	info.append(";");
-    info.append("id");
+    info.append(id);
 }
 
 void
@@ -341,6 +333,23 @@ add_info(string id,
     info.append(id);
     info.append("=");
     info.append(val);
+}
+
+void
+SV_VcfVariant::
+add_format(string sample,
+	   string format,
+	   string value)
+{
+    // add to format to active_formats vector
+    if (find(active_formats.begin(),
+	     active_formats.end(),
+	     format)
+	== active_formats.end())
+	active_formats.push_back(format);
+
+    // set the sample's format value
+    var_samples[sample][format] = value;
 }
 
 string
@@ -406,17 +415,6 @@ print_var()
 
 void
 SV_VcfVariant::
-add_sample(string sample_name)
-{
-    if (find(samples.begin(),
-	     samples.end(),
-	     sample_name)
-	== samples.end())
-	samples.push_back(sample_name);
-}
-
-void
-SV_VcfVariant::
 print_header()
 {
     string sep = "\t";
@@ -453,7 +451,8 @@ print_header()
 	"INFO" << sep <<
 	"FORMAT";
 
-    for (vector<string>::iterator samp_it = samples.begin();
+    vector<string>::iterator samp_it;
+    for (samp_it = samples.begin();
 	 samp_it != samples.end();
 	 ++samp_it) {
 	cout << sep <<
