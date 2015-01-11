@@ -26,6 +26,8 @@ class SV_Vcf
     vector<string> active_formats;
 
     void add_sample(string sample_name);
+    void add_format(string format);
+    
     void print_header();
     void print_variant();
 

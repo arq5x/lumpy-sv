@@ -1118,9 +1118,6 @@ print_bedpe(int id, int print_prob)
 }
 //}}}
 
-// {{{ void SV_BreakPoint:: print_vcf_variant(int id,
-// 					   int print_prob,
-// 					   SV_Vcf vcf)
 void
 SV_BreakPoint::
 print_vcf_variant(int id,

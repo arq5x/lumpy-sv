@@ -1,5 +1,5 @@
 /*****************************************************************************
- * SV_Vcf.h
+ * SV_VcfVariant.h
  * (c) 2014 - Ryan M. Layer
  * Hall Laboratory
  * Quinlan Laboratory
@@ -15,17 +15,17 @@
 #ifndef __SV_VCFVARIANT_H__
 #define __SV_VCFVARIANT_H__
 
-#include "SV_Vcf.h"
 #include "SV_BreakPoint.h"
+#include "SV_Vcf.h"
 
 #include <string>
 #include <vector>
+#include <map>
 using namespace std;
 
 class SV_VcfVariant
 {
  public:
-    
     SV_VcfVariant(SV_Vcf *vcf);
     SV_VcfVariant(SV_Vcf *vcf,
 		  SV_BreakPoint *bp,
@@ -44,16 +44,25 @@ class SV_VcfVariant
     string qual; // string to allow for '.'
     string filter;
     string info;
-    vector<string> format;
+
     
     void add_info(string id);
     void add_info(string id,
 		  string value);
 
-    void add_format_field(string fmt);
+    void add_format(string sample,
+		    string format,
+		    string value);
+
+    string get_format_string();
+    string get_sample_string(string sample);
 
     void print_var();
-    
+
+ private:
+    // sample->format->value
+    map< string,map<string,string> > var_samples;
 };
+
 
 #endif

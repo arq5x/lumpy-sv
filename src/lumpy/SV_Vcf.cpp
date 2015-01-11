@@ -35,6 +35,17 @@ add_sample(string sample_name)
 
 void
 SV_Vcf::
+add_format(string format)
+{
+    if (find(active_formats.begin(),
+	     active_formats.end(),
+	     format)
+	== active_formats.end())
+	active_formats.push_back(format);
+}
+
+void
+SV_Vcf::
 print_header()
 {
     string sep = "\t";
