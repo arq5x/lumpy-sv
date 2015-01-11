@@ -77,11 +77,11 @@ SV_VcfVariant(SV_Vcf *_vcf,
     CHR_POS start_l, start_r, end_l, end_r;
     log_space *l,*r;
     bp->get_interval_probabilities(&start_l,
-			       &start_r,
-			       &end_l,
-			       &end_r,
-			       &l,
-			       &r);
+				   &start_r,
+				   &end_l,
+				   &end_r,
+				   &l,
+				   &r);
 
     // l and r contain the full, untrimmed distribution.  All of the
     // calculations below must be shifted to the right by an offset so they are
@@ -183,14 +183,132 @@ SV_VcfVariant(SV_Vcf *_vcf,
 	add_info("RP", rp);
     }
 
+    // INFO: IMPRECISE
+    add_info("IMPRECISE"); // add conditional here
+
+    // Get the area that includes the max and 95% of the probabitliy
+    log_space p_95 = get_ls(0.95);
+
+    log_space total = l[l_max_i];
+    CHR_POS l_l_i = l_max_i,
+	l_r_i = l_max_i,
+	t_last = bp->interval_l.i.end - bp->interval_l.i.start;
+
+    while ( ((l_l_i > 0) || (l_r_i < t_last)) && (total < p_95) ){
+	if ( l_l_i == 0 ) {
+	    total = ls_add(total, l[l_r_i+1]);;
+	    ++l_r_i;
+	} else if ( l_r_i == t_last ) {
+	    total = ls_add(total, l[l_l_i-1]);
+	    --l_l_i;
+	} else if ( l[l_l_i-1] == l[l_r_i+1] ) {
+	    total = ls_add(total, l[l_r_i+1]);
+	    total = ls_add(total, l[l_l_i-1]);
+	    --l_l_i;
+	    ++l_r_i;
+	} else if ( l[l_l_i-1] > l[l_r_i+1] ) {
+	    total = ls_add(total, l[l_l_i-1]);
+	    --l_l_i;
+	} else {
+	    total = ls_add(total,l[l_r_i+1]);
+	    ++l_r_i;
+	}
+    }
+    CHR_POS abs_l_l_95 = start_l + l_l_i,
+	abs_l_r_95 = start_l + l_r_i;
+
+    total = r[r_max_i];
+    CHR_POS r_l_i = r_max_i,
+	r_r_i = r_max_i;
+    t_last = bp->interval_r.i.end - bp->interval_r.i.start;
+
+    while ( ((r_l_i > 0) || (r_r_i < t_last)) && (total < p_95) ){
+	if ( r_l_i == 0 ) {
+	    total = ls_add(total, r[r_r_i+1]);
+	    ++r_r_i;
+	} else if ( r_r_i == t_last ) {
+	    total = ls_add(total, r[r_l_i-1]);
+	    --r_l_i;
+	} else if ( r[r_l_i-1] == r[r_r_i+1] ) {
+	    total = ls_add(total, r[r_r_i+1]);
+	    total = ls_add(total, r[r_l_i-1]);
+	    --r_l_i;
+	    ++r_r_i;
+	} else if ( r[r_l_i-1] > r[r_r_i+1] ) {
+	    total = ls_add(total, r[r_l_i-1]);
+	    --r_l_i;
+	} else {
+	    total = ls_add(total,r[r_r_i+1]);
+	    ++r_r_i;
+	}
+    }
+
+    CHR_POS abs_r_l_95 = start_r + r_l_i,
+	abs_r_r_95 = start_r + r_r_i;
+
+    cout << "95:" <<
+	bp->interval_l.i.chr << ":" << abs_l_l_95 << "-"<< abs_l_r_95 <<";"<<
+	bp->interval_r.i.chr << ":" << abs_r_l_95 << "-"<< abs_r_r_95;
+
+
+    CHR_POS open_l_start = 0,
+	open_r_start = 0;
+
+    if (bp->interval_l.i.start > 0)
+	open_l_start = bp->interval_l.i.start - 1;
+
+    if (bp->interval_r.i.start > 0)
+	open_r_start = bp->interval_r.i.start - 1;
+
+
+    // cout <<
+    // 	(score_l+score_r) << "\t" <<
+    // 	bp->interval_l.i.strand << "\t" <<
+    // 	bp->interval_r.i.strand << "\t";
+
+    // map<int, int>::iterator ids_it;
+    // vector<int> _ids;
+    // for ( ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
+    // 	_ids.push_back(ids_it->first);
+
+    // sort(_ids.begin(), _ids.end());
+
+    // vector<int>::iterator _ids_it;
+
+    // cout << "IDS:";
+    // for ( _ids_it = _ids.begin(); _ids_it != _ids.end(); ++_ids_it) {
+    // 	if (_ids_it != _ids.begin())
+    // 	    cout << ";";
+    // 	cout << *_ids_it << "," << ids[*_ids_it];
+    // }
+
+    // cout << "\t";
+
+    // cout << "STRANDS:";
+    // map<string,int>:: iterator s_it;
+    // for ( s_it = uniq_strands.begin(); s_it != uniq_strands.end(); ++s_it) {
+    // 	if (s_it != uniq_strands.begin())
+    // 	    cout <<  ";";
+    // 	cout << s_it->first << "," << s_it->second;
+    // }
+
+    // cout << "\t";
+
+
     // FORMAT
     vector<string>::iterator samp_itr;
     for (samp_itr = vcf->samples.begin();
     	 samp_itr != vcf->samples.end();
     	 ++samp_itr) {
     	add_format(*samp_itr, "GT", "./.");
-	add_format(*samp_itr, "SUP", "20");
+	add_format(*samp_itr, "SP", "20");
     }
+
+
+
+    free(l);
+    free(r);
+    cout << endl;
 }
 
 void
