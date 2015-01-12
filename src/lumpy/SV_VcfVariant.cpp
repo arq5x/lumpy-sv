@@ -28,14 +28,16 @@ vector<string> SV_VcfVariant::active_formats;
 SV_VcfVariant::
 SV_VcfVariant()
 {
-    chrom = ".";
-    pos = 0;
-    id = ".";
-    ref = "N";
-    alt = ".";
-    qual = ".";
-    filter = ".";
-    info = "";
+    is_multiline = false;
+    
+    chrom[LINE1] = ".";
+    pos[LINE1] = 0;
+    id[LINE1] = ".";
+    ref[LINE1] = "N";
+    alt[LINE1] = ".";
+    qual[LINE1] = ".";
+    filter[LINE1] = ".";
+    info[LINE1] = "";
 }
 
 SV_VcfVariant::
@@ -43,6 +45,8 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	      int bp_id,
 	      int print_prob)
 {
+    is_multiline = false;
+    
     // Get the most likely positions
     CHR_POS start_l, start_r, end_l, end_r;
     log_space *l,*r;
@@ -87,62 +91,81 @@ SV_VcfVariant(SV_BreakPoint *bp,
     CHR_POS abs_max_r = start_r + r_max_i;
 
     // CHROM, POS, ID, REF
-    chrom = bp->interval_l.i.chr;
-    pos = abs_max_l;
-    id = to_string(bp_id); // Note: removed the id: -1 control statement (CC 2014-01-10)
-    ref = "N";
+    chrom[LINE1] = bp->interval_l.i.chr;
+    chrom[LINE2] = bp->interval_r.i.chr;
+    pos[LINE1] = abs_max_l;
+    pos[LINE2] = abs_max_r;
+    ref[LINE1] = "N";
+    ref[LINE2] = "N";
 
+    // ALT
     bool interchrom = bp->interval_l.i.chr.compare(bp->interval_r.i.chr) != 0;
     map<string,int> uniq_strands = get_strands(bp);
+    // get alt allele for generic breakend
+    vector<string> alt_v;
+    alt_v = get_alt(chrom[LINE1],
+		    pos[LINE1],
+		    ref[LINE1],
+		    chrom[LINE2],
+		    pos[LINE2],
+		    ref[LINE2],
+		    uniq_strands.begin()->first);
+
     if (interchrom) {
-	// alt = "INTERCHROM";
-	set_info("SVTYPE", "BND");
+	is_multiline = true;
+	alt[LINE1] = alt_v[LINE1];
+	alt[LINE2] = alt_v[LINE2];
+	set_info(LINE1, "SVTYPE", "BND");
+	set_info(LINE2, "SVTYPE", "BND");
     }
     else if (bp->type == bp->DELETION ) {
-	// alt = "<DEL>";
-	set_info("SVTYPE", "DEL");
+	alt[LINE1] = "<DEL>";
+	set_info(LINE1, "SVTYPE", "DEL");
     }
     else if (bp->type == bp->DUPLICATION) {
-	// alt = "<DUP>";
-	set_info("SVTYPE", "DUP");
+	alt[LINE1] = "<DUP>";
+	set_info(LINE1, "SVTYPE", "DUP");
     }
+    // TODO: multi line inversions should not have CIEND
     else if (bp->type == bp->INVERSION
 	     && uniq_strands["++"] > 0
 	     && uniq_strands["--"] > 0) {
-	// alt = "<INV>";
-	set_info("SVTYPE", "INV");
+	alt[LINE1] = "<INV>";
+	set_info(LINE1, "SVTYPE", "INV");
     }
     else {
 	// set the alt for the first of two lines
 	// in the multi-line variant
-
-	// cout << alt_v[0] << endl;
-	set_info("SVTYPE", "BND");
+	is_multiline = true;
+	alt[LINE1] = alt_v[LINE1];;
+	alt[LINE2] = alt_v[LINE2];;
+	set_info(LINE1, "SVTYPE", "BND");
+	set_info(LINE2, "SVTYPE", "BND");
     }
-    vector<string> alt_v;
-    alt_v = get_alt(bp->interval_l.i.chr,
-		    abs_max_l,
-		    bp->interval_r.i.chr,
-		    abs_max_r,
-		    ref,
-		    uniq_strands.begin()->first);
-    alt = alt_v[0];
-    
-    qual = ".";
-    filter = ".";
 
+    qual[LINE1] = ".";
+    filter[LINE1] = ".";
+    if (is_multiline) {
+	id[LINE1] = to_string(bp_id).append("_1");
+	id[LINE2] = to_string(bp_id).append("_2");
+	qual[LINE2] = ".";
+	filter[LINE2] = ".";
+    }
+    else
+	id[LINE1] = to_string(bp_id); // Note: removed the id: -1 control statement (CC 2014-01-10)
+    
     // CHECK FOR 1-OFF HERE!
-    if (!interchrom) {
+    if (! is_multiline) {
 	// INFO: SVLEN
 	int svlen;
 	if (bp->type == bp->DELETION)
 	    svlen = abs_max_l - abs_max_r;
 	else
 	    svlen = abs_max_r - abs_max_l;
-	set_info("SVLEN", to_string(svlen));
+	set_info(LINE1, "SVLEN", to_string(svlen));
 	
 	// INFO: END
-	set_info("END", to_string(abs_max_r));
+	set_info(LINE1, "END", to_string(abs_max_r));
     }
 
     // INFO: STRANDS
@@ -155,7 +178,9 @@ SV_VcfVariant(SV_BreakPoint *bp,
     	    strands <<  ",";
     	strands << s_it->first << ":" << s_it->second;
     }
-    set_info("STRANDS", strands.str());
+    set_info(LINE1, "STRANDS", strands.str());
+    if (is_multiline)
+	set_info(LINE2, "STRANDS", strands.str());
     
     // INFO: CIPOS:: CHECK FOR OFF BY ONE HERE.
     int cipos_l = bp->interval_l.i.start - abs_max_l;
@@ -163,23 +188,18 @@ SV_VcfVariant(SV_BreakPoint *bp,
     string ci_join = to_string(cipos_l);
     ci_join.append(",");
     ci_join.append(to_string(cipos_r));
-    set_info("CIPOS", ci_join);
+    set_info(LINE1, "CIPOS", ci_join);
 
-    if (!interchrom) {
-	int ciend_l = bp->interval_r.i.start - abs_max_r;
-	int ciend_r = bp->interval_r.i.end - abs_max_r;
-	ci_join = to_string(ciend_l);
-	ci_join.append(",");
-	ci_join.append(to_string(ciend_r));
-	set_info("CIEND", ci_join);
-
-	// INFO: IMPRECISE (based on full confidence interval)
-	if (cipos_l != 0 ||
-	    cipos_r != 0 ||
-	    ciend_l != 0 ||
-	    ciend_r != 0)
-	    set_info("IMPRECISE");
-    }
+    int ciend_l = bp->interval_r.i.start - abs_max_r;
+    int ciend_r = bp->interval_r.i.end - abs_max_r;
+    ci_join = to_string(ciend_l);
+    ci_join.append(",");
+    ci_join.append(to_string(ciend_r));
+    
+    if (is_multiline)
+	set_info(LINE2, "CIPOS", ci_join);
+    else
+	set_info(LINE1, "CIEND", ci_join);
 
     // INFO: Get the area that includes 95% of the probabitliy
     log_space p_95 = get_ls(0.95);
@@ -209,49 +229,63 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	}
     }
     // CHR_POS abs_l_l_95 = start_l + l_l_i,
-    // 	abs_l_r_95 = start_l + l_r_i;
+    // abs_l_r_95 = start_l + l_r_i;
     int cipos95_l = start_l + l_l_i - abs_max_l;
     int cipos95_r = start_l + l_r_i - abs_max_l;
     ci_join = to_string(cipos95_l);
     ci_join.append(",");
     ci_join.append(to_string(cipos95_r));
-    set_info("CIPOS95", ci_join);
+    set_info(LINE1, "CIPOS95", ci_join);
 
-    if (!interchrom) {
-	total = r[r_max_i];
-	CHR_POS r_l_i = r_max_i,
-	    r_r_i = r_max_i;
-	t_last = bp->interval_r.i.end - bp->interval_r.i.start;
+    // if (!interchrom) {
+    total = r[r_max_i];
+    CHR_POS r_l_i = r_max_i,
+	r_r_i = r_max_i;
+    t_last = bp->interval_r.i.end - bp->interval_r.i.start;
 
-	while ( ((r_l_i > 0) || (r_r_i < t_last)) && (total < p_95) ){
-	    if ( r_l_i == 0 ) {
-		total = ls_add(total, r[r_r_i+1]);
-		++r_r_i;
-	    } else if ( r_r_i == t_last ) {
-		total = ls_add(total, r[r_l_i-1]);
-		--r_l_i;
-	    } else if ( r[r_l_i-1] == r[r_r_i+1] ) {
-		total = ls_add(total, r[r_r_i+1]);
-		total = ls_add(total, r[r_l_i-1]);
-		--r_l_i;
-		++r_r_i;
-	    } else if ( r[r_l_i-1] > r[r_r_i+1] ) {
-		total = ls_add(total, r[r_l_i-1]);
-		--r_l_i;
-	    } else {
-		total = ls_add(total,r[r_r_i+1]);
-		++r_r_i;
-	    }
+    while ( ((r_l_i > 0) || (r_r_i < t_last)) && (total < p_95) ){
+	if ( r_l_i == 0 ) {
+	    total = ls_add(total, r[r_r_i+1]);
+	    ++r_r_i;
+	} else if ( r_r_i == t_last ) {
+	    total = ls_add(total, r[r_l_i-1]);
+	    --r_l_i;
+	} else if ( r[r_l_i-1] == r[r_r_i+1] ) {
+	    total = ls_add(total, r[r_r_i+1]);
+	    total = ls_add(total, r[r_l_i-1]);
+	    --r_l_i;
+	    ++r_r_i;
+	} else if ( r[r_l_i-1] > r[r_r_i+1] ) {
+	    total = ls_add(total, r[r_l_i-1]);
+	    --r_l_i;
+	} else {
+	    total = ls_add(total,r[r_r_i+1]);
+	    ++r_r_i;
 	}
+    }
 
-	// CHR_POS abs_r_l_95 = start_r + r_l_i,
-	// 	abs_r_r_95 = start_r + r_r_i;
-	int ciend95_l = start_r + r_l_i - abs_max_r;
-	int ciend95_r = start_r + r_r_i - abs_max_r;
-	ci_join = to_string(ciend95_l);
-	ci_join.append(",");
-	ci_join.append(to_string(ciend95_r));
-	set_info("CIEND95", ci_join);
+    // CHR_POS abs_r_l_95 = start_r + r_l_i,
+    // 	abs_r_r_95 = start_r + r_r_i;
+    int ciend95_l = start_r + r_l_i - abs_max_r;
+    int ciend95_r = start_r + r_r_i - abs_max_r;
+    ci_join = to_string(ciend95_l);
+    ci_join.append(",");
+    ci_join.append(to_string(ciend95_r));
+    // }
+
+    if (is_multiline)
+	set_info(LINE2, "CIPOS95", ci_join);
+    else
+	set_info(LINE1, "CIEND95", ci_join);
+
+    // INFO: IMPRECISE (based on 95% confidence interval)
+    if (cipos95_l != 0 ||
+    	cipos95_r != 0 ||
+    	ciend95_l != 0 ||
+    	ciend95_r != 0) {
+    	set_info(LINE1, "IMPRECISE");
+    	if (is_multiline)
+    	    set_info(LINE2, "IMPRECISE");
     }
 
     // FORMAT: initialize appropriate sample fields
@@ -277,7 +311,6 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	}
     }
 
-	
     // FORMAT: update variant support with evidence counts
     map<string,int> var_supp;
     map<int, int>::iterator ids_it;
@@ -308,15 +341,20 @@ SV_VcfVariant(SV_BreakPoint *bp,
     }
     
     // INFO: add variant support across all samples
-    set_info("SU", to_string(var_supp["SU"]));
+    set_info(LINE1, "SU", to_string(var_supp["SU"]));
+    if (is_multiline)
+	set_info(LINE2, "SU", to_string(var_supp["SU"]));
     for (vector<string>::iterator ev_it = ev_v.begin();
 	 ev_it != ev_v.end();
 	 ++ev_it) {
 	if (find(active_formats.begin(),
 		 active_formats.end(),
 		 *ev_it)
-	    != active_formats.end())
-	    set_info(*ev_it, to_string(var_supp[*ev_it]));
+	    != active_formats.end()) {
+	    set_info(LINE1, *ev_it, to_string(var_supp[*ev_it]));
+	    if (is_multiline)
+		set_info(LINE2, *ev_it, to_string(var_supp[*ev_it]));
+	}
     }
 
     // INFO: LP, RP
@@ -336,8 +374,13 @@ SV_VcfVariant(SV_BreakPoint *bp,
 		rp.append(",");
 	    rp.append(to_string(get_p(r[r_trim_offset+i])));
 	}
-	set_info("LP", lp);
-	set_info("RP", rp);
+	set_info(LINE1, "LP", lp);
+	set_info(LINE1, "RP", rp);
+
+	if (is_multiline) {
+	    set_info(LINE2, "LP", lp);
+	    set_info(LINE2, "RP", rp);
+	}
     }
 
     free(l);
@@ -382,45 +425,46 @@ vector<string>
 SV_VcfVariant::
 get_alt(string l_chrom,
 	CHR_POS l_pos,
+	string l_ref,
 	string r_chrom,
 	CHR_POS r_pos,
-	string ref,
+	string r_ref,
 	string strands)
 {
     vector<string> alt;
     stringstream l_alt, r_alt;
 
     if (strands == "+-") {
-	l_alt << ref <<
+	l_alt << l_ref <<
 	    "[" << r_chrom <<
 	    ":" << r_pos << "[";
 	r_alt << "]" <<
 	    l_chrom << ":" <<
-	    l_pos << "]" << ref;
+	    l_pos << "]" << r_ref;
     }
     else if (strands == "-+") {
 	l_alt << "]" <<
 	    r_chrom << ":" <<
-	    r_pos << "]" << ref;
-	r_alt << ref <<
+	    r_pos << "]" << l_ref;
+	r_alt << r_ref <<
 	    "[" << l_chrom <<
-	    ":" << r_pos << "[";
+	    ":" << l_pos << "[";
     }
     else if (strands == "++") {
-	l_alt << ref <<
+	l_alt << l_ref <<
 	    "]" << r_chrom <<
 	    ":" << r_pos << "]";
-	r_alt << ref <<
+	r_alt << r_ref <<
 	    "]" << l_chrom <<
-	    ":" << r_pos << "]";
+	    ":" << l_pos << "]";
     }
     else if (strands == "--") {
 	l_alt << "[" <<
 	    r_chrom << ":" <<
-	    r_pos << "[" << ref;
-	l_alt << "[" <<
+	    r_pos << "[" << l_ref;
+	r_alt << "[" <<
 	    l_chrom << ":" <<
-	    r_pos << "[" << ref;
+	    l_pos << "[" << r_ref;
     }
 
     alt.push_back(l_alt.str());
@@ -442,23 +486,25 @@ add_sample(string sample_name)
 
 void
 SV_VcfVariant::
-set_info(string id)
+set_info(int line,
+	 string id)
 {
-    if (info != "")
-	info.append(";");
-    info.append(id);
+    if (info[line] != "")
+	info[line].append(";");
+    info[line].append(id);
 }
 
 void
 SV_VcfVariant::
-set_info(string id,
+set_info(int line,
+	 string id,
 	 string val)
 {
-    if (info != "")
-	info.append(";");
-    info.append(id);
-    info.append("=");
-    info.append(val);
+    if (info[line] != "")
+	info[line].append(";");
+    info[line].append(id);
+    info[line].append("=");
+    info[line].append(val);
 }
 
 void
@@ -531,25 +577,27 @@ print_var()
 {
     string sep = "\t";
     string format = get_format_string();
+    int num_lines = is_multiline + 1;
+
+    for (int i = 0; i < num_lines; ++i) {
+	cout << chrom[i] << sep <<
+	    pos[i] << sep <<
+	    id[i] << sep <<
+	    ref[i] << sep <<
+	    alt[i] << sep <<
+	    qual[i] << sep <<
+	    filter[i] << sep <<
+	    info[i] << sep <<
+	    format;
+	vector<string>::iterator samp_it;
+	for (samp_it = samples.begin();
+	     samp_it != samples.end();
+	     ++samp_it)
+	    cout << sep <<
+		get_sample_string(*samp_it);
     
-    cout << chrom << sep <<
-	pos << sep <<
-	id << sep <<
-	ref << sep <<
-	alt << sep <<
-	qual << sep <<
-	filter << sep <<
-	info << sep <<
-	format;
-    
-    vector<string>::iterator samp_it;
-    for (samp_it = samples.begin();
-	 samp_it != samples.end();
-	 ++samp_it)
-	cout << sep <<
-	    get_sample_string(*samp_it);
-    
-    cout << endl;
+	cout << endl;
+    }
 }
 
 void
@@ -562,6 +610,7 @@ print_header()
 	"##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">" << endl <<
 	"##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">" << endl <<
 	"##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the variant described in this record\">" << endl <<
+	"##INFO=<ID=STRANDS,Number=.,Type=String,Description=\"Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)\">" << endl <<
 	"##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description=\"Imprecise structural variation\">" << endl <<
 	"##INFO=<ID=CIPOS,Number=2,Type=Integer,Description=\"Confidence interval around POS for imprecise variants\">" << endl <<
 	"##INFO=<ID=CIEND,Number=2,Type=Integer,Description=\"Confidence interval around END for imprecise variants\">" << endl <<
@@ -576,6 +625,12 @@ print_header()
 	"##INFO=<ID=LP,Number=.,Type=String,Description=\"LUMPY probability curve of the left breakend\">" << endl <<
 	"##INFO=<ID=RP,Number=.,Type=String,Description=\"LUMPY probability curve of the right breakend\">" << endl <<
 	// "##INFO=<ID=PRIN,Number=0,Type=Flag,Description=\"Indicates variant as the principal variant in a BEDPE pair\">" << endl <<
+	"##ALT=<ID=DEL,Description=\"Deletion\">" << endl <<
+	"##ALT=<ID=DUP,Description=\"Duplication\">" << endl <<
+	"##ALT=<ID=INV,Description=\"Inversion\">" << endl <<
+	"##ALT=<ID=DUP:TANDEM,Description=\"Tandem duplication\">" << endl <<
+	"##ALT=<ID=INS,Description=\"Insertion of novel sequence\">" << endl <<
+	"##ALT=<ID=CNV,Description=\"Copy number variable region\">" << endl <<
 	"##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl <<
 	"##FORMAT=<ID=SU,Number=1,Type=Integer,Description=\"Number of pieces of evidence supporting the variant\">" << endl <<
 	"##FORMAT=<ID=PE,Number=1,Type=Integer,Description=\"Number of paired-end reads supporting the variant\">" << endl <<
