@@ -614,6 +614,7 @@ print_header()
     string sep = "\t";
 
     cout << "##fileformat=VCFv4.2" << endl <<
+	"##source=LUMPY"
 	"##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">" << endl <<
 	"##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">" << endl <<
 	"##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the variant described in this record\">" << endl <<
@@ -631,7 +632,6 @@ print_header()
 	"##INFO=<ID=EV,Number=.,Type=String,Description=\"Type of LUMPY evidence contributing to the variant call\">" << endl <<
 	"##INFO=<ID=LP,Number=.,Type=String,Description=\"LUMPY probability curve of the left breakend\">" << endl <<
 	"##INFO=<ID=RP,Number=.,Type=String,Description=\"LUMPY probability curve of the right breakend\">" << endl <<
-	// "##INFO=<ID=PRIN,Number=0,Type=Flag,Description=\"Indicates variant as the principal variant in a BEDPE pair\">" << endl <<
 	"##ALT=<ID=DEL,Description=\"Deletion\">" << endl <<
 	"##ALT=<ID=DUP,Description=\"Duplication\">" << endl <<
 	"##ALT=<ID=INV,Description=\"Inversion\">" << endl <<
