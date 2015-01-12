@@ -146,6 +146,7 @@ SV_VcfVariant(SV_BreakPoint *bp,
     qual[LINE1] = ".";
     filter[LINE1] = ".";
     if (is_multiline) {
+	set_info(LINE1, "PRIMARY");
 	id[LINE1] = to_string(bp_id).append("_1");
 	id[LINE2] = to_string(bp_id).append("_2");
 
@@ -244,7 +245,6 @@ SV_VcfVariant(SV_BreakPoint *bp,
     ci_join.append(to_string(cipos95_r));
     set_info(LINE1, "CIPOS95", ci_join);
 
-    // if (!interchrom) {
     total = r[r_max_i];
     CHR_POS r_l_i = r_max_i,
 	r_r_i = r_max_i;
@@ -278,7 +278,6 @@ SV_VcfVariant(SV_BreakPoint *bp,
     ci_join = to_string(ciend95_l);
     ci_join.append(",");
     ci_join.append(to_string(ciend95_r));
-    // }
 
     if (is_multiline)
 	set_info(LINE2, "CIPOS95", ci_join);
@@ -364,7 +363,7 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	}
     }
 
-    // INFO: LP, RP
+    // INFO: PRPOS, PREND
     if (print_prob > 0) {
 	string lp, rp;
 	for (i = 0;
@@ -381,12 +380,12 @@ SV_VcfVariant(SV_BreakPoint *bp,
 		rp.append(",");
 	    rp.append(to_string(get_p(r[r_trim_offset+i])));
 	}
-	set_info(LINE1, "LP", lp);
-	set_info(LINE1, "RP", rp);
+	set_info(LINE1, "PRPOS", lp);
+	set_info(LINE1, "PREND", rp);
 
 	if (is_multiline) {
-	    set_info(LINE2, "LP", lp);
-	    set_info(LINE2, "RP", rp);
+	    set_info(LINE2, "PRPOS", rp);
+	    set_info(LINE2, "PREND", lp);
 	}
     }
 
@@ -626,12 +625,13 @@ print_header()
 	"##INFO=<ID=CIEND95,Number=2,Type=Integer,Description=\"Confidence interval (95%) around END for imprecise variants\">" << endl <<
 	"##INFO=<ID=MATEID,Number=.,Type=String,Description=\"ID of mate breakends\">" << endl <<
 	"##INFO=<ID=EVENT,Number=1,Type=String,Description=\"ID of event associated to breakend\">" << endl <<
+	"##INFO=<ID=PRIMARY,Number=0,Type=Flag,Description=\"Primary breakend in a multi-line variants\">" << endl <<
 	"##INFO=<ID=SU,Number=.,Type=Integer,Description=\"Number of pieces of evidence supporting the variant across all samples\">" << endl <<
 	"##INFO=<ID=PE,Number=.,Type=Integer,Description=\"Number of paired-end reads supporting the variant across all samples\">" << endl <<
 	"##INFO=<ID=SR,Number=.,Type=Integer,Description=\"Number of split reads supporting the variant across all samples\">" << endl <<
 	"##INFO=<ID=EV,Number=.,Type=String,Description=\"Type of LUMPY evidence contributing to the variant call\">" << endl <<
-	"##INFO=<ID=LP,Number=.,Type=String,Description=\"LUMPY probability curve of the left breakend\">" << endl <<
-	"##INFO=<ID=RP,Number=.,Type=String,Description=\"LUMPY probability curve of the right breakend\">" << endl <<
+	"##INFO=<ID=PRPOS,Number=.,Type=String,Description=\"LUMPY probability curve of the POS breakend\">" << endl <<
+	"##INFO=<ID=PREND,Number=.,Type=String,Description=\"LUMPY probability curve of the END breakend\">" << endl <<
 	"##ALT=<ID=DEL,Description=\"Deletion\">" << endl <<
 	"##ALT=<ID=DUP,Description=\"Duplication\">" << endl <<
 	"##ALT=<ID=INV,Description=\"Inversion\">" << endl <<
