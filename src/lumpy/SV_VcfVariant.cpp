@@ -614,7 +614,7 @@ print_header()
     string sep = "\t";
 
     cout << "##fileformat=VCFv4.2" << endl <<
-	"##source=LUMPY"
+	"##source=LUMPY" << endl <<
 	"##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">" << endl <<
 	"##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">" << endl <<
 	"##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the variant described in this record\">" << endl <<
