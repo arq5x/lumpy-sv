@@ -43,36 +43,6 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	      int bp_id,
 	      int print_prob)
 {
-    map<string,int> uniq_strands;
-    vector<SV_Evidence*>::iterator it;
-    vector<SV_BreakPoint *> bps;
-    vector<string>::iterator samp_it;
-
-    for (it = bp->evidence.begin(); it < bp->evidence.end(); ++it) {
-	SV_Evidence *e = *it;
-	SV_BreakPoint *tmp_bp = e->get_bp();
-	tmp_bp->init_interval_probabilities();
-
-	bps.push_back(tmp_bp);
-
-	stringstream strands;
-	strands << tmp_bp->interval_l.i.strand << tmp_bp->interval_r.i.strand;
-
-	if (uniq_strands.find(strands.str()) == uniq_strands.end())
-	    uniq_strands[strands.str()] = 1;
-	else
-	    uniq_strands[strands.str()] = uniq_strands[strands.str()] + 1;
-    }
-
-    double score_l, score_r;
-    bp->get_score(bps, &score_l, &score_r);
-
-    vector<SV_BreakPoint *>::iterator bp_it;
-    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
-	SV_BreakPoint *tmp_bp = *bp_it;
-	delete tmp_bp;
-    }
-
     // Get the most likely positions
     CHR_POS start_l, start_r, end_l, end_r;
     log_space *l,*r;
@@ -116,39 +86,76 @@ SV_VcfVariant(SV_BreakPoint *bp,
     // position start_r, and r_max_i is w.r.t. r[0]
     CHR_POS abs_max_r = start_r + r_max_i;
 
-    // set fixed VCF columns
+    // CHROM, POS, ID, REF
     chrom = bp->interval_l.i.chr;
     pos = abs_max_l;
     id = to_string(bp_id); // Note: removed the id: -1 control statement (CC 2014-01-10)
     ref = "N";
-    if (bp->interval_l.i.chr.compare(bp->interval_r.i.chr) != 0) {
-	alt = "INTERCHROM";
+
+    bool interchrom = bp->interval_l.i.chr.compare(bp->interval_r.i.chr) != 0;
+    map<string,int> uniq_strands = get_strands(bp);
+    if (interchrom) {
+	// alt = "INTERCHROM";
 	set_info("SVTYPE", "BND");
     }
     else if (bp->type == bp->DELETION ) {
-	alt = "<DEL>";
+	// alt = "<DEL>";
 	set_info("SVTYPE", "DEL");
     }
     else if (bp->type == bp->DUPLICATION) {
-	alt = "<DUP>";
+	// alt = "<DUP>";
 	set_info("SVTYPE", "DUP");
     }
-    else if (bp->type == bp->INVERSION) {
-	alt = "<INV>";
+    else if (bp->type == bp->INVERSION
+	     && uniq_strands["++"] > 0
+	     && uniq_strands["--"] > 0) {
+	// alt = "<INV>";
 	set_info("SVTYPE", "INV");
     }
-    else
-	alt = ".";
+    else {
+	// set the alt for the first of two lines
+	// in the multi-line variant
+
+	// cout << alt_v[0] << endl;
+	set_info("SVTYPE", "BND");
+    }
+    vector<string> alt_v;
+    alt_v = get_alt(bp->interval_l.i.chr,
+		    abs_max_l,
+		    bp->interval_r.i.chr,
+		    abs_max_r,
+		    ref,
+		    uniq_strands.begin()->first);
+    alt = alt_v[0];
+    
     qual = ".";
     filter = ".";
 
-    // INFO: SVLEN
-    int64_t svlen = abs_max_l - abs_max_r;
-    set_info("SVLEN", to_string(svlen));
+    // CHECK FOR 1-OFF HERE!
+    if (!interchrom) {
+	// INFO: SVLEN
+	int svlen;
+	if (bp->type == bp->DELETION)
+	    svlen = abs_max_l - abs_max_r;
+	else
+	    svlen = abs_max_r - abs_max_l;
+	set_info("SVLEN", to_string(svlen));
+	
+	// INFO: END
+	set_info("END", to_string(abs_max_r));
+    }
 
-    // INFO: END
-    set_info("END", to_string(abs_max_r));
-    
+    // INFO: STRANDS
+    stringstream strands;
+    map<string,int>::iterator s_it;
+    for (s_it = uniq_strands.begin();
+	 s_it != uniq_strands.end();
+	 ++s_it) {
+    	if (s_it != uniq_strands.begin())
+    	    strands <<  ",";
+    	strands << s_it->first << ":" << s_it->second;
+    }
+    set_info("STRANDS", strands.str());
     
     // INFO: CIPOS:: CHECK FOR OFF BY ONE HERE.
     int cipos_l = bp->interval_l.i.start - abs_max_l;
@@ -158,12 +165,21 @@ SV_VcfVariant(SV_BreakPoint *bp,
     ci_join.append(to_string(cipos_r));
     set_info("CIPOS", ci_join);
 
-    int ciend_l = bp->interval_r.i.start - abs_max_r;
-    int ciend_r = bp->interval_r.i.end - abs_max_r;
-    ci_join = to_string(ciend_l);
-    ci_join.append(",");
-    ci_join.append(to_string(ciend_r));
-    set_info("CIEND", ci_join);
+    if (!interchrom) {
+	int ciend_l = bp->interval_r.i.start - abs_max_r;
+	int ciend_r = bp->interval_r.i.end - abs_max_r;
+	ci_join = to_string(ciend_l);
+	ci_join.append(",");
+	ci_join.append(to_string(ciend_r));
+	set_info("CIEND", ci_join);
+
+	// INFO: IMPRECISE (based on full confidence interval)
+	if (cipos_l != 0 ||
+	    cipos_r != 0 ||
+	    ciend_l != 0 ||
+	    ciend_r != 0)
+	    set_info("IMPRECISE");
+    }
 
     // INFO: Get the area that includes 95% of the probabitliy
     log_space p_95 = get_ls(0.95);
@@ -201,46 +217,42 @@ SV_VcfVariant(SV_BreakPoint *bp,
     ci_join.append(to_string(cipos95_r));
     set_info("CIPOS95", ci_join);
 
-    total = r[r_max_i];
-    CHR_POS r_l_i = r_max_i,
-	r_r_i = r_max_i;
-    t_last = bp->interval_r.i.end - bp->interval_r.i.start;
+    if (!interchrom) {
+	total = r[r_max_i];
+	CHR_POS r_l_i = r_max_i,
+	    r_r_i = r_max_i;
+	t_last = bp->interval_r.i.end - bp->interval_r.i.start;
 
-    while ( ((r_l_i > 0) || (r_r_i < t_last)) && (total < p_95) ){
-	if ( r_l_i == 0 ) {
-	    total = ls_add(total, r[r_r_i+1]);
-	    ++r_r_i;
-	} else if ( r_r_i == t_last ) {
-	    total = ls_add(total, r[r_l_i-1]);
-	    --r_l_i;
-	} else if ( r[r_l_i-1] == r[r_r_i+1] ) {
-	    total = ls_add(total, r[r_r_i+1]);
-	    total = ls_add(total, r[r_l_i-1]);
-	    --r_l_i;
-	    ++r_r_i;
-	} else if ( r[r_l_i-1] > r[r_r_i+1] ) {
-	    total = ls_add(total, r[r_l_i-1]);
-	    --r_l_i;
-	} else {
-	    total = ls_add(total,r[r_r_i+1]);
-	    ++r_r_i;
+	while ( ((r_l_i > 0) || (r_r_i < t_last)) && (total < p_95) ){
+	    if ( r_l_i == 0 ) {
+		total = ls_add(total, r[r_r_i+1]);
+		++r_r_i;
+	    } else if ( r_r_i == t_last ) {
+		total = ls_add(total, r[r_l_i-1]);
+		--r_l_i;
+	    } else if ( r[r_l_i-1] == r[r_r_i+1] ) {
+		total = ls_add(total, r[r_r_i+1]);
+		total = ls_add(total, r[r_l_i-1]);
+		--r_l_i;
+		++r_r_i;
+	    } else if ( r[r_l_i-1] > r[r_r_i+1] ) {
+		total = ls_add(total, r[r_l_i-1]);
+		--r_l_i;
+	    } else {
+		total = ls_add(total,r[r_r_i+1]);
+		++r_r_i;
+	    }
 	}
-    }
-    // CHR_POS abs_r_l_95 = start_r + r_l_i,
-    // 	abs_r_r_95 = start_r + r_r_i;
-    int ciend95_l = start_r + r_l_i - abs_max_r;
-    int ciend95_r = start_r + r_r_i - abs_max_r;
-    ci_join = to_string(ciend95_l);
-    ci_join.append(",");
-    ci_join.append(to_string(ciend95_r));
-    set_info("CIEND95", ci_join);
 
-    // INFO: IMPRECISE (based on full confidence interval)
-    if (cipos_l != 0 ||
-	cipos_r != 0 ||
-	ciend_l != 0 ||
-	ciend_r != 0)
-	set_info("IMPRECISE");
+	// CHR_POS abs_r_l_95 = start_r + r_l_i,
+	// 	abs_r_r_95 = start_r + r_r_i;
+	int ciend95_l = start_r + r_l_i - abs_max_r;
+	int ciend95_r = start_r + r_r_i - abs_max_r;
+	ci_join = to_string(ciend95_l);
+	ci_join.append(",");
+	ci_join.append(to_string(ciend95_r));
+	set_info("CIEND95", ci_join);
+    }
 
     // FORMAT: initialize appropriate sample fields
     vector<string> ev_v;
@@ -248,10 +260,11 @@ SV_VcfVariant(SV_BreakPoint *bp,
     ev_v.push_back("SR");
     ev_v.push_back("BD");
 
+    vector<string>::iterator samp_it;
     for (samp_it = samples.begin();
-    	 samp_it != samples.end();
-    	 ++samp_it) {
-    	set_sample_field(*samp_it, "GT", "./.");
+	 samp_it != samples.end();
+	 ++samp_it) {
+	set_sample_field(*samp_it, "GT", "./.");
 	set_sample_field(*samp_it, "SU", "0");
 	for (vector<string>::iterator it = ev_v.begin();
 	     it != ev_v.end();
@@ -264,6 +277,7 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	}
     }
 
+	
     // FORMAT: update variant support with evidence counts
     map<string,int> var_supp;
     map<int, int>::iterator ids_it;
@@ -305,17 +319,6 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	    set_info(*ev_it, to_string(var_supp[*ev_it]));
     }
 
-    // cout << "STRANDS:";
-    // map<string,int>:: iterator s_it;
-    // for ( s_it = uniq_strands.begin(); s_it != uniq_strands.end(); ++s_it) {
-    // 	if (s_it != uniq_strands.begin())
-    // 	    cout <<  ";";
-    // 	cout << s_it->first << "," << s_it->second;
-    // }
-
-    // cout << "\t";
-
-
     // INFO: LP, RP
     if (print_prob > 0) {
 	string lp, rp;
@@ -339,6 +342,91 @@ SV_VcfVariant(SV_BreakPoint *bp,
 
     free(l);
     free(r);
+}
+
+map<string,int>
+SV_VcfVariant::
+get_strands(SV_BreakPoint *bp)
+{
+    vector<SV_Evidence*>::iterator it;
+    vector<SV_BreakPoint *> bps;
+    map<string,int> uniq_strands;
+    for (it = bp->evidence.begin();
+	 it < bp->evidence.end();
+	 ++it) {
+	SV_Evidence *e = *it;
+	SV_BreakPoint *tmp_bp = e->get_bp();
+	tmp_bp->init_interval_probabilities();
+
+	bps.push_back(tmp_bp);
+
+	stringstream strands;
+	strands << tmp_bp->interval_l.i.strand << tmp_bp->interval_r.i.strand;
+
+	if (uniq_strands.find(strands.str()) == uniq_strands.end())
+	    uniq_strands[strands.str()] = 1;
+	else
+	    uniq_strands[strands.str()] = uniq_strands[strands.str()] + 1;
+    }
+
+    vector<SV_BreakPoint *>::iterator bp_it;
+    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+	SV_BreakPoint *tmp_bp = *bp_it;
+	delete tmp_bp;
+    }
+    
+    return uniq_strands;
+}
+
+vector<string>
+SV_VcfVariant::
+get_alt(string l_chrom,
+	CHR_POS l_pos,
+	string r_chrom,
+	CHR_POS r_pos,
+	string ref,
+	string strands)
+{
+    vector<string> alt;
+    stringstream l_alt, r_alt;
+
+    if (strands == "+-") {
+	l_alt << ref <<
+	    "[" << r_chrom <<
+	    ":" << r_pos << "[";
+	r_alt << "]" <<
+	    l_chrom << ":" <<
+	    l_pos << "]" << ref;
+    }
+    else if (strands == "-+") {
+	l_alt << "]" <<
+	    r_chrom << ":" <<
+	    r_pos << "]" << ref;
+	r_alt << ref <<
+	    "[" << l_chrom <<
+	    ":" << r_pos << "[";
+    }
+    else if (strands == "++") {
+	l_alt << ref <<
+	    "]" << r_chrom <<
+	    ":" << r_pos << "]";
+	r_alt << ref <<
+	    "]" << l_chrom <<
+	    ":" << r_pos << "]";
+    }
+    else if (strands == "--") {
+	l_alt << "[" <<
+	    r_chrom << ":" <<
+	    r_pos << "[" << ref;
+	l_alt << "[" <<
+	    l_chrom << ":" <<
+	    r_pos << "[" << ref;
+    }
+
+    alt.push_back(l_alt.str());
+    alt.push_back(r_alt.str());
+    
+    return alt;
 }
 
 void

@@ -648,9 +648,18 @@ int main(int argc, char* argv[])
         if ( bp->weight >= min_weight ) {
             //bp->do_it();
             if (bp->trim_intervals() > 0) {
-                bp->print_bedpe(++call_id, print_prob);
-                if (show_evidence)
-                    bp->print_evidence("\t");
+		if (bedpe_output) {
+		    bp->print_bedpe(++call_id, print_prob);
+		    if (show_evidence)
+			bp->print_evidence("\t");
+		}
+		else {
+		    SV_VcfVariant *vcf_var =
+			new SV_VcfVariant(bp,
+					  ++call_id,
+					  print_prob);
+		    vcf_var->print_var();
+		}
             }
         }
 
@@ -777,9 +786,18 @@ int main(int argc, char* argv[])
                     if ( bp->weight >= min_weight ) {
                         //bp->do_it();
                         if (bp->trim_intervals() > 0) {
-                            bp->print_bedpe(++call_id, print_prob);
-                            if (show_evidence)
-                                bp->print_evidence("\t");
+			    if (bedpe_output) {
+				bp->print_bedpe(++call_id, print_prob);
+				if (show_evidence)
+				    bp->print_evidence("\t");
+			    }
+			    else {
+				SV_VcfVariant *vcf_var =
+				    new SV_VcfVariant(bp,
+						      ++call_id,
+						      print_prob);
+				vcf_var->print_var();
+			    }
                         }
                     }
 
@@ -814,9 +832,18 @@ int main(int argc, char* argv[])
             if ( bp->weight >= min_weight ) {
                 //bp->do_it();
                 if (bp->trim_intervals() > 0) {
-                    bp->print_bedpe(++call_id, print_prob);
-                    if (show_evidence)
-                        bp->print_evidence("\t");
+		    if (bedpe_output) {
+			bp->print_bedpe(++call_id, print_prob);
+			if (show_evidence)
+			    bp->print_evidence("\t");
+		    }
+		    else {
+			SV_VcfVariant *vcf_var =
+			    new SV_VcfVariant(bp,
+					      ++call_id,
+					      print_prob);
+			vcf_var->print_var();
+		    }
                 }
             }
 

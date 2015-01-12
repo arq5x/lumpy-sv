@@ -41,6 +41,14 @@ class SV_VcfVariant
     string filter;
     string info;
 
+    map<string,int> get_strands(SV_BreakPoint *bp);
+    vector<string> get_alt(string l_chrom,
+			   CHR_POS l_pos,
+			   string r_chrom,
+			   CHR_POS r_pos,
+			   string ref,
+			   string strands);
+    
     void add_sample(string sample_name);
     void set_info(string id);
     void set_info(string id,
