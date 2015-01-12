@@ -148,6 +148,13 @@ SV_VcfVariant(SV_BreakPoint *bp,
     if (is_multiline) {
 	id[LINE1] = to_string(bp_id).append("_1");
 	id[LINE2] = to_string(bp_id).append("_2");
+
+	set_info(LINE1, "EVENT", to_string(bp_id));
+	set_info(LINE2, "EVENT", to_string(bp_id));
+
+	set_info(LINE1, "MATE_ID", to_string(bp_id).append("_2"));
+	set_info(LINE2, "MATE_ID", to_string(bp_id).append("_1"));
+	
 	qual[LINE2] = ".";
 	filter[LINE2] = ".";
     }
