@@ -71,6 +71,9 @@ class SV_VcfVariant
     void print_header();
     void print_var();
 
+    template <typename Type>
+      string to_string(Type t);
+    
  private:
     static const int LINE1 = 0;
     static const int LINE2 = 1;

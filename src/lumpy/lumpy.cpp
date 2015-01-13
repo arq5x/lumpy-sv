@@ -87,8 +87,8 @@ void ShowHelp(void)
          "\t-mw"	"\tminimum weight for a call" << endl <<
          "\t-tt"	"\ttrim threshold" << endl <<
          "\t-x"	"\texclude file bed file" <<  endl <<
-         "\t-t"	"\ttemp file prefix, must be to a writeable directory" <<
-         "\t-P"	"\toutput probability curve for each variant" <<
+         "\t-t"	"\ttemp file prefix, must be to a writeable directory" << endl <<
+         "\t-P"	"\toutput probability curve for each variant" << endl <<
          "\t-b"	"\toutput BEDPE instead of VCF" <<
          endl <<
          "\t-sr"     "\tbam_file:<file name>," << endl <<

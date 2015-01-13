@@ -663,3 +663,13 @@ print_header()
     }
     cout << endl;
 }
+
+template <typename Type>
+string
+SV_VcfVariant::
+to_string(Type t)
+{
+  stringstream convert;
+  convert << t;
+  return convert.str();
+}
