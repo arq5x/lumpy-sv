@@ -321,8 +321,8 @@ SV_VcfVariant(SV_BreakPoint *bp,
     map<string,int> var_supp;
     map<int, int>::iterator ids_it;
     vector<int> _ids;
-    for (ids_it = bp->ids.begin();
-	 ids_it != bp->ids.end();
+    for (ids_it = bp->ev_ids.begin();
+	 ids_it != bp->ev_ids.end();
 	 ++ids_it)
     	_ids.push_back(ids_it->first);
     vector<int>::iterator _ids_it;
@@ -334,7 +334,7 @@ SV_VcfVariant(SV_BreakPoint *bp,
 
 	int samp_supp = atoi(get_sample_field(samp, "SU").c_str());
 	int ev = atoi(get_sample_field(samp, ev_type).c_str());
-	int new_ev = bp->ids[*_ids_it];
+	int new_ev = bp->ev_ids[*_ids_it];
 
 	ev += new_ev;
 	samp_supp += new_ev;
