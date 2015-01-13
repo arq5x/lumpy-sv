@@ -33,7 +33,6 @@ SV_PairReader(struct pair_end_parameters pair_end_param)
     discordant_z = pair_end_param.discordant_z;
     back_distance = pair_end_param.back_distance;
     weight = pair_end_param.weight;
-    id = pair_end_param.id;
     min_mapping_threshold = pair_end_param.min_mapping_threshold;
     ev_id = SV_EvidenceReader::counter;
     SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
@@ -56,7 +55,6 @@ SV_PairReader()
     discordant_z = 0;
     back_distance = 0;
     weight = 0;
-    id = -1;
     min_mapping_threshold = 0;
     ev_id = SV_EvidenceReader::counter;
     SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
@@ -94,8 +92,6 @@ check_params()
         msg.append("back_distance ");
     if (weight == 0)
         msg.append("weight ");
-    if (id == -1)
-        msg.append("id ");
 
     return msg;
 }
@@ -129,8 +125,6 @@ add_param(char *param, char *val)
         back_distance = atoi(val);
     else if ( strcmp("weight", param) == 0 )
         weight = atoi(val);
-    else if ( strcmp("id", param) == 0 )
-        id = atoi(val);
     else if ( strcmp("min_mapping_threshold", param) == 0 )
         min_mapping_threshold = atoi(val);
     else if ( strcmp("read_group", param) == 0 )
@@ -159,7 +153,6 @@ get_pair_end_parameters()
     pair_end_param.discordant_z = discordant_z;
     pair_end_param.back_distance = back_distance;
     pair_end_param.weight = weight;
-    pair_end_param.id = id;
     pair_end_param.min_mapping_threshold = min_mapping_threshold;
     pair_end_param.read_group = read_group;
 
@@ -235,7 +228,6 @@ process_input( BamAlignment &_bam,
                               mapped_pairs,
                               r_bin,
                               weight,
-                              id,
                               ev_id,
                               this);
 }
@@ -256,7 +248,6 @@ process_input( BamAlignment &_bam,
                                           mapped_pairs,
                                           r_bin,
                                           weight,
-                                          id,
                                           ev_id,
                                           this);
 }
@@ -328,7 +319,6 @@ process_input_chr(string chr,
                                   mapped_pairs,
                                   r_bin,
                                   weight,
-                                  id,
                                   ev_id,
                                   this);
         have_next_alignment = reader.GetNextAlignment(bam);
@@ -355,7 +345,6 @@ process_input_chr_pos(string chr,
                                   mapped_pairs,
                                   r_bin,
                                   weight,
-                                  id,
                                   ev_id,
                                   this);
         have_next_alignment = reader.GetNextAlignment(bam);
@@ -376,7 +365,6 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
                                   mapped_pairs,
                                   r_bin,
                                   weight,
-                                  id,
                                   ev_id,
                                   this);
 }

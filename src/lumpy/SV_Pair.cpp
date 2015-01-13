@@ -42,7 +42,6 @@ SV_Pair(const BamAlignment &bam_a,
         const BamAlignment &bam_b,
         const RefVector &refs,
         int _weight,
-        int _id,
         int _ev_id,
         SV_PairReader *_reader)
 {
@@ -91,7 +90,6 @@ SV_Pair(const BamAlignment &bam_a,
     }
 
     weight = _weight;
-    id = _id;
     ev_id = _ev_id;
 }
 //}}}
@@ -338,7 +336,7 @@ print_bedpe(int score)
          score << sep <<
          read_l.strand << sep <<
          read_r.strand << sep <<
-         "id:" << id << sep <<
+	 "id:" << ev_id << sep <<
          "weight:" << weight <<
          endl;
 }
@@ -421,7 +419,6 @@ process_pair(const BamAlignment &curr,
              map<string, BamAlignment> &mapped_pairs,
              UCSCBins<SV_BreakPoint*> &r_bin,
              int weight,
-             int id,
              int ev_id,
              SV_PairReader *reader)
 {
@@ -432,7 +429,6 @@ process_pair(const BamAlignment &curr,
                                         curr,
                                         refs,
                                         weight,
-                                        id,
                                         ev_id,
                                         reader);
         //cerr << count_clipped(curr.CigarData) << "\t" <<
@@ -478,7 +474,6 @@ process_intra_chrom_pair(const BamAlignment &curr,
                          map<string, BamAlignment> &mapped_pairs,
                          UCSCBins<SV_BreakPoint*> &r_bin,
                          int weight,
-                         int id,
                          int ev_id,
                          SV_PairReader *reader)
 {
@@ -489,7 +484,6 @@ process_intra_chrom_pair(const BamAlignment &curr,
                      mapped_pairs,
                      r_bin,
                      weight,
-                     id,
                      ev_id,
                      reader);
 

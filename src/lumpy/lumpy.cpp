@@ -96,7 +96,6 @@ void ShowHelp(void)
          "\t\tback_distance:<distance>," << endl <<
          "\t\tmin_mapping_threshold:<mapping quality>," << endl <<
          "\t\tweight:<sample weight>," << endl <<
-         "\t\tid:<sample id>," << endl <<
          "\t\tmin_clip:<minimum clip length>," << endl <<
          "\t\tread_group:<string>" << endl <<
          endl <<
@@ -111,13 +110,11 @@ void ShowHelp(void)
          "\t\tback_distance:<distance>," << endl <<
          "\t\tmin_mapping_threshold:<mapping quality>," << endl <<
          "\t\tweight:<sample weight>," << endl <<
-         "\t\tid:<sample id>," << endl <<
          "\t\tread_group:<string>" << endl <<
          endl <<
          "\t-bedpe"  "\tbedpe_file:<bedpe file>," << endl <<
          "\t\tsample_name:<sample name>," << endl <<
          "\t\tweight:<sample weight>," << endl <<
-         "\t\tid:<sample id>" << endl <<
          endl;
     // end the program here
     exit(1);
@@ -302,12 +299,12 @@ int main(int argc, char* argv[])
                     char *val = strtok_r(NULL, ":", &brkb);
 
                     if (val == NULL) {
-                        cerr << "Parameter requied for " << param << endl;
+                        cerr << "Parameter required for " << param << endl;
                         ShowHelp();
                     }
 
                     if ( ! sr_r->add_param(param, val) ) {
-                        cerr << "Unknown pair end parameter:" << param << endl;
+                        cerr << "Unknown split read parameter:" << param << endl;
                         ShowHelp();
                     }
                 }

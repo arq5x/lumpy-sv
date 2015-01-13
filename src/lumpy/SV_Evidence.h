@@ -37,7 +37,6 @@ public:
         static map<int, int> distros_size;
         static UCSCBins<int> exclude_regions;
         int weight;
-        int id;
         int ev_id;
         int type;
 

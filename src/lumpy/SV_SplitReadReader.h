@@ -38,7 +38,6 @@ struct split_read_parameters {
 				 min_mapping_threshold,
                  min_clip;
 	int weight;
-	int id;
 	vector<string> read_group;
 };
 //}}}
@@ -52,7 +51,6 @@ class SV_SplitReadReader : public SV_EvidenceReader
 					 min_mapping_threshold,
                      min_clip;
 		int weight;
-		int id;
 		vector<string> read_group;
 		bool is_open,
 			 have_next_alignment;

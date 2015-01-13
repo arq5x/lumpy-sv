@@ -27,7 +27,6 @@ SV_SplitReadReader()
 	min_non_overlap = 25;
 	weight = -1;
 	min_mapping_threshold = 0;
-	id = -1;
 	ev_id = SV_EvidenceReader::counter;
 	SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
 	SV_EvidenceReader::sample_names[ev_id] = sample_name;
@@ -51,8 +50,6 @@ check_params()
 		msg.append("back_distance ");
 	if (weight == 0)
 		msg.append("weight ");
-	if (id == -1)
-		msg.append("id ");
 
 	return msg;
 }
@@ -76,8 +73,6 @@ add_param(char *param, char *val)
 		back_distance = atoi(val);
 	else if ( strcmp("weight", param) == 0 )
 		weight = atoi(val);
-	else if ( strcmp("id", param) == 0 )
-		id = atoi(val);
 	else if ( strcmp("min_mapping_threshold", param) == 0 )
 		min_mapping_threshold = atoi(val);
 	else if ( strcmp("min_clip", param) == 0 )
@@ -159,7 +154,6 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 									mapped_splits,
 									r_bin,
 									weight,
-									id,
 									ev_id,
 									this);
 }
@@ -178,7 +172,6 @@ process_input( BamAlignment &_bam,
 								mapped_splits,
 								r_bin,
 								weight,
-								id,
 								ev_id,
 								this);
 }
@@ -198,7 +191,6 @@ process_input( BamAlignment &_bam,
 											mapped_splits,
 											r_bin,
 											weight,
-											id,
 											ev_id,
 											this);
 }
@@ -222,7 +214,6 @@ process_input_chr(string chr,
 									mapped_splits,
 									r_bin,
 									weight,
-									id,
 									ev_id,
 									this);
 
@@ -253,7 +244,6 @@ process_input_chr_pos(string chr,
 									mapped_splits,
 									r_bin,
 									weight,
-									id,
 									ev_id,
 									this);
 

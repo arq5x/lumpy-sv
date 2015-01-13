@@ -104,7 +104,6 @@ SV_SplitRead::
 SV_SplitRead(vector< BamAlignment > &block,
              const RefVector &refs,
              int _weight,
-             int _id,
              int _ev_id,
              SV_SplitReadReader *_reader)
 {
@@ -186,7 +185,6 @@ SV_SplitRead(vector< BamAlignment > &block,
     }
 
     weight = _weight;
-    id = _id;
 }
 //}}}
 
@@ -196,7 +194,6 @@ SV_SplitRead(const BamAlignment &bam_a,
              const BamAlignment &bam_b,
              const RefVector &refs,
              int _weight,
-             int _id,
              int _ev_id,
              SV_SplitReadReader *_reader)
 {
@@ -280,7 +277,6 @@ SV_SplitRead(const BamAlignment &bam_a,
     }
 
     weight = _weight;
-    id = _id;
 }
 //}}}
 
@@ -607,7 +603,7 @@ print_bedpe(int score)
          score << sep <<
          side_l.strand << "\t" <<
          side_r.strand << "\t" <<
-         "id:" << id << sep <<
+         "id:" << ev_id << sep <<
          "weight:" << weight <<
          endl;
 }
@@ -621,7 +617,6 @@ process_split(const BamAlignment &curr,
               map<string, BamAlignment> &mapped_splits,
               UCSCBins<SV_BreakPoint*> &r_bin,
               int weight,
-              int id,
               int ev_id,
               SV_SplitReadReader *_reader)
 {
@@ -637,7 +632,6 @@ process_split(const BamAlignment &curr,
                                  curr,
                                  refs,
                                  weight,
-                                 id,
                                  ev_id,
                                  _reader);
 
@@ -677,7 +671,6 @@ process_intra_chrom_split(const BamAlignment &curr,
                           map<string, BamAlignment> &mapped_splits,
                           UCSCBins<SV_BreakPoint*> &r_bin,
                           int weight,
-                          int id,
                           int ev_id,
                           SV_SplitReadReader *_reader)
 {
@@ -700,7 +693,6 @@ process_intra_chrom_split(const BamAlignment &curr,
                                      curr,
                                      refs,
                                      weight,
-                                     id,
                                      ev_id,
                                      _reader);
 

@@ -67,7 +67,6 @@ class SV_Pair: public SV_Evidence
 				const BamAlignment &bam_b,
 				const RefVector &refs,
 				int weight,
-				int id,
 				int ev_id,
 				SV_PairReader *reader);
 
@@ -76,7 +75,6 @@ class SV_Pair: public SV_Evidence
 								map<string, BamAlignment> &mapped_pairs,
 								UCSCBins<SV_BreakPoint*> &r_bin,
 								int weight,
-								int id,
 								int ev_id,
 								SV_PairReader *reader);
 
@@ -87,7 +85,6 @@ class SV_Pair: public SV_Evidence
 								 map<string, BamAlignment> &mapped_pairs,
 								 UCSCBins<SV_BreakPoint*> &r_bin,
 								 int weight,
-								 int id,
 								 int ev_id,
 								 SV_PairReader *reader);
 

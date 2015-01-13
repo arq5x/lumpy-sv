@@ -26,7 +26,6 @@ SV_BedpeReader()
     sample_name = "";
     //distro_file = "";
     weight = 0;
-    id = -1;
     ev_id = SV_EvidenceReader::counter;
     SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
     SV_EvidenceReader::sample_names[ev_id] = sample_name;
@@ -52,8 +51,6 @@ check_params()
 
     if (weight == 0)
         msg.append("weight ");
-    if (id == -1)
-        msg.append("id ");
 
     return msg;
 }
@@ -79,8 +76,6 @@ add_param(char *param, char *val)
     */
     else if ( strcmp("weight", param) == 0 )
         weight = atoi(val);
-    else if ( strcmp("id", param) == 0 )
-        id = atoi(val);
     else
         return false;
 
@@ -99,7 +94,6 @@ get_bedpe_parameters()
     bedpe_param.sample_name = sample_name;
     //bedpe_param.distro_file = distro_file;
     bedpe_param.weight = weight;
-    bedpe_param.id = id;
 
     return bedpe_param;
 }
@@ -160,7 +154,6 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
             SV_Bedpe::process_bedpe(&bedpeEntry,
                                     r_bin,
                                     weight,
-                                    id,
                                     ev_id,
                                     this);
             bedpeEntry = nullBedpe;
@@ -207,7 +200,6 @@ process_input_chr(string chr,
             SV_Bedpe::process_bedpe(&bedpeEntry,
                                     r_bin,
                                     weight,
-                                    id,
                                     ev_id,
                                     this);
             bedpeEntry = nullBedpe;
@@ -235,7 +227,6 @@ process_input_chr_pos(string chr,
             SV_Bedpe::process_bedpe(&bedpeEntry,
                                     r_bin,
                                     weight,
-                                    id,
                                     ev_id,
                                     this);
             bedpeEntry = nullBedpe;

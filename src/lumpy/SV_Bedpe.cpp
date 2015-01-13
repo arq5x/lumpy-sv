@@ -31,7 +31,6 @@ using namespace std;
 SV_Bedpe::
 SV_Bedpe(const BEDPE *bedpeEntry,
          int _weight,
-         int _id,
          int _ev_id,
          SV_BedpeReader *_reader)
 {
@@ -97,7 +96,6 @@ SV_Bedpe(const BEDPE *bedpeEntry,
     }
 
     weight = _weight;
-    id = _id;
 }
 //}}}
 
@@ -225,13 +223,11 @@ SV_Bedpe::
 process_bedpe(const BEDPE *bedpeEntry,
               UCSCBins<SV_BreakPoint*> &r_bin,
               int weight,
-              int id,
               int ev_id,
               SV_BedpeReader *reader)
 {
     SV_Bedpe *new_bedpe = new SV_Bedpe(bedpeEntry,
                                        weight,
-                                       id,
                                        ev_id,
                                        reader);
 

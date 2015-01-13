@@ -66,7 +66,7 @@ class SV_BreakPoint
 		int type;
 		int weight;
 		vector<SV_Evidence*> evidence;
-		map<int, int> ids;
+		map<int, int> ev_ids;
 		struct breakpoint_interval interval_l, interval_r;
 		SV_BreakPoint(SV_Evidence *e);
 		SV_BreakPoint();

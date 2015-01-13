@@ -41,7 +41,6 @@ struct pair_end_parameters {
 				 back_distance,
 				 min_mapping_threshold;
 	int weight;
-	int id;
         vector<string> read_group;
 };
 //}}}
@@ -58,7 +57,6 @@ class SV_PairReader : public SV_EvidenceReader
 					 back_distance,
 					 min_mapping_threshold;
 		int weight;
-		int id;
 		vector<string> read_group;
 		bool is_open,
 			 have_next_alignment;

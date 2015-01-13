@@ -32,7 +32,6 @@ struct bedpe_parameters {
         */
 	unsigned int back_distance;
 	int weight;
-	int id;
 };
 //}}}
 
@@ -46,7 +45,6 @@ class SV_BedpeReader : public SV_EvidenceReader
                 */
 		unsigned int back_distance;
 		int weight;
-		int id;
 		bool is_open,
 			 have_next_alignment;
 
