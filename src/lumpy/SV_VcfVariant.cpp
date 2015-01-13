@@ -193,21 +193,23 @@ SV_VcfVariant(SV_BreakPoint *bp,
     // INFO: CIPOS:: CHECK FOR OFF BY ONE HERE.
     int cipos_l = bp->interval_l.i.start - abs_max_l;
     int cipos_r = bp->interval_l.i.end - abs_max_l;
-    string ci_join = to_string(cipos_l);
-    ci_join.append(",");
-    ci_join.append(to_string(cipos_r));
-    set_info(LINE1, "CIPOS", ci_join);
+    string cipos = to_string(cipos_l);
+    cipos.append(",");
+    cipos.append(to_string(cipos_r));
 
     int ciend_l = bp->interval_r.i.start - abs_max_r;
     int ciend_r = bp->interval_r.i.end - abs_max_r;
-    ci_join = to_string(ciend_l);
-    ci_join.append(",");
-    ci_join.append(to_string(ciend_r));
-    
-    if (is_multiline)
-	set_info(LINE2, "CIPOS", ci_join);
-    else
-	set_info(LINE1, "CIEND", ci_join);
+    string ciend = to_string(ciend_l);
+    ciend.append(",");
+    ciend.append(to_string(ciend_r));
+
+    set_info(LINE1, "CIPOS", cipos);
+    set_info(LINE1, "CIEND", ciend);
+   
+    if (is_multiline) {
+	set_info(LINE2, "CIPOS", ciend);
+	set_info(LINE2, "CIEND", cipos);
+    }
 
     // INFO: Get the area that includes 95% of the probabitliy
     log_space p_95 = get_ls(0.95);
@@ -240,10 +242,9 @@ SV_VcfVariant(SV_BreakPoint *bp,
     // abs_l_r_95 = start_l + l_r_i;
     int cipos95_l = start_l + l_l_i - abs_max_l;
     int cipos95_r = start_l + l_r_i - abs_max_l;
-    ci_join = to_string(cipos95_l);
-    ci_join.append(",");
-    ci_join.append(to_string(cipos95_r));
-    set_info(LINE1, "CIPOS95", ci_join);
+    string cipos95 = to_string(cipos95_l);
+    cipos95.append(",");
+    cipos95.append(to_string(cipos95_r));
 
     total = r[r_max_i];
     CHR_POS r_l_i = r_max_i,
@@ -275,14 +276,17 @@ SV_VcfVariant(SV_BreakPoint *bp,
     // 	abs_r_r_95 = start_r + r_r_i;
     int ciend95_l = start_r + r_l_i - abs_max_r;
     int ciend95_r = start_r + r_r_i - abs_max_r;
-    ci_join = to_string(ciend95_l);
-    ci_join.append(",");
-    ci_join.append(to_string(ciend95_r));
+    string ciend95 = to_string(ciend95_l);
+    ciend95.append(",");
+    ciend95.append(to_string(ciend95_r));
 
-    if (is_multiline)
-	set_info(LINE2, "CIPOS95", ci_join);
-    else
-	set_info(LINE1, "CIEND95", ci_join);
+    set_info(LINE1, "CIPOS95", cipos95);
+    set_info(LINE1, "CIEND95", ciend95);
+    
+    if (is_multiline) {
+	set_info(LINE2, "CIPOS95", ciend95);
+	set_info(LINE2, "CIEND95", cipos95);
+    }
 
     // INFO: IMPRECISE (based on 95% confidence interval)
     if (cipos95_l != 0 ||
