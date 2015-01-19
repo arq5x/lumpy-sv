@@ -146,7 +146,7 @@ SV_VcfVariant(SV_BreakPoint *bp,
     qual[LINE1] = ".";
     filter[LINE1] = ".";
     if (is_multiline) {
-	set_info(LINE1, "PRIMARY");
+	set_info(LINE2, "SECONDARY");
 	id[LINE1] = to_string(bp_id).append("_1");
 	id[LINE2] = to_string(bp_id).append("_2");
 
@@ -629,7 +629,7 @@ print_header()
 	"##INFO=<ID=CIEND95,Number=2,Type=Integer,Description=\"Confidence interval (95%) around END for imprecise variants\">" << endl <<
 	"##INFO=<ID=MATEID,Number=.,Type=String,Description=\"ID of mate breakends\">" << endl <<
 	"##INFO=<ID=EVENT,Number=1,Type=String,Description=\"ID of event associated to breakend\">" << endl <<
-	"##INFO=<ID=PRIMARY,Number=0,Type=Flag,Description=\"Primary breakend in a multi-line variants\">" << endl <<
+	"##INFO=<ID=SECONDARY,Number=0,Type=Flag,Description=\"Secondary breakend in a multi-line variants\">" << endl <<
 	"##INFO=<ID=SU,Number=.,Type=Integer,Description=\"Number of pieces of evidence supporting the variant across all samples\">" << endl <<
 	"##INFO=<ID=PE,Number=.,Type=Integer,Description=\"Number of paired-end reads supporting the variant across all samples\">" << endl <<
 	"##INFO=<ID=SR,Number=.,Type=Integer,Description=\"Number of split reads supporting the variant across all samples\">" << endl <<
