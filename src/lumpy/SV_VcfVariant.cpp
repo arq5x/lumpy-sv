@@ -104,8 +104,6 @@ SV_VcfVariant(SV_BreakPoint *bp,
     map<string,int> uniq_strands = get_strands(bp);
     if (bp->interval_l.i.chr.compare(bp->interval_r.i.chr) != 0) {
 	is_multiline = true;
-	// alt[LINE1] = alt_v[LINE1];
-	// alt[LINE2] = alt_v[LINE2];
 	set_info(LINE1, "SVTYPE", "BND");
 	set_info(LINE2, "SVTYPE", "BND");
     }
@@ -127,8 +125,6 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	// set the alt for the first of two lines
 	// in the multi-line variant
 	is_multiline = true;
-	// alt[LINE1] = alt_v[LINE1];;
-	// alt[LINE2] = alt_v[LINE2];;
 	set_info(LINE1, "SVTYPE", "BND");
 	set_info(LINE2, "SVTYPE", "BND");
     }
@@ -179,9 +175,9 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	//
 	// LUMPY always reports the base to the left of the
 	// breakpoint, so only need to move the '-' strand
-	// positions
+	// positions one base to the right
 	
-	// bump the negative strand positions
+	// move the negative strand positions to the right
 	if (uniq_strands.find("--") != uniq_strands.end()) {
 	    pos[LINE1] = abs_max_l + 1;
 	    pos[LINE2] = abs_max_r + 1;
@@ -209,8 +205,6 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	set_info(LINE1, "MATEID", to_string(bp_id).append("_2"));
 	set_info(LINE2, "MATEID", to_string(bp_id).append("_1"));
 
-	// CAREFUL OF END! it might not match ALT.
-	
 	// ALT
 	vector<string> alt_v;
 	alt_v = get_alt(chrom[LINE1],
@@ -243,7 +237,7 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	set_info(LINE1, "END", to_string(abs_max_r));
     }
         
-    // INFO: CIPOS:: CHECK FOR OFF BY ONE HERE.
+    // INFO: CIPOS
     int cipos_l = bp->interval_l.i.start - abs_max_l;
     int cipos_r = bp->interval_l.i.end - abs_max_l;
     string cipos = to_string(cipos_l);
@@ -291,6 +285,7 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	    ++l_r_i;
 	}
     }
+
     // CHR_POS abs_l_l_95 = start_l + l_l_i,
     // abs_l_r_95 = start_l + l_r_i;
     int cipos95_l = start_l + l_l_i - abs_max_l;
@@ -668,7 +663,8 @@ print_header()
 {
     string sep = "\t";
 
-    cout << "##fileformat=VCFv4.2" << endl <<
+    cout <<
+	"##fileformat=VCFv4.2" << endl <<
 	"##source=LUMPY" << endl <<
 	"##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">" << endl <<
 	"##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">" << endl <<
