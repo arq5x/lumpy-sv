@@ -43,7 +43,7 @@ check_params()
     if (bedpe_file.compare("") == 0)
         msg.append("bedpe_file ");
     if (sample_name.compare("") == 0)
-        msg.append("sample_name ");
+        msg.append("id ");
     /*
     if (distro_file.compare("") == 0)
         msg.append("distro_file ");
@@ -65,7 +65,7 @@ add_param(char *param, char *val)
 
     if ( strcmp("bedpe_file", param) == 0 )
         bedpe_file = val;
-    else if ( strcmp("sample_name", param) == 0 ) {
+    else if ( strcmp("id", param) == 0 ) {
         sample_name = val;
 	SV_EvidenceReader::sample_names[ev_id] = sample_name;
 	SV_EvidenceReader::ev_types[ev_id] = "BD";

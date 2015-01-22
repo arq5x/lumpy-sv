@@ -92,7 +92,7 @@ void ShowHelp(void)
          "\t-b"	"\toutput BEDPE instead of VCF" <<
          endl <<
          "\t-sr"     "\tbam_file:<file name>," << endl <<
-         "\t\tsample_name:<sample name>," << endl <<
+         "\t\tid:<sample name>," << endl <<
          "\t\tback_distance:<distance>," << endl <<
          "\t\tmin_mapping_threshold:<mapping quality>," << endl <<
          "\t\tweight:<sample weight>," << endl <<
@@ -100,7 +100,7 @@ void ShowHelp(void)
          "\t\tread_group:<string>" << endl <<
          endl <<
          "\t-pe"     "\tbam_file:<file name>," << endl <<
-         "\t\tsample_name:<sample name>," << endl <<
+         "\t\tid:<sample name>," << endl <<
          "\t\thisto_file:<file name>," << endl <<
          "\t\tmean:<value>," << endl <<
          "\t\tstdev:<value>," << endl <<
@@ -113,7 +113,7 @@ void ShowHelp(void)
          "\t\tread_group:<string>" << endl <<
          endl <<
          "\t-bedpe"  "\tbedpe_file:<bedpe file>," << endl <<
-         "\t\tsample_name:<sample name>," << endl <<
+         "\t\tid:<sample name>," << endl <<
          "\t\tweight:<sample weight>," << endl <<
          endl;
     // end the program here
