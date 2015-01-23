@@ -380,7 +380,7 @@ SV_VcfVariant(SV_BreakPoint *bp,
 
 	int samp_supp = atoi(get_sample_field(samp, "SU").c_str());
 	int ev = atoi(get_sample_field(samp, ev_type).c_str());
-	int new_ev = bp->ev_ids[ids_it->first];
+	int new_ev = ids_it->second;
 
 	ev += new_ev;
 	samp_supp += new_ev;
