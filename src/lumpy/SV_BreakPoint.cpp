@@ -950,17 +950,23 @@ print_bedpe(int id, int print_prob)
     sort(_ev_ids.begin(), _ev_ids.end());
 
     vector<int>::iterator _ev_ids_it;
-    
+    map<string,int> ev_map;
     cout << "IDS:";
-    for ( _ev_ids_it = _ev_ids.begin(); _ev_ids_it != _ev_ids.end(); ++_ev_ids_it) {
+    for (_ev_ids_it = _ev_ids.begin();
+	 _ev_ids_it != _ev_ids.end();
+	 ++_ev_ids_it) {
+
 	string samp = SV_EvidenceReader::sample_names[*_ev_ids_it];
     	string ev_type = SV_EvidenceReader::ev_types[*_ev_ids_it];
 
-        if (_ev_ids_it != _ev_ids.begin())
+	ev_map[samp + "_" + ev_type] += ev_ids[*_ev_ids_it];
+    }
+    for (map<string,int>::iterator s_it = ev_map.begin();
+	 s_it != ev_map.end();
+	 ++s_it) {
+        if (s_it != ev_map.begin())
             cout << ";";
-        cout << samp << "_" <<
-	    ev_type << "_" <<
-	    *_ev_ids_it << "," << ev_ids[*_ev_ids_it];
+        cout << s_it->first << "," << s_it->second;
     }
     
     cout << "\t";
