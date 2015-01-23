@@ -136,5 +136,6 @@ class SV_BreakPoint
                                              log_space **product_prob);
                 void get_mixture(struct breakpoint_interval **l_mixture,
                                  struct breakpoint_interval **r_mixture);
+		int get_max_sample_weight();
 };
 #endif

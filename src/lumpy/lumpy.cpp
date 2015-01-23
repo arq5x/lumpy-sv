@@ -85,6 +85,7 @@ void ShowHelp(void)
          "\t-e"	"\tShow evidence for each call" << endl <<
          "\t-w"	"\tFile read windows size (default 1000000)" << endl <<
          "\t-mw"	"\tminimum weight for a call" << endl <<
+         "\t-msw"	"\tminimum per-sample weight for a call" << endl <<
          "\t-tt"	"\ttrim threshold" << endl <<
          "\t-x"	"\texclude file bed file" <<  endl <<
          "\t-t"	"\ttemp file prefix, must be to a writeable directory" << endl <<
@@ -128,6 +129,7 @@ int main(int argc, char* argv[])
     double trim_threshold = 1e-10;
     double merge_threshold = 1e-10;
     int min_weight = 0;
+    int min_sample_weight = 0;
     bool show_evidence = false;
     bool has_pe_bams = false,
 	has_sr_bams = false,
@@ -366,6 +368,13 @@ int main(int argc, char* argv[])
             }
         }
 
+        else if(PARAMETER_CHECK("-msw", 4, parameterLength)) {
+            if ((i+1) < argc) {
+                min_sample_weight = atoi(argv[i + 1]);
+                i++;
+            }
+        }
+	
         else if(PARAMETER_CHECK("-w", 2, parameterLength)) {
             if ((i+1) < argc) {
                 window_size = atoi(argv[i + 1]);
@@ -416,8 +425,8 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (min_weight == 0) {
-        cerr << endl << "*****ERROR: must set min weight *****" <<
+    if (min_weight == 0 && min_sample_weight == 0) {
+        cerr << endl << "*****ERROR: must set min weight or min sample weight  *****" <<
              endl << endl;
         ShowHelp();
     }
@@ -581,7 +590,8 @@ int main(int argc, char* argv[])
 
                 // Make sure both ends of the bp are less than or equal to the
                 // current chrom
-                if ( bp->weight >= min_weight ) {
+                if (bp->weight >= min_weight
+		    && bp->get_max_sample_weight() >= min_sample_weight) {
                     //bp->do_it();
                     // make sure there was not an error with trimming
                     if (bp->trim_intervals() > 0) {
@@ -642,7 +652,8 @@ int main(int argc, char* argv[])
             it != values.end(); ++it) {
         SV_BreakPoint *bp = it->value;
 
-        if ( bp->weight >= min_weight ) {
+	if (bp->weight >= min_weight
+	    && bp->get_max_sample_weight() >= min_sample_weight) {
             //bp->do_it();
             if (bp->trim_intervals() > 0) {
 		if (bedpe_output) {
@@ -780,7 +791,8 @@ int main(int argc, char* argv[])
 
                 for (it = values.begin(); it < values.end(); ++it) {
                     SV_BreakPoint *bp = it->value;
-                    if ( bp->weight >= min_weight ) {
+		    if (bp->weight >= min_weight
+			&& bp->get_max_sample_weight() >= min_sample_weight) {
                         //bp->do_it();
                         if (bp->trim_intervals() > 0) {
 			    if (bedpe_output) {
@@ -826,7 +838,8 @@ int main(int argc, char* argv[])
 
         for (it = values.begin(); it != values.end(); ++it) {
             SV_BreakPoint *bp = it->value;
-            if ( bp->weight >= min_weight ) {
+	    if (bp->weight >= min_weight
+		&& bp->get_max_sample_weight() >= min_sample_weight) {
                 //bp->do_it();
                 if (bp->trim_intervals() > 0) {
 		    if (bedpe_output) {

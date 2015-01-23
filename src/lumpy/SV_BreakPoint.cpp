@@ -2000,6 +2000,29 @@ peak_distance(SV_BreakPoint *e,
 }
 //}}}
 
+int
+SV_BreakPoint::
+get_max_sample_weight()
+{
+    map<string,int> sample_weights;
+    int max_sample_weight = 0;
+
+    map<int, int>::iterator ids_it;
+    for (ids_it = this->ev_ids.begin();
+	 ids_it != this->ev_ids.end();
+	 ++ids_it)
+	sample_weights[SV_EvidenceReader::sample_names[ids_it->first]] += ids_it->second;
+
+    map<string,int>::iterator sw_it;
+    for (sw_it = sample_weights.begin();
+    	 sw_it != sample_weights.end();
+    	 ++sw_it) {
+    	if (sw_it->second > max_sample_weight)
+    	    max_sample_weight = sw_it->second;
+    }
+    return max_sample_weight;
+}
+
 #if 0
 //{{{ boost::numeric::ublas::matrix<double>* BreakPoint::get_matrix(double
 //  number of rows equals the lenght of the a interval

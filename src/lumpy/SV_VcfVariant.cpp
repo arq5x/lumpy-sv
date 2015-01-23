@@ -372,21 +372,15 @@ SV_VcfVariant(SV_BreakPoint *bp,
     // FORMAT: update variant support with evidence counts
     map<string,int> var_supp;
     map<int, int>::iterator ids_it;
-    vector<int> _ids;
     for (ids_it = bp->ev_ids.begin();
 	 ids_it != bp->ev_ids.end();
-	 ++ids_it)
-    	_ids.push_back(ids_it->first);
-    vector<int>::iterator _ids_it;
-    for (_ids_it = _ids.begin();
-	 _ids_it != _ids.end();
-	 ++_ids_it) {
-	string samp = SV_EvidenceReader::sample_names[*_ids_it];
-	string ev_type = SV_EvidenceReader::ev_types[*_ids_it];
+	 ++ids_it) {
+	string samp = SV_EvidenceReader::sample_names[ids_it->first];
+	string ev_type = SV_EvidenceReader::ev_types[ids_it->first];
 
 	int samp_supp = atoi(get_sample_field(samp, "SU").c_str());
 	int ev = atoi(get_sample_field(samp, ev_type).c_str());
-	int new_ev = bp->ev_ids[*_ids_it];
+	int new_ev = bp->ev_ids[ids_it->first];
 
 	ev += new_ev;
 	samp_supp += new_ev;
