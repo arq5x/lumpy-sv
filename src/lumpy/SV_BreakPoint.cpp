@@ -118,7 +118,7 @@ SV_BreakPoint(SV_BreakPoint *a, SV_BreakPoint *b)
                 ids[id_it->first] += id_it->second;
             }
 
-            for (id_it = a->ids.begin(); id_it != a->ids.end(); ++id_it) {
+            for (id_it = b->ids.begin(); id_it != b->ids.end(); ++id_it) {
                 if ( ids.find( id_it->first ) == ids.end() )
                     ids[id_it->first] = 0;
                 ids[id_it->first] += id_it->second;
