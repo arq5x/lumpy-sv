@@ -7,7 +7,7 @@ University of Virginia.
 
 Installation
 ============
-Lumpy installation does not require any external softwart. We do recommend
+Lumpy installation does not require any external software. We do recommend
 installing numpy, samtools, bedtools, bamtools, novoalign (or bwa), and yaha.  Below
 is a step-by-step tutorial for how to install and use Lumpy. This guide assumes
 that `/usr/local/bin` is writable and in your path.  If either is not true, use
@@ -36,8 +36,8 @@ Install samtools
 Install bedtools
 ::
 
-    git clone git@github.com:arq5x/bedtools.git    
-    cd bedtools
+    git clone https://github.com/arq5x/bedtools2
+    cd bedtools2
     make
     cp bin/bedtools /usr/local/bin/.
 
