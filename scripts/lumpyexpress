@@ -416,13 +416,13 @@ then
 	    # generate split-read string for LUMPY
 	    LUMPY_SPL_STRING="$LUMPY_SPL_STRING -sr bam_file:${TEMP_DIR}/$OUTBASE.sample$(($i+1)).splitters.bam,back_distance:10,min_mapping_threshold:20,weight:1,id:$(($i+1))$(($j+1))1,min_clip:20,${RG_STRING}"
 
-	    # generate LUMPY sample config file
-	    DISC_BAM=$TEMP_DIR/$OUTBASE.sample$(($i+1)).lib$(($j+1)).discordants.bam
-	    SPL_BAM=${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).splitters.bam
-	    DISC_SAMPLE=`$SAMBAMBA view -H $DISC_BAM | grep -m 1 "^@RG" | awk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
-	    SPL_SAMPLE=`$SAMBAMBA view -H $SPL_BAM | grep -m 1 "^@RG" | awk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
-	    echo -e "$DISC_SAMPLE\t$(($i+1))$(($j+1))0\tPE\t$DISC_BAM" >> $TEMP_DIR/$OUTBASE.sample.config
-	    echo -e "$SPL_SAMPLE\t$(($i+1))$(($j+1))1\tSR\t$SPL_BAM" >> $TEMP_DIR/$OUTBASE.sample.config
+	    # # generate LUMPY sample config file
+	    # DISC_BAM=$TEMP_DIR/$OUTBASE.sample$(($i+1)).lib$(($j+1)).discordants.bam
+	    # SPL_BAM=${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).splitters.bam
+	    # DISC_SAMPLE=`$SAMBAMBA view -H $DISC_BAM | grep -m 1 "^@RG" | awk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	    # SPL_SAMPLE=`$SAMBAMBA view -H $SPL_BAM | grep -m 1 "^@RG" | awk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	    # echo -e "$DISC_SAMPLE\t$(($i+1))$(($j+1))0\tPE\t$DISC_BAM" >> $TEMP_DIR/$OUTBASE.sample.config
+	    # echo -e "$SPL_SAMPLE\t$(($i+1))$(($j+1))1\tSR\t$SPL_BAM" >> $TEMP_DIR/$OUTBASE.sample.config
 	done
 
 	# merge the splitters and discordants files
@@ -464,8 +464,8 @@ then
 
 # else (user provided a splitter and discordants file)
 else
-    # initialize LUMPY sample config file for generating the VCF
-    > $TEMP_DIR/$OUTBASE.sample.config
+    # # initialize LUMPY sample config file for generating the VCF
+    # > $TEMP_DIR/$OUTBASE.sample.config
 
     # parse the libraries in the BAM header to extract readgroups from the same library
     for i in $( seq 0 $(( ${#FULL_BAM_LIST[@]}-1 )) )
@@ -484,7 +484,7 @@ else
 	do
 	    # calculate read length if not provided
 	    LIB_READ_LENGTH_LIST+=(`$SAMBAMBA view ${FULL_BAM_LIST[$i]} | head -n 10000 | awk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`)
-	    echo "Library read groups:${LIB_RG_LIST[$j]}"
+	    echo "Library read groups: ${LIB_RG_LIST[$j]}"
 	    echo "Library read length: ${LIB_READ_LENGTH_LIST[$j]}"
 	    $SAMBAMBA view -h -F 'paired and mate_is_reverse_strand and not (unmapped or mate_is_unmapped or reverse_strand or secondary_alignment or duplicate)' ${FULL_BAM_LIST[$i]} \
 		| $PYTHON $BAMFILTERRG -S -n 4000000 --readgroup ${LIB_RG_LIST[$j]} \
@@ -498,8 +498,8 @@ else
 	# construct LUMPY_SPL_STRING
 	SPL_SAMPLE=`$SAMBAMBA view -H $SPL_BAM | grep -m 1 "^@RG" | awk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	LUMPY_SPL_STRING="$LUMPY_SPL_STRING -sr bam_file:${SPL_BAM},back_distance:10,min_mapping_threshold:20,weight:1,id:${SPL_SAMPLE},min_clip:20"
-	# append to the sample config file
-	echo -e "$SPL_SAMPLE\t$(($i+1))01\tSR\t$SPL_BAM" >> $TEMP_DIR/$OUTBASE.sample.config
+	# # append to the sample config file
+	# echo -e "$SPL_SAMPLE\t$(($i+1))01\tSR\t$SPL_BAM" >> $TEMP_DIR/$OUTBASE.sample.config
 
 	# construct LUMPY_DISC_STRING
 	for j in $( seq 0 $(( ${#LIB_RG_LIST[@]}-1 )) )
@@ -513,8 +513,8 @@ else
 
 	    LUMPY_DISC_STRING="$LUMPY_DISC_STRING -pe bam_file:${DISC_BAM},histo_file:${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo,mean:${MEAN},stdev:${STDEV},read_length:${LIB_READ_LENGTH_LIST[$j]},min_non_overlap:${LIB_READ_LENGTH_LIST[$j]},discordant_z:5,back_distance:10,weight:1,id:${DISC_SAMPLE},min_mapping_threshold:20,${RG_STRING}"
 
-	    # append to the sample config file
-	    echo -e "$DISC_SAMPLE\t$(($i+1))$(($j+1))0\tPE\t$DISC_BAM" >> $TEMP_DIR/$OUTBASE.sample.config
+	    # # append to the sample config file
+	    # echo -e "$DISC_SAMPLE\t$(($i+1))$(($j+1))0\tPE\t$DISC_BAM" >> $TEMP_DIR/$OUTBASE.sample.config
 	done
     done
 fi
@@ -537,16 +537,7 @@ $LUMPY $PROB_CURVE -t ${TEMP_DIR}/${OUTBASE} -mw $MIN_WEIGHT -tt $TRIM_THRES \
     $EXCLUDE_BED_FMT \
     $LUMPY_DISC_STRING \
     $LUMPY_SPL_STRING \
-    > $TEMP_DIR/$OUTBASE.sv.vcf
-
-# write output vcf file
-cat $TEMP_DIR/$OUTBASE.sv.vcf \
-    | grep -v "^#" \
-    | sort -k1,1 -k2,2n \
-    | cat $TEMP_DIR/header.txt - \
-    | $BGZIP -c \
-    > $OUTPUT.sv.vcf.gz
-$TABIX -p vcf $OUTPUT.sv.vcf.gz
+    > $OUTPUT.sv.vcf
 
 # clean up
 if [[ "$KEEP" -eq 0 ]]

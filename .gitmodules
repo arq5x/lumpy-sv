@@ -1,0 +1,3 @@
+[submodule "scripts/bamkit"]
+	path = scripts/bamkit
+	url = https://github.com/cc2qe/bamkit.git
