@@ -67,7 +67,6 @@ function check_python_modules() {
 
     $PYTHON_TEST -c "import imp; imp.find_module('pysam')"
     $PYTHON_TEST -c "import imp; imp.find_module('numpy')"
-    $PYTHON_TEST -c "import imp; imp.find_module('scipy')"
 }
 
 ## usage
@@ -81,13 +80,8 @@ options:
      -D FILE  discordant reads BAM files(s) (comma separated) (required)
      -R FILE  indexed reference genome fasta file (required)
      -o STR   output prefix [fullBam.bam]
-#     -t INT   threads [1] 
      -x FILE  BED file to exclude
      -P       output probability curves for each variant
-#     -g       genotype SV breakends with svtyper
-#     -d       calculate read-depth with CNVnator
-#     -A       annotate the vcf with VEP
-#     -a       re-align with SpeedSeq BWA
      -m INT   minimum sample weight for a call [4]
      -r FLOAT trim threshold [0]
      -T DIR   temp directory [./output_prefix.XXXXXXXXXXXX]
@@ -197,95 +191,26 @@ source_binaries $CONFIG
 if [[ -z "$LUMPY" ]]
 then
     usage
-    echo -e "Error: lumpy executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
+    echo -e "Error: lumpy executable not found. Please set path in $LUMPY_DIR/lumpyexpress.config file\n"
     exit 1
 elif [[ -z  "$PAIREND_DISTRO" ]]
 then
     usage
-    echo -e "Error: pairend_distro.py executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
+    echo -e "Error: pairend_distro.py executable not found. Please set path in $LUMPY_DIR/lumpyexpress.config file\n"
     exit 1
 elif [[ -z  "$SAMBAMBA" ]]
 then
     usage
-    echo -e "Error: sambamba executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ ! -f "$VEP" ]] && [[ "$ANNOTATE" -eq 1 ]]
-then
-    usage
-    echo -e "Error: VEP not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ ! -d "$VEP_CACHE_DIR" ]] && [[ "$ANNOTATE" -eq 1 ]]
-then
-    usage
-    echo -e "Error: VEP cache directory not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ -z "$VAWK" ]] && [[ "$ANNOTATE" -eq 1 ]]
-then
-    usage
-    echo -e "Error: vawk executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ -z "$SAMBLASTER" ]] && [[ -z "${DISC_BAM_STRING}${SPL_BAM_STRING}" ]]
-then
-    usage
-    echo -e "Error: samblaster executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ -z "$BWA" ]] && [[ "$REALIGN" -eq 1 ]]
-then
-    usage
-    echo -e "Error: BWA executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ -z "$BAMTOFASTQ" ]] && [[ "$REALIGN" -eq 1 ]]
-then
-    usage
-    echo -e "Error: bamtofastq.py executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ -z "$BAMHEADRG" ]] && [[ "$REALIGN" -eq 1 ]]
-then
-    usage
-    echo -e "Error: bamheadrg.py executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ -z "$MBUFFER" ]] && [[ "$REALIGN" -eq 1 ]]
-then
-    usage
-    echo -e "Error: mbuffer executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
+    echo -e "Error: sambamba executable not found. Please set path in $LUMPY_DIR/lumpyexpress.config file\n"
     exit 1
 elif [[ -z "$BAMFILTERRG" ]]
 then
     usage
-    echo -e "Error: bamheadrg.py executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
+    echo -e "Error: bamfilterrg.py executable not found. Please set path in $LUMPY_DIR/lumpyexpress.config file\n"
     exit 1
 fi
 
-# if genotyping requested, look for svtyper
-if [[ "$GENOTYPE" -eq 1 ]] && [[ -z "$SVTYPER" ]]
-then
-    usage
-    echo -e "Error: svtyper executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-fi
-
-# if CNV read-depth requested, look for cnvnator executables
-if [[ "$READDEPTH" -eq 1 ]]
-then
-    if [[ -z "$CNVNATOR_MULTI" ]]
-    then
-	usage
-	echo -e "Error: cnvnator executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-	exit 1
-    elif [[ -z "$CNVNATOR_WRAPPER" ]]
-    then
-	usage
-	echo -e "Error: cnvnator_wrapper.py executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-	exit 1
-    elif [[ -z "$ANNOTATE_RD" ]]
-    then
-	usage
-	echo -e "Error: annotate_rd.py executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-	exit 1
-    fi
-fi
-
-# check for required python modules (pysam, numpy, scipy, etc)
+# check for required python modules (pysam, numpy)
 check_python_modules $PYTHON
 
 # Check that the required files exist
@@ -415,14 +340,6 @@ then
 
 	    # generate split-read string for LUMPY
 	    LUMPY_SPL_STRING="$LUMPY_SPL_STRING -sr bam_file:${TEMP_DIR}/$OUTBASE.sample$(($i+1)).splitters.bam,back_distance:10,min_mapping_threshold:20,weight:1,id:$(($i+1))$(($j+1))1,min_clip:20,${RG_STRING}"
-
-	    # # generate LUMPY sample config file
-	    # DISC_BAM=$TEMP_DIR/$OUTBASE.sample$(($i+1)).lib$(($j+1)).discordants.bam
-	    # SPL_BAM=${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).splitters.bam
-	    # DISC_SAMPLE=`$SAMBAMBA view -H $DISC_BAM | grep -m 1 "^@RG" | awk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
-	    # SPL_SAMPLE=`$SAMBAMBA view -H $SPL_BAM | grep -m 1 "^@RG" | awk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
-	    # echo -e "$DISC_SAMPLE\t$(($i+1))$(($j+1))0\tPE\t$DISC_BAM" >> $TEMP_DIR/$OUTBASE.sample.config
-	    # echo -e "$SPL_SAMPLE\t$(($i+1))$(($j+1))1\tSR\t$SPL_BAM" >> $TEMP_DIR/$OUTBASE.sample.config
 	done
 
 	# merge the splitters and discordants files
@@ -464,9 +381,6 @@ then
 
 # else (user provided a splitter and discordants file)
 else
-    # # initialize LUMPY sample config file for generating the VCF
-    # > $TEMP_DIR/$OUTBASE.sample.config
-
     # parse the libraries in the BAM header to extract readgroups from the same library
     for i in $( seq 0 $(( ${#FULL_BAM_LIST[@]}-1 )) )
     do
@@ -498,8 +412,6 @@ else
 	# construct LUMPY_SPL_STRING
 	SPL_SAMPLE=`$SAMBAMBA view -H $SPL_BAM | grep -m 1 "^@RG" | awk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	LUMPY_SPL_STRING="$LUMPY_SPL_STRING -sr bam_file:${SPL_BAM},back_distance:10,min_mapping_threshold:20,weight:1,id:${SPL_SAMPLE},min_clip:20"
-	# # append to the sample config file
-	# echo -e "$SPL_SAMPLE\t$(($i+1))01\tSR\t$SPL_BAM" >> $TEMP_DIR/$OUTBASE.sample.config
 
 	# construct LUMPY_DISC_STRING
 	for j in $( seq 0 $(( ${#LIB_RG_LIST[@]}-1 )) )
@@ -512,9 +424,6 @@ else
 	    RG_STRING=`echo "${LIB_RG_LIST[$j]}" | sed 's/,/,read_group:/g' | sed 's/^/read_group:/g'`
 
 	    LUMPY_DISC_STRING="$LUMPY_DISC_STRING -pe bam_file:${DISC_BAM},histo_file:${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo,mean:${MEAN},stdev:${STDEV},read_length:${LIB_READ_LENGTH_LIST[$j]},min_non_overlap:${LIB_READ_LENGTH_LIST[$j]},discordant_z:5,back_distance:10,weight:1,id:${DISC_SAMPLE},min_mapping_threshold:20,${RG_STRING}"
-
-	    # # append to the sample config file
-	    # echo -e "$DISC_SAMPLE\t$(($i+1))$(($j+1))0\tPE\t$DISC_BAM" >> $TEMP_DIR/$OUTBASE.sample.config
 	done
     done
 fi
