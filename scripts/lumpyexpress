@@ -26,7 +26,7 @@ function source_binaries() {
 	TABIX=`which tabix || true`
 	VAWK=`which vawk || true`
 	PARALLEL=`which parallel || true`
-	PYTHON27=`which python2.7 || true`
+	PYTHON=`which python2.7 || true`
 
 	# align
 	BWA=`which bwa || true`
@@ -73,9 +73,6 @@ function check_python_modules() {
 ## usage
 function usage() {
     echo "
-Program: lumpyexpress
-Author: Colby Chiang (cc2qe@virginia.edu)
-
 usage:   lumpyexpress [options]
 
 options:
@@ -88,7 +85,7 @@ options:
      -x FILE  BED file to exclude
      -P       output probability curves for each variant
 #     -g       genotype SV breakends with svtyper
-#     -d       calculate read-depth with CNVnato
+#     -d       calculate read-depth with CNVnator
 #     -A       annotate the vcf with VEP
 #     -a       re-align with SpeedSeq BWA
      -m INT   minimum sample weight for a call [4]
@@ -96,15 +93,16 @@ options:
      -T DIR   temp directory [./output_prefix.XXXXXXXXXXXX]
      -k       keep temporary files
 
-     -K FILE  path to speedseq.config file (default: same directory as speedseq)
+     -K FILE  path to lumpyexpress.config file
+                (default: same directory as lumpyexpress)
      -v       verbose
      -h       show this message
 "
 }
 
 # set defaults
-SPEEDSEQ_DIR=`dirname $0`
-CONFIG="$SPEEDSEQ_DIR/speedseq.config"
+LUMPY_DIR=`dirname $0`
+CONFIG="$LUMPY_DIR/lumpyexpress.config"
 THREADS=1
 ANNOTATE=0
 MIN_WEIGHT=4
@@ -211,11 +209,6 @@ then
     usage
     echo -e "Error: sambamba executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
     exit 1
-elif [[ -z  "$BEDPETOVCF" ]]
-then
-    usage
-    echo -e "Error: bedpeToVcf executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
 elif [[ ! -f "$VEP" ]] && [[ "$ANNOTATE" -eq 1 ]]
 then
     usage
@@ -293,7 +286,7 @@ then
 fi
 
 # check for required python modules (pysam, numpy, scipy, etc)
-check_python_modules $PYTHON27
+check_python_modules $PYTHON
 
 # Check that the required files exist
 if [[ ! -f $REF ]]
@@ -340,9 +333,9 @@ then
 fi
 if [[ -z $TEMP_DIR ]]
 then
-    TEMP_DIR=`mktemp -d -p ./ ${OUTBASE}.XXXXXXXXXXXX`
+    TEMP_DIR=`mktemp -d ${OUTBASE}.XXXXXXXXXXXX`
 else
-    mkdir -p $TEMP_DIR	
+    mkdir -p $TEMP_DIR
 fi
 
 # If splitter and discordant BAMs not provided, generate them
@@ -378,43 +371,19 @@ then
 	READ_LENGTH=`$SAMBAMBA view $FULL_BAM | head -n 10000 | awk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`
 
 	# parse the libraries in the BAM header to extract readgroups from the same library
-	LIB_RG_LIST=(`$SAMBAMBA view -H $FULL_BAM \
-	    | grep "^@RG" \
-	    | awk \
-		'{
-		    for (j=1;j<=NF;++j) {
-			if ($j~"^ID") {
-			    id=$j
-			    gsub("^ID:","",id)
-			}
-			else if ($j~"^LB:") {
-			    lib=$j
-			    gsub("^LB:","",lib);
-			}
-		    }
-		    lib_list[lib][length(lib_list[lib])+1] = id
-		}
-		END {
-		    for (i in lib_list) {
-			RG_STRING=lib_list[i][1]
-			for (j=2;j<=length(lib_list[i]);++j) {
-			    RG_STRING=RG_STRING","lib_list[i][j]
-			}
-			print RG_STRING
-		    }
-		}'`)
+	LIB_RG_LIST=(`$BAMLIBS $FULL_BAM`)
 
 	for j in $( seq 0 $(( ${#LIB_RG_LIST[@]}-1 )) )
 	do
 	    if [[ "$VERBOSE" -eq 1 ]]
 	    then
 		echo -e "
-	    $PYTHON27 $BAMGROUPREADS --fix_flags -i $FULL_BAM -r ${LIB_RG_LIST[$j]} \\
+	    $PYTHON $BAMGROUPREADS --fix_flags -i $FULL_BAM -r ${LIB_RG_LIST[$j]} \\
 		| $SAMBLASTER --acceptDupMarks --excludeDups --addMateTags --maxSplitCount $MAX_SPLIT_COUNT --minNonOverlap $MIN_NON_OVERLAP \\
 		--splitterFile $TEMP_DIR/spl_pipe --discordantFile $TEMP_DIR/disc_pipe \\
 		| $SAMBAMBA view -S -F 'paired and mate_is_reverse_strand and not (unmapped or mate_is_unmapped or reverse_strand or secondary_alignment or duplicate)' /dev/stdin \\
 		| awk '{ if (NR<=1000000) print > \"/dev/stdout\" ; else print > \"/dev/null\" }' \\
-		| $PYTHON27 $PAIREND_DISTRO -r $READ_LENGTH -X 4 -N 1000000 -o ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo \\
+		| $PYTHON $PAIREND_DISTRO -r $READ_LENGTH -X 4 -N 1000000 -o ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo \\
 		> ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats
 
 	    $SAMBAMBA view -S -f bam -l 0 $TEMP_DIR/spl_pipe \\
@@ -424,12 +393,12 @@ then
 	    fi
 
 	    echo -e "
-	    $PYTHON27 $BAMGROUPREADS --fix_flags -i $FULL_BAM -r ${LIB_RG_LIST[$j]} \
+	    $PYTHON $BAMGROUPREADS --fix_flags -i $FULL_BAM -r ${LIB_RG_LIST[$j]} \
 		| $SAMBLASTER --acceptDupMarks --excludeDups --addMateTags --maxSplitCount $MAX_SPLIT_COUNT --minNonOverlap $MIN_NON_OVERLAP \
 		    --splitterFile $TEMP_DIR/spl_pipe --discordantFile $TEMP_DIR/disc_pipe \
 		| $SAMBAMBA view -S -F 'paired and mate_is_reverse_strand and not (unmapped or mate_is_unmapped or reverse_strand or secondary_alignment or duplicate)' /dev/stdin \
 		| awk '{ if (NR<=1000000) print > \"/dev/stdout\" ; else print > \"/dev/null\" }' \
-		| $PYTHON27 $PAIREND_DISTRO -r $READ_LENGTH -X 4 -N 1000000 -o ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo \
+		| $PYTHON $PAIREND_DISTRO -r $READ_LENGTH -X 4 -N 1000000 -o ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo \
 		> ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats
 
 	    $SAMBAMBA view -S -f bam -l 0 $TEMP_DIR/spl_pipe \
@@ -507,31 +476,7 @@ else
 
 	# LIB_RG_LIST contains an element for each library in the BAM file.
 	# These elements are comma delimited strings for the readgroups for each library.
-	LIB_RG_LIST=(`$SAMBAMBA view -H ${FULL_BAM_LIST[$i]} \
-	    | grep "^@RG" \
-	    | awk \
-	    '{
-			for (j=1;j<=NF;++j) {
-			    if ($j~"^ID") {
-				    id=$j
-				    gsub("^ID:","",id)
-				}
-			    else if ($j~"^LB:") {
-					lib=$j
-					gsub("^LB:","",lib);
-				    }
-			}
-			lib_list[lib][length(lib_list[lib])+1] = id
-		    }
-		    END {
-			for (i in lib_list) {
-				RG_STRING=lib_list[i][1]
-				for (j=2;j<=length(lib_list[i]);++j) {
-				    RG_STRING=RG_STRING","lib_list[i][j]
-				}
-				print RG_STRING
-			    }
-			    }'`)
+	LIB_RG_LIST=(`$BAMLIBS ${FULL_BAM_LIST[$i]}`)
 
 	# generate the histo, stats, and config files
 	echo "Calculating insert distributions... "
@@ -542,10 +487,10 @@ else
 	    echo "Library read groups:${LIB_RG_LIST[$j]}"
 	    echo "Library read length: ${LIB_READ_LENGTH_LIST[$j]}"
 	    $SAMBAMBA view -h -F 'paired and mate_is_reverse_strand and not (unmapped or mate_is_unmapped or reverse_strand or secondary_alignment or duplicate)' ${FULL_BAM_LIST[$i]} \
-		| $PYTHON27 $BAMFILTERRG -S -n 4000000 --readgroup ${LIB_RG_LIST[$j]} \
+		| $PYTHON $BAMFILTERRG -S -n 4000000 --readgroup ${LIB_RG_LIST[$j]} \
 		| grep -v '^@' \
 		| sed -n '3000001,4000000p;4000000q' \
-		| $PYTHON27 $PAIREND_DISTRO -r ${LIB_READ_LENGTH_LIST[$j]} -X 4 -N 1000000 -o ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo \
+		| $PYTHON $PAIREND_DISTRO -r ${LIB_READ_LENGTH_LIST[$j]} -X 4 -N 1000000 -o ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo \
 		> ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats
 	done
 	echo "done"
@@ -579,14 +524,13 @@ if [[ "$VERBOSE" -eq 1 ]]
 then
     echo "
 $LUMPY ${PROB_CURVE} \\
--t ${TEMP_DIR}/${OUTBASE} \\
--mw $MIN_WEIGHT \\
--tt $TRIM_THRES \\
-$EXCLUDE_BED_FMT \\
-$LUMPY_DISC_STRING \\
-$LUMPY_SPL_STRING \\
-> $TEMP_DIR/$OUTBASE.sv.vcf
-    "
+    -t ${TEMP_DIR}/${OUTBASE} \\
+    -mw $MIN_WEIGHT \\
+    -tt $TRIM_THRES \\
+    $EXCLUDE_BED_FMT \\
+    $LUMPY_DISC_STRING \\
+    $LUMPY_SPL_STRING \\
+    > $TEMP_DIR/$OUTBASE.sv.vcf"
 fi
 # call lumpy
 $LUMPY $PROB_CURVE -t ${TEMP_DIR}/${OUTBASE} -mw $MIN_WEIGHT -tt $TRIM_THRES \
@@ -594,10 +538,6 @@ $LUMPY $PROB_CURVE -t ${TEMP_DIR}/${OUTBASE} -mw $MIN_WEIGHT -tt $TRIM_THRES \
     $LUMPY_DISC_STRING \
     $LUMPY_SPL_STRING \
     > $TEMP_DIR/$OUTBASE.sv.vcf
-
-# copy raw files to output directory
-# cp $TEMP_DIR/$OUTBASE.sv.lumpy $OUTPUT.sv.lumpy
-cp $TEMP_DIR/$OUTBASE.sample.config $OUTPUT.sample.config
 
 # write output vcf file
 cat $TEMP_DIR/$OUTBASE.sv.vcf \
@@ -608,11 +548,6 @@ cat $TEMP_DIR/$OUTBASE.sv.vcf \
     > $OUTPUT.sv.vcf.gz
 $TABIX -p vcf $OUTPUT.sv.vcf.gz
 
-# # write output bedpe file
-# $LUMPYTOBEDPE -b $TEMP_DIR/$OUTBASE.sv.lumpy -c $TEMP_DIR/$OUTBASE.sample.config \
-# 	| awk -v MIN_WEIGHT=${MIN_WEIGHT} '{ PASS=0 ; for (i=16;i<=NF;++i) { if ($i>=MIN_WEIGHT) { PASS=1 ; print ; break } } }' \
-# 	> $OUTPUT.sv.bedpe
-
 # clean up
 if [[ "$KEEP" -eq 0 ]]
 then
@@ -620,269 +555,6 @@ then
 fi
 
 echo "done"
-
-# exit cleanly
-exit 0
-}
-
-function realign() {
-function realign_usage() {
-    echo "
-usage:   speedseq realign [options] <reference.fa> <in.bam>
-
-positional args:
-     reference.fa
-	      fasta file (indexed with bwa)
-     in.bam   re-align from a coordinate sorted BAM file
-		this BAM file must contain read group tags
-
-alignment options:
-     -o STR   output prefix [in.realign]
-     -I FLOAT[,FLOAT[,INT[,INT]]]
-	      specify the mean, standard deviation (10% of the mean if absent), max
-		(4 sigma from the mean if absent) and min of the insert size distribution.
-		FR orientation only. [inferred]
-     -n       rename reads for smaller file size
-     -t INT   threads [1]
-     -T DIR   temp directory [./output_prefix.XXXXXXXXXXXX]
-
-samblaster options:
-     -i       include duplicates in splitters and discordants
-     -c INT   maximum number of split alignments for a read to be included in splitter file [2]
-     -m INT   minimum non-overlapping base pairs between two alignments for a read to be included in splitter file [20]
-
-sambamba options:
-     -M       amount of memory in GB to be used for sorting [20]
-
-global options:
-     -K FILE  path to speedseq.config file (default: same directory as speedseq)
-     -v       verbose
-     -h       show this message
-"
-}
-
-# Check options passed in.
-if test -z "$2"
-then
-    realign_usage
-    exit 1
-fi
-
-# set defaults
-SPEEDSEQ_DIR=`dirname $0`
-CONFIG="$SPEEDSEQ_DIR/speedseq.config"
-INTERLEAVED=0
-OUTPUT=""
-INCLUDE_DUPS="--excludeDups"
-MAX_SPLIT_COUNT=2
-MIN_NON_OVERLAP=20
-THREADS=1
-TEMP_DIR=""
-VERBOSE=0
-INS_DIST=""
-RENAME=""
-SORT_MEM=20 # amount of memory for sorting, in gigabytes
-
-while getopts ":hw:o:pic:m:M:t:T:I:nvK:" OPTION
-do
-    case "${OPTION}" in
-	h)
-	    realign_usage
-	    exit 1
-	    ;;
-	p)
-	    INTERLEAVED=1
-	    ;;
-	o)
-	    OUTPUT="$OPTARG"
-	    ;;
-	i)
-	    INCLUDE_DUPS=""
-	    ;;
-	c)
-	    MAX_SPLIT_COUNT="$OPTARG"
-	    ;;
-	m)
-	    MIN_NON_OVERLAP="$OPTARG"
-	    ;;
-	M)
-	    SORT_MEM="$OPTARG"
-	    ;;
-	n)
-	    RENAME="-n"
-	    ;;
-	t)
-	    THREADS="$OPTARG"
-	    ;;
-	T)
-	    TEMP_DIR="$OPTARG"
-	    ;;
-	I)
-	    INS_DIST="-I $OPTARG"
-	    ;;
-	v)
-	    VERBOSE=1
-	    ;;
-	K)
-	    CONFIG="$OPTARG"
-	    ;;
-    esac
-done
-
-REF="${@:${OPTIND}:1}"
-IN_BAM="${@:$((${OPTIND}+1)):1}"
-if [[ -z "$OUTPUT" ]]
-then
-    OUTPUT=`basename "$IN_BAM" ".bam"`".realign"
-fi
-
-# Check that the ref and bam files exist
-if [[ -z "$REF" ]] || [[ ! -f "$REF" ]]
-then
-    realign_usage
-    echo -e "Error: Reference file $REF not found.\n"
-    exit 1
-elif [[ -z "$IN_BAM" ]] || [[ ! -e "$IN_BAM" ]]
-then
-    realign_usage
-    echo -e "Error: BAM file $IN_BAM not found.\n"
-    exit 1
-fi
-
-# Check that SORT_MEM > 2
-if [[ "$SORT_MEM" -lt 3 ]]
-then
-    realign_usage
-    echo -e "Error: -M must be greater than 2"
-    exit 1
-fi
-
-# Check the for the relevant binaries
-source_binaries $CONFIG
-if [[ -z "$BWA" ]]
-then
-    realign_usage
-    echo -e "Error: bwa executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ -z  "$SAMBLASTER" ]]
-then
-    realign_usage
-    echo -e "Error: samblaster executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ -z "$SAMBAMBA" ]]
-then
-    realign_usage
-    echo -e "Error: sambamba executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ -z "$MBUFFER" ]]
-then
-    realign_usage
-    echo -e "Error: mbuffer executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ -z "$BAMTOFASTQ" ]]
-then
-    realign_usage
-    echo -e "Error: bamtofastq.py executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ -z "$BAMHEADRG" ]]
-then
-    realign_usage
-    echo -e "Error: bamheadrg.py executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-elif [[ -z "$PARALLEL" ]]
-then
-    realign_usage
-    echo parallel is $PARALLEL
-    echo -e "Error: parallel executable not found. Please set path in $SPEEDSEQ_DIR/speedseq.config file\n"
-    exit 1
-fi
-
-# check for required python modules (pysam, numpy, scipy, etc)
-check_python_modules $PYTHON27
-
-# set the output name
-OUTBASE=`basename "$OUTPUT"`
-
-echo "Aligning..."
-# create temp directory if not specified by command argument
-if [[ -z $TEMP_DIR ]]
-then
-    TEMP_DIR=`mktemp -d -p ./ ${OUTBASE}.XXXXXXXXXXXX`
-fi
-
-if [[ $VERBOSE -eq 1 ]]
-then
-    echo "
-    mkdir -p $TEMP_DIR/full $TEMP_DIR/spl $TEMP_DIR/disc
-    mkfifo $TEMP_DIR/spl_pipe $TEMP_DIR/disc_pipe"
-fi
-
-if [[ $VERBOSE -eq 1 ]]
-then
-    echo "
-    mkdir -p $TEMP_DIR $TEMP_DIR/full $TEMP_DIR/spl $TEMP_DIR/disc
-    mkdir -p $TEMP_DIR/full $TEMP_DIR/spl $TEMP_DIR/disc
-    mkfifo $TEMP_DIR/spl_pipe $TEMP_DIR/disc_pipe $TEMP_DIR/fq_pipe"
-fi
-
-# create temp files and pipes
-mkdir -p $TEMP_DIR $TEMP_DIR/full $TEMP_DIR/spl $TEMP_DIR/disc
-if [[ ! -e $TEMP_DIR/spl_pipe ]]
-then
-    mkfifo $TEMP_DIR/spl_pipe
-fi
-if [[ ! -e $TEMP_DIR/disc_pipe ]]
-then
-    mkfifo $TEMP_DIR/disc_pipe
-fi
-if [[ ! -e $TEMP_DIR/fq_pipe ]]
-then
-    mkfifo $TEMP_DIR/fq_pipe
-fi
-FQ="$TEMP_DIR/fq_pipe"
-
-# alignment command
-if [[ $VERBOSE -eq 1 ]]
-then
-    echo -e "
-$PYTHON27 $BAMTOFASTQ $RENAME -i $IN_BAM | $MBUFFER -q -m 1G > $FQ
-$BWA mem -t $THREADS -C -M -p $INS_DIST $REF $FQ | \\
-    $PYTHON27 $BAMHEADRG -S -d <($SAMBAMBA view -H $IN_BAM) | \\
-    $SAMBLASTER $INCLUDE_DUPS --addMateTags --maxSplitCount $MAX_SPLIT_COUNT --minNonOverlap $MIN_NON_OVERLAP --splitterFile $TEMP_DIR/spl_pipe --discordantFile $TEMP_DIR/disc_pipe | \\
-    $SAMBAMBA view -S -f bam -l 0 /dev/stdin | \\
-    $SAMBAMBA sort -t $THREADS -m $((${SORT_MEM}-2))G --tmpdir=$TEMP_DIR/full -o $OUTPUT.bam /dev/stdin
-
-$SAMBAMBA view -S -f bam -l 0 $TEMP_DIR/spl_pipe | \\
-    $SAMBAMBA sort -t 4 -m 1G --tmpdir=$TEMP_DIR/spl -o $OUTPUT.splitters.bam /dev/stdin
-$SAMBAMBA view -S -f bam $TEMP_DIR/disc_pipe | \\
-    $SAMBAMBA sort -t 4 -m 1G --tmpdir=$TEMP_DIR/disc -o $OUTPUT.discordants.bam /dev/stdin"
-fi
-
-echo -e "
-$PYTHON27 $BAMTOFASTQ $RENAME -i $IN_BAM | $MBUFFER -q -m 1G > $FQ
-$BWA mem -t $THREADS -C -M -p $INS_DIST $REF $FQ | \
-    $PYTHON27 $BAMHEADRG -S -d <($SAMBAMBA view -H $IN_BAM) | \
-    $SAMBLASTER $INCLUDE_DUPS --addMateTags --maxSplitCount $MAX_SPLIT_COUNT --minNonOverlap $MIN_NON_OVERLAP --splitterFile $TEMP_DIR/spl_pipe --discordantFile $TEMP_DIR/disc_pipe | \
-    $SAMBAMBA view -S -f bam -l 0 /dev/stdin | \
-    $SAMBAMBA sort -t $THREADS -m $((${SORT_MEM}-2))G --tmpdir=$TEMP_DIR/full -o $OUTPUT.bam /dev/stdin
-
-$SAMBAMBA view -S -f bam -l 0 $TEMP_DIR/spl_pipe | \
-    $SAMBAMBA sort -t 4 -m 1G --tmpdir=$TEMP_DIR/spl -o $OUTPUT.splitters.bam /dev/stdin
-$SAMBAMBA view -S -f bam $TEMP_DIR/disc_pipe | \
-    $SAMBAMBA sort -t 4 -m 1G --tmpdir=$TEMP_DIR/disc -o $OUTPUT.discordants.bam /dev/stdin
-" | $PARALLEL -j 4
-
-echo "
-$SAMBAMBA index $OUTPUT.bam
-$SAMBAMBA index $OUTPUT.discordants.bam
-$SAMBAMBA index $OUTPUT.splitters.bam
-" | $PARALLEL -j 3
-
-
-# clean up
-rm -r $TEMP_DIR
-
-echo "Done"
 
 # exit cleanly
 exit 0
