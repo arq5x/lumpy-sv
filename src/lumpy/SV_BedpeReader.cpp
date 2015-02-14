@@ -25,6 +25,7 @@ SV_BedpeReader()
     bedpe_file = "";
     sample_name = "";
     //distro_file = "";
+    distro_size = 0;
     weight = 0;
     ev_id = SV_EvidenceReader::counter;
     SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
