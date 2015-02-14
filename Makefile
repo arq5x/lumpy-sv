@@ -15,6 +15,7 @@ export OBJ_DIR	= obj
 export BIN_DIR	= bin
 export SRC_DIR	= src
 export UTIL_DIR	= src/utils
+export SCRIPTS_DIR = scripts
 export CXX		= g++
 ##ifeq ($(DEBUG),1)
 export CXXFLAGS = -Wall -O0 -g -fno-inline -fkeep-inline-functions -D_FILE_OFFSET_BITS=64 -fPIC -DDEBUG -D_DEBUG
@@ -60,6 +61,7 @@ all:
 		echo ""; \
 	done
 
+	cp $(SCRIPTS_DIR)/lumpyexpress $(SCRIPTS_DIR)/lumpyexpress.config $(BIN_DIR)
 
 .PHONY: all
 
