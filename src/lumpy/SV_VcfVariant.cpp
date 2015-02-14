@@ -90,31 +90,20 @@ SV_VcfVariant(SV_BreakPoint *bp,
     // position start_r, and r_max_i is w.r.t. r[0]
     CHR_POS abs_max_r = start_r + r_max_i;
 
-    // CHROM, POS, ID, REF
+    // CHROM
     chrom[LINE1] = bp->interval_l.i.chr;
     chrom[LINE2] = bp->interval_r.i.chr;
-    pos[LINE1] = abs_max_l;
-    pos[LINE2] = abs_max_r;
     ref[LINE1] = "N";
     ref[LINE2] = "N";
-
-    // ALT
-    bool interchrom = bp->interval_l.i.chr.compare(bp->interval_r.i.chr) != 0;
+    qual[LINE1] = ".";
+    qual[LINE2] = ".";
+    filter[LINE1] = ".";
+    filter[LINE2] = ".";
+    
+    // SV type
     map<string,int> uniq_strands = get_strands(bp);
-    // get alt allele for generic breakend
-    vector<string> alt_v;
-    alt_v = get_alt(chrom[LINE1],
-		    pos[LINE1],
-		    ref[LINE1],
-		    chrom[LINE2],
-		    pos[LINE2],
-		    ref[LINE2],
-		    uniq_strands.begin()->first);
-
-    if (interchrom) {
+    if (bp->interval_l.i.chr.compare(bp->interval_r.i.chr) != 0) {
 	is_multiline = true;
-	alt[LINE1] = alt_v[LINE1];
-	alt[LINE2] = alt_v[LINE2];
 	set_info(LINE1, "SVTYPE", "BND");
 	set_info(LINE2, "SVTYPE", "BND");
     }
@@ -126,10 +115,9 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	alt[LINE1] = "<DUP>";
 	set_info(LINE1, "SVTYPE", "DUP");
     }
-    // TODO: multi line inversions should not have CIEND
     else if (bp->type == bp->INVERSION
-	     && uniq_strands["++"] > 0
-	     && uniq_strands["--"] > 0) {
+	     && uniq_strands.find("++") != uniq_strands.end()
+	     && uniq_strands.find("--") != uniq_strands.end()) {
 	alt[LINE1] = "<INV>";
 	set_info(LINE1, "SVTYPE", "INV");
     }
@@ -137,15 +125,76 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	// set the alt for the first of two lines
 	// in the multi-line variant
 	is_multiline = true;
-	alt[LINE1] = alt_v[LINE1];;
-	alt[LINE2] = alt_v[LINE2];;
 	set_info(LINE1, "SVTYPE", "BND");
 	set_info(LINE2, "SVTYPE", "BND");
     }
 
-    qual[LINE1] = ".";
-    filter[LINE1] = ".";
+    // INFO: STRANDS
+    stringstream strands;
+    stringstream strands_sec; // secondary line strands
+    map<string,int>::iterator s_it;
+    for (s_it = uniq_strands.begin();
+	 s_it != uniq_strands.end();
+	 ++s_it) {
+    	if (s_it != uniq_strands.begin())
+    	    strands <<  ",";
+    	strands << s_it->first << ":" << s_it->second;
+
+	// flip the orientations for the secondary breakend
+	if (s_it->first == "+-")
+	    strands_sec << "-+" << ":" << s_it->second;
+	else if (s_it->first == "-+")
+	    strands_sec << "+-" << ":" << s_it->second;
+	else
+	    strands_sec << s_it->first << ":" << s_it->second;
+    }
+    set_info(LINE1, "STRANDS", strands.str());
+    if (is_multiline)
+	set_info(LINE2, "STRANDS", strands_sec.str());
+
     if (is_multiline) {
+	// for multi-line variants (non-symbolic) we need to bump
+	// the position of '-' strand breakend (VCF 4.2 spec,
+	// section 5.4)
+	// This is because for symbolic variants, "END" refers to
+	// the last deleted base in the SV, but for BND it must
+	// be the immediate flanking base outside the SV.
+	//
+	// Symbolic format (<DEL>, <DUP>, <INV>:
+	//
+	//        POS      END
+	//         |        |
+	// =========.........=========
+	//
+	//
+	// BND format:
+	//
+	//        POS       ALT
+	//         |         |
+	// =========.........=========
+	//
+	// LUMPY always reports the base to the left of the
+	// breakpoint, so only need to move the '-' strand
+	// positions one base to the right
+	
+	// move the negative strand positions to the right
+	if (uniq_strands.find("--") != uniq_strands.end()) {
+	    pos[LINE1] = abs_max_l + 1;
+	    pos[LINE2] = abs_max_r + 1;
+	}
+	else if (uniq_strands.find("-+") != uniq_strands.end()) {
+	    pos[LINE1] = abs_max_l + 1;
+	    pos[LINE2] = abs_max_r;
+	}
+	else if (uniq_strands.find("++") != uniq_strands.end()) {
+	    pos[LINE1] = abs_max_l;
+	    pos[LINE2] = abs_max_r;
+	}
+	else if (uniq_strands.find("+-") != uniq_strands.end()) {
+	    pos[LINE1] = abs_max_l;
+	    pos[LINE2] = abs_max_r + 1;
+	}
+	
 	set_info(LINE2, "SECONDARY");
 	id[LINE1] = to_string(bp_id).append("_1");
 	id[LINE2] = to_string(bp_id).append("_2");
@@ -155,16 +204,28 @@ SV_VcfVariant(SV_BreakPoint *bp,
 
 	set_info(LINE1, "MATEID", to_string(bp_id).append("_2"));
 	set_info(LINE2, "MATEID", to_string(bp_id).append("_1"));
+
+	// ALT
+	vector<string> alt_v;
+	alt_v = get_alt(chrom[LINE1],
+			pos[LINE1],
+			ref[LINE1],
+			chrom[LINE2],
+			pos[LINE2],
+			ref[LINE2],
+			uniq_strands.begin()->first);
 	
-	qual[LINE2] = ".";
-	filter[LINE2] = ".";
+	alt[LINE1] = alt_v[LINE1];
+	alt[LINE2] = alt_v[LINE2];
     }
-    else
-	id[LINE1] = to_string(bp_id); // Note: removed the id: -1 control statement (CC 2014-01-10)
-    
-    // CHECK FOR 1-OFF HERE!
-    if (! is_multiline) {
-	// INFO: SVLEN
+    else {
+	// POS
+	pos[LINE1] = abs_max_l;
+
+	// ID
+	id[LINE1] = to_string(bp_id);
+	
+        // INFO: SVLEN
 	int svlen;
 	if (bp->type == bp->DELETION)
 	    svlen = abs_max_l - abs_max_r;
@@ -175,22 +236,8 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	// INFO: END
 	set_info(LINE1, "END", to_string(abs_max_r));
     }
-
-    // INFO: STRANDS
-    stringstream strands;
-    map<string,int>::iterator s_it;
-    for (s_it = uniq_strands.begin();
-	 s_it != uniq_strands.end();
-	 ++s_it) {
-    	if (s_it != uniq_strands.begin())
-    	    strands <<  ",";
-    	strands << s_it->first << ":" << s_it->second;
-    }
-    set_info(LINE1, "STRANDS", strands.str());
-    if (is_multiline)
-	set_info(LINE2, "STRANDS", strands.str());
-    
-    // INFO: CIPOS:: CHECK FOR OFF BY ONE HERE.
+        
+    // INFO: CIPOS
     int cipos_l = bp->interval_l.i.start - abs_max_l;
     int cipos_r = bp->interval_l.i.end - abs_max_l;
     string cipos = to_string(cipos_l);
@@ -238,6 +285,7 @@ SV_VcfVariant(SV_BreakPoint *bp,
 	    ++l_r_i;
 	}
     }
+
     // CHR_POS abs_l_l_95 = start_l + l_l_i,
     // abs_l_r_95 = start_l + l_r_i;
     int cipos95_l = start_l + l_l_i - abs_max_l;
@@ -324,21 +372,15 @@ SV_VcfVariant(SV_BreakPoint *bp,
     // FORMAT: update variant support with evidence counts
     map<string,int> var_supp;
     map<int, int>::iterator ids_it;
-    vector<int> _ids;
     for (ids_it = bp->ev_ids.begin();
 	 ids_it != bp->ev_ids.end();
-	 ++ids_it)
-    	_ids.push_back(ids_it->first);
-    vector<int>::iterator _ids_it;
-    for (_ids_it = _ids.begin();
-	 _ids_it != _ids.end();
-	 ++_ids_it) {
-	string samp = SV_EvidenceReader::sample_names[*_ids_it];
-	string ev_type = SV_EvidenceReader::ev_types[*_ids_it];
+	 ++ids_it) {
+	string samp = SV_EvidenceReader::sample_names[ids_it->first];
+	string ev_type = SV_EvidenceReader::ev_types[ids_it->first];
 
 	int samp_supp = atoi(get_sample_field(samp, "SU").c_str());
 	int ev = atoi(get_sample_field(samp, ev_type).c_str());
-	int new_ev = bp->ev_ids[*_ids_it];
+	int new_ev = ids_it->second;
 
 	ev += new_ev;
 	samp_supp += new_ev;
@@ -427,7 +469,6 @@ get_strands(SV_BreakPoint *bp)
 	SV_BreakPoint *tmp_bp = *bp_it;
 	delete tmp_bp;
     }
-    
     return uniq_strands;
 }
 
@@ -616,7 +657,8 @@ print_header()
 {
     string sep = "\t";
 
-    cout << "##fileformat=VCFv4.2" << endl <<
+    cout <<
+	"##fileformat=VCFv4.2" << endl <<
 	"##source=LUMPY" << endl <<
 	"##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">" << endl <<
 	"##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">" << endl <<

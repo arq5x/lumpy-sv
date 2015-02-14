@@ -118,7 +118,7 @@ SV_BreakPoint(SV_BreakPoint *a, SV_BreakPoint *b)
                 ev_ids[ev_id_it->first] += ev_id_it->second;
             }
 
-            for (ev_id_it = a->ev_ids.begin(); ev_id_it != a->ev_ids.end(); ++ev_id_it) {
+            for (ev_id_it = b->ev_ids.begin(); ev_id_it != b->ev_ids.end(); ++ev_id_it) {
                 if ( ev_ids.find( ev_id_it->first ) == ev_ids.end() )
                     ev_ids[ev_id_it->first] = 0;
                 ev_ids[ev_id_it->first] += ev_id_it->second;
@@ -950,14 +950,25 @@ print_bedpe(int id, int print_prob)
     sort(_ev_ids.begin(), _ev_ids.end());
 
     vector<int>::iterator _ev_ids_it;
-
+    map<string,int> ev_map;
     cout << "IDS:";
-    for ( _ev_ids_it = _ev_ids.begin(); _ev_ids_it != _ev_ids.end(); ++_ev_ids_it) {
-        if (_ev_ids_it != _ev_ids.begin())
-            cout << ";";
-        cout << *_ev_ids_it << "," << ev_ids[*_ev_ids_it];
-    }
+    for (_ev_ids_it = _ev_ids.begin();
+	 _ev_ids_it != _ev_ids.end();
+	 ++_ev_ids_it) {
 
+	string samp = SV_EvidenceReader::sample_names[*_ev_ids_it];
+    	string ev_type = SV_EvidenceReader::ev_types[*_ev_ids_it];
+
+	ev_map[samp + "_" + ev_type] += ev_ids[*_ev_ids_it];
+    }
+    for (map<string,int>::iterator s_it = ev_map.begin();
+	 s_it != ev_map.end();
+	 ++s_it) {
+        if (s_it != ev_map.begin())
+            cout << ";";
+        cout << s_it->first << "," << s_it->second;
+    }
+    
     cout << "\t";
 
     cout << "STRANDS:";
@@ -1999,6 +2010,29 @@ peak_distance(SV_BreakPoint *e,
 #endif
 }
 //}}}
+
+int
+SV_BreakPoint::
+get_max_sample_weight()
+{
+    map<string,int> sample_weights;
+    int max_sample_weight = 0;
+
+    map<int, int>::iterator ids_it;
+    for (ids_it = this->ev_ids.begin();
+	 ids_it != this->ev_ids.end();
+	 ++ids_it)
+	sample_weights[SV_EvidenceReader::sample_names[ids_it->first]] += ids_it->second;
+
+    map<string,int>::iterator sw_it;
+    for (sw_it = sample_weights.begin();
+    	 sw_it != sample_weights.end();
+    	 ++sw_it) {
+    	if (sw_it->second > max_sample_weight)
+    	    max_sample_weight = sw_it->second;
+    }
+    return max_sample_weight;
+}
 
 #if 0
 //{{{ boost::numeric::ublas::matrix<double>* BreakPoint::get_matrix(double
