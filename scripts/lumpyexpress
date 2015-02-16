@@ -99,7 +99,7 @@ LUMPY_DIR=`dirname $0`
 CONFIG="$LUMPY_DIR/lumpyexpress.config"
 THREADS=1
 ANNOTATE=0
-MIN_WEIGHT=4
+MIN_SAMPLE_WEIGHT=4
 TRIM_THRES=0
 EXCLUDE_BED=
 TEMP_DIR=""
@@ -136,7 +136,7 @@ do
 	    OUTPUT="$OPTARG"
 	    ;;
 	m)
-	    MIN_WEIGHT="$OPTARG"
+	    MIN_SAMPLE_WEIGHT="$OPTARG"
 	    ;;
 	r)
 	    TRIM_THRES="$OPTARG"
@@ -439,7 +439,7 @@ then
     echo "
 $LUMPY ${PROB_CURVE} \\
     -t ${TEMP_DIR}/${OUTBASE} \\
-    -mw $MIN_WEIGHT \\
+    -msw $MIN_SAMPLE_WEIGHT \\
     -tt $TRIM_THRES \\
     $EXCLUDE_BED_FMT \\
     $LUMPY_DISC_STRING \\
@@ -447,7 +447,7 @@ $LUMPY ${PROB_CURVE} \\
     > $TEMP_DIR/$OUTBASE.sv.vcf"
 fi
 # call lumpy
-$LUMPY $PROB_CURVE -t ${TEMP_DIR}/${OUTBASE} -mw $MIN_WEIGHT -tt $TRIM_THRES \
+$LUMPY $PROB_CURVE -t ${TEMP_DIR}/${OUTBASE} -msw $MIN_SAMPLE_WEIGHT -tt $TRIM_THRES \
     $EXCLUDE_BED_FMT \
     $LUMPY_DISC_STRING \
     $LUMPY_SPL_STRING \
