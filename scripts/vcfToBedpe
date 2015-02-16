@@ -310,16 +310,16 @@ def vcfToBedpe(vcf_file, bedpe_out):
             ispan = s2 - e1
             ospan = e2 - s1
 
-            if o1 == '+':
-                if o2 == '-':
-                    svtype = 'DEL'
-                elif o2 == '+':
-                    svtype = 'INV'
-            elif o1 == '-':
-                if o2 == '+':
-                    svtype = 'DUP'
-                elif o2 == '-':
-                    svtype = 'INV'
+            # if o1 == '+':
+            #     if o2 == '-':
+            #         svtype = 'DEL'
+            #     elif o2 == '+':
+            #         svtype = 'INV'
+            # elif o1 == '-':
+            #     if o2 == '+':
+            #         svtype = 'DUP'
+            #     elif o2 == '-':
+            #         svtype = 'INV'
             
             ev_list = list()
             for ev in ['PE', 'SR']:
@@ -355,7 +355,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
                                            var.qual,
                                            o1,
                                            o2,
-                                           svtype,
+                                           var.info['SVTYPE'],
                                            var.filter,
                                            var.get_info_string(),
                                            var.get_format_string()])
@@ -387,19 +387,19 @@ def vcfToBedpe(vcf_file, bedpe_out):
                 ispan = s2 - e1
                 ospan = e2 - s1
 
-                if prim.chrom != sec.chrom:
-                    svtype = 'INT'
-                else:
-                    if o1 == '+':
-                        if o2 == '-':
-                            svtype = 'DEL'
-                        elif o2 == '+':
-                            svtype = 'INV'
-                    elif o1 == '-':
-                        if o2 == '+':
-                            svtype = 'DUP'
-                        elif o2 == '-':
-                            svtype = 'INV'
+                # if prim.chrom != sec.chrom:
+                #     svtype = 'INT'
+                # else:
+                #     if o1 == '+':
+                #         if o2 == '-':
+                #             svtype = 'DEL'
+                #         elif o2 == '+':
+                #             svtype = 'INV'
+                #     elif o1 == '-':
+                #         if o2 == '+':
+                #             svtype = 'DUP'
+                #         elif o2 == '-':
+                #             svtype = 'INV'
 
                 ev_list = list()
                 for ev in ['PE', 'SR']:
@@ -435,11 +435,11 @@ def vcfToBedpe(vcf_file, bedpe_out):
                                                prim.qual,
                                                o1,
                                                o2,
-                                               svtype,
+                                               prim.info['SVTYPE'],
                                                prim.filter,
-                                               var.get_info_string(),
-                                               var.get_format_string(),
-                                               '\t'.join([var.gts[sample].get_gt_string() for sample in var.sample_list])
+                                               prim.get_info_string(),
+                                               prim.get_format_string(),
+                                               '\t'.join([prim.gts[sample].get_gt_string() for sample in prim.sample_list])
                                            ])) + '\n')
 
                 # delete the mate from the dictionary
