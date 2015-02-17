@@ -44,7 +44,6 @@ cp bin/* /usr/local/bin/.
 
 ## Usage
 
-LUMPY has two basic workflows:
 - [LUMPY Express](#lumpy-express): automated script for standard analyses
 - [LUMPY (traditional)](#lumpy-traditional): flexible and customizable for specialty analyses
 
