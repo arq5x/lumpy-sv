@@ -14,13 +14,6 @@ Ryan M Layer, Colby Chiang, Aaron R Quinlan, and Ira M Hall. 2014. "LUMPY: a Pro
 5. [Example workflows](#example-workflows)
 -->
 
-## Requirements
-- samtools or sambamba
-- SAMBLASTER
-- python2.7
-    * pysam
-    * numpy
-
 ## Quick start
 ```
 git clone --recursive git@github.com:arq5x/lumpy-sv.git
@@ -34,6 +27,14 @@ lumpyexpress \
 ```
 
 ## Installation
+
+### Requirements
+- samtools or sambamba
+- SAMBLASTER
+- python2.7
+    * pysam
+    * numpy
+
 ```
 git clone --recursive git@github.com:arq5x/lumpy-sv.git
 cd lumpy-sv
