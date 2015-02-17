@@ -11,8 +11,8 @@ Genome Biology 15 (6): R84.
 ## Table of Contents
 1. [Quick start](#quick-start)
 2. [Installation](#installation)
-3. [Usage](#usage)
-4. [Example](#examples)
+3. [LUMPY Express](#lumpy-express)
+4. [LUMPY (traditional)](#lumpy-traditional)
 
 ## Quick start
 
