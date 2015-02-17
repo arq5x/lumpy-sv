@@ -33,7 +33,7 @@ lumpyexpress \
 - SAMBLASTER ([https://github.com/GregoryFaust/samblaster](https://github.com/GregoryFaust/samblaster))
 - Python 2.7 ([https://www.python.org/](https://www.python.org/))
     * pysam ([https://pypi.python.org/pypi/pysam](https://pypi.python.org/pypi/pysam))
-    * NumPy ([http://www.numpy.org/](http://www.numpy.org/))
+    * NumPy ([http://docs.scipy.org/doc/numpy/user/install.html](http://docs.scipy.org/doc/numpy/user/install.html))
 
 ```
 git clone --recursive git@github.com:arq5x/lumpy-sv.git
@@ -41,3 +41,5 @@ cd lumpy-sv
 make
 cp bin/* /usr/local/bin/.
 ```
+
+## Usage
