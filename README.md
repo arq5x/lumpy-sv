@@ -16,7 +16,7 @@ Genome Biology 15 (6): R84.
 
 ## Quick start
 
-Download and install LUMPY and LUMPY Express
+Download and install
 ```
 git clone --recursive git@github.com:arq5x/lumpy-sv.git
 cd lumpy-sv
@@ -40,6 +40,7 @@ lumpyexpress \
     * pysam ([https://pypi.python.org/pypi/pysam](https://pypi.python.org/pypi/pysam))
     * NumPy ([http://docs.scipy.org/doc/numpy/user/install.html](http://docs.scipy.org/doc/numpy/user/install.html))
 
+Install LUMPY
 ```
 git clone --recursive git@github.com:arq5x/lumpy-sv.git
 cd lumpy-sv
