@@ -55,7 +55,7 @@ options:
      -B FILE  full BAM file(s) (comma separated) (required)
      -S FILE  split reads BAM file(s) (comma separated)
      -D FILE  discordant reads BAM files(s) (comma separated)
-     -o STR   output prefix [fullBam.bam]
+     -o FILE  output file [fullBam.bam.vcf]
      -x FILE  BED file to exclude
      -P       output probability curves for each variant
      -m INT   minimum sample weight for a call [4]
@@ -219,7 +219,7 @@ done
 # default OUTPUT if not provided
 if test -z "$OUTPUT"
 then
-    OUTPUT=`basename "${FULL_BAM_LIST[0]}"`
+    OUTPUT=`basename "${FULL_BAM_LIST[0]}"`.vcf
 fi
 OUTBASE=`basename "$OUTPUT"`
 
@@ -405,14 +405,14 @@ $LUMPY ${PROB_CURVE} \\
     $EXCLUDE_BED_FMT \\
     $LUMPY_DISC_STRING \\
     $LUMPY_SPL_STRING \\
-    > $TEMP_DIR/$OUTBASE.sv.vcf"
+    > $OUTPUT"
 fi
 # call lumpy
 $LUMPY $PROB_CURVE -t ${TEMP_DIR}/${OUTBASE} -msw $MIN_SAMPLE_WEIGHT -tt $TRIM_THRES \
     $EXCLUDE_BED_FMT \
     $LUMPY_DISC_STRING \
     $LUMPY_SPL_STRING \
-    > $OUTPUT.sv.vcf
+    > $OUTPUT
 
 # clean up
 if [[ "$KEEP" -eq 0 ]]
