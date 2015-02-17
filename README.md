@@ -82,8 +82,8 @@ LUMPY Express runs several external program whose paths are specified in
 must reside in the same directory as lumpyexpress, or be specified explicitly
 with the -K flag.
 
-The installation script auto-generates a lumpyexpress.config file and places
-it in the "bin" directory.
+The installation script auto-generates a lumpyexpress.config file
+and places it in the "bin" directory.
 
 #### Input
 LUMPY Express expects BWA-MEM aligned BAM files as input. It automatically parses
@@ -95,15 +95,8 @@ extracts splitters and discordants using SAMBLASTER before running LUMPY.
 Optionally, users may supply coordinate-sorted splitter (-S) and discordant (-D)
 BAM files which will bypass SAMBLASTER extraction for faster analysis.
 
-#### Examples
-
-Run LUMPY Express on a single sample. Output is written to output_prefix.vcf
-```
-lumpyexpress \
-    -B my.bam \
-    -o output_prefix
-```
-
+#### Output
+LUMPY Express produces a VCF file according to [VCF spec 4.2](https://samtools.github.io/hts-specs/VCFv4.2.pdf)
 
 ### LUMPY (traditional)
 Flexible and customizable breakpoint detection for advanced users.
@@ -149,6 +142,15 @@ usage:    lumpy [options]
     -bedpe    bedpe_file:<bedpe file>,
               id:<sample name>,
               weight:<sample weight>
+```
+
+## Examples
+
+Run LUMPY Express on a single sample. Output is written to output_prefix.vcf
+```
+lumpyexpress \
+    -B my.bam \
+    -o output_prefix
 ```
 
 
