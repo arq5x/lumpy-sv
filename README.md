@@ -53,7 +53,7 @@ cp bin/* /usr/local/bin/.
 [LUMPY Express](#lumpy-express): Automated breakpoint detection for standard analyses.  
 [LUMPY (traditional)](#lumpy-traditional): Flexible and customizable breakpoint detection for advanced users.
 
-### LUMPY Express
+## LUMPY Express
 Automated breakpoint detection for standard analyses.
 
 ```
@@ -140,7 +140,7 @@ LUMPY Express produces a VCF file according to [VCF spec 4.2](https://samtools.g
         -o output.vcf
     ```
 
-### LUMPY (traditional)
+## LUMPY (traditional)
 Flexible and customizable breakpoint detection for advanced users.
 
 ```
