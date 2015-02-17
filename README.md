@@ -50,6 +50,35 @@ cp bin/* /usr/local/bin/.
 #### LUMPY Express
 Automated breakpoint detection for standard analyses.
 
+```
+usage:   lumpyexpress [options]
+```
+
+##### Required arguments
+```
+     -B FILE  full coordinate-sorted BAM file(s) (comma separated)
+     -R FILE  indexed reference genome fasta file
+```
+
+##### Optional arguments
+```
+options:
+     -S FILE  split reads BAM file(s) (comma separated)
+     -D FILE  discordant reads BAM files(s) (comma separated)
+     -o STR   output prefix [fullBam.bam]
+     -x FILE  BED file to exclude
+     -P       output probability curves for each variant
+     -m INT   minimum sample weight for a call [4]
+     -r FLOAT trim threshold [0]
+     -T DIR   temp directory [./output_prefix.XXXXXXXXXXXX]
+     -k       keep temporary files
+
+     -K FILE  path to lumpyexpress.config file
+                (default: same directory as lumpyexpress)
+     -v       verbose
+     -h       show this message
+```
+
 #### LUMPY (traditional)
 Flexible and customizable breakpoint detection for advanced users.
 
