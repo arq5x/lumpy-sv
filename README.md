@@ -22,8 +22,8 @@ make
 cp bin/* /usr/local/bin/.
 
 lumpyexpress \
-    -B sample.bam \
-    -o sample
+    -B my.bam \
+    -o output_prefix
 ```
 
 ## Installation
@@ -105,17 +105,17 @@ usage:    lumpy [options]
               read_group:<string>
 
      -pe      bam_file:<file name>,
-	      id:<sample name>,
-	      histo_file:<file name>,
-	      mean:<value>,
-	      stdev:<value>,
-	      read_length:<length>,
-	      min_non_overlap:<length>,
-	      discordant_z:<z value>,
-	      back_distance:<distance>,
-	      min_mapping_threshold:<mapping quality>,
-	      weight:<sample weight>,
-	      read_group:<string>
+              id:<sample name>,
+              histo_file:<file name>,
+              mean:<value>,
+              stdev:<value>,
+              read_length:<length>,
+              min_non_overlap:<length>,
+              discordant_z:<z value>,
+              back_distance:<distance>,
+              min_mapping_threshold:<mapping quality>,
+              weight:<sample weight>,
+              read_group:<string>
 
     -bedpe    bedpe_file:<bedpe file>,
               id:<sample name>,
