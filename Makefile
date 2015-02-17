@@ -67,7 +67,7 @@ lumpyexpress:
 	> $(BIN_DIR)/lumpyexpress.config
 	@echo "LUMPY_HOME=$(MKFILE_DIR)" >> $(BIN_DIR)/lumpyexpress.config
 	@echo "" >> $(BIN_DIR)/lumpyexpress.config
-	@echo "LUMPY=`which lumpy`" >> $(BIN_DIR)/lumpyexpress.config
+	@echo "LUMPY=$(BIN_DIR)/lumpy" >> $(BIN_DIR)/lumpyexpress.config
 	@echo "SAMBLASTER=`which samblaster`" >> $(BIN_DIR)/lumpyexpress.config
 	@echo "SAMBAMBA=`which sambamba`" >> $(BIN_DIR)/lumpyexpress.config
 	@echo "SAMTOOLS=`which samtools`" >> $(BIN_DIR)/lumpyexpress.config
