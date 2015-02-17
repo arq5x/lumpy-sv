@@ -152,14 +152,14 @@ usage:    lumpy [options]
 
 ## Examples
 
-##### Run LUMPY Express on a single sample
+1. Run LUMPY Express on a single sample
 ```
 lumpyexpress \
     -B my.bam \
     -o output.vcf
 ```
 
-##### Run LUMPY Express on a single sample with pre-extracted splitters and discordants
+2. Run LUMPY Express on a single sample with pre-extracted splitters and discordants
 ```
 lumpyexpress \
     -B my.bam \
