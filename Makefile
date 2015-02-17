@@ -62,7 +62,7 @@ all:	lumpyexpress
 	done
 
 lumpyexpress:
-	cp $(SCRIPTS_DIR)/lumpyexpress $(BIN_DIR)/lumpyexpress.config
+	cp $(SCRIPTS_DIR)/lumpyexpress $(BIN_DIR)/lumpyexpress
 
 	> $(BIN_DIR)/lumpyexpress.config
 	@echo "LUMPY_HOME=$(MKFILE_DIR)" >> $(BIN_DIR)/lumpyexpress.config
