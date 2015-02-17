@@ -54,13 +54,13 @@ Automated breakpoint detection for standard analyses.
 usage:   lumpyexpress [options]
 ```
 
-###### Required arguments
+**Required arguments**
 ```
      -B FILE  full coordinate-sorted BAM file(s) (comma separated)
      -R FILE  indexed reference genome fasta file
 ```
 
-###### Optional arguments
+**Optional arguments**
 ```
 options:
      -S FILE  split reads BAM file(s) (comma separated)
