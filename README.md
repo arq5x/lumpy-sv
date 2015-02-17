@@ -111,33 +111,33 @@ LUMPY Express produces a VCF file according to [VCF spec 4.2](https://samtools.g
 1. Run LUMPY Express on a single sample
     ```
     lumpyexpress \
-	-B my.bam \
-	-o output.vcf
+        -B my.bam \
+        -o output.vcf
     ```
 
 2. Run LUMPY Express on a single sample with pre-extracted splitters and discordants
     ```
     lumpyexpress \
-	-B my.bam \
-	-S my.splitters.bam \
-	-D my.discordants.bam \
-	-o output.vcf
+        -B my.bam \
+        -S my.splitters.bam \
+        -D my.discordants.bam \
+        -o output.vcf
     ```
 
 3. Run LUMPY Express on jointly on multiple samples
     ```
     lumpyexpress \
-	-B sample1.bam,sample2.bam,sample3.bam \
-	-o output.vcf
+        -B sample1.bam,sample2.bam,sample3.bam \
+        -o output.vcf
     ```
 
 4. Run LUMPY Express jointly on multiple samples with pre-extracted splitters and discordants
     ```
     lumpyexpress \
-	-B sample1.bam,sample2.bam,sample3.bam \
-	-S sample1.splitters.bam,sample2.splitters..bam,sample3.splitters.bam \
-	-D sample1.discordants.bam,sample2.discordants.bam,sample3.discordants.bam \
-	-o output.vcf
+        -B sample1.bam,sample2.bam,sample3.bam \
+        -S sample1.splitters.bam,sample2.splitters..bam,sample3.splitters.bam \
+        -D sample1.discordants.bam,sample2.discordants.bam,sample3.discordants.bam \
+        -o output.vcf
     ```
 
 ### LUMPY (traditional)
