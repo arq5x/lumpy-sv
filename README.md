@@ -28,7 +28,7 @@ Run LUMPY Express
 ```
 lumpyexpress \
     -B my.bam \
-    -o output_prefix
+    -o output.vcf
 ```
 
 ## Installation
@@ -69,7 +69,7 @@ usage:   lumpyexpress [options]
 ```
      -S FILE  split reads BAM file(s) (comma separated)
      -D FILE  discordant reads BAM files(s) (comma separated)
-     -o STR   output prefix [fullBam.bam]
+     -o STR   output [fullBam.bam.vcf]
      -x FILE  BED file to exclude
      -P       output probability curves for each variant
      -m INT   minimum sample weight for a call [4]
@@ -152,19 +152,36 @@ usage:    lumpy [options]
 
 ## Examples
 
-Run LUMPY Express on a single sample.
+##### Run LUMPY Express on a single sample
 ```
 lumpyexpress \
     -B my.bam \
-    -o output_prefix
+    -o output.vcf
 ```
 
-Run LUMPY Express on a single sample.
+##### Run LUMPY Express on a single sample with pre-extracted splitters and discordants
 ```
 lumpyexpress \
     -B my.bam \
+    -S my.splitters.bam \
+    -D my.discordants.bam \
+    -o output.vcf
+```
+
+##### Run LUMPY Express on jointly on multiple samples
+```
+lumpyexpress \
+    -B sample1.bam,sample2.bam,sample3.bam \
     -o output_prefix
 ```
 
+##### Run LUMPY Express jointly on multiple samples with pre-extracted splitters and discordants
+```
+lumpyexpress \
+    -B sample1.bam,sample2.bam,sample3.bam \
+    -S sample1.splitters.bam,sample2.splitters..bam,sample3.splitters.bam \
+    -D sample1.discordants.bam,sample2.discordants.bam,sample3.discordants.bam \
+    -o output_prefix
+```
 
 
