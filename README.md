@@ -153,35 +153,31 @@ usage:    lumpy [options]
 ## Examples
 
 1. Run LUMPY Express on a single sample
-    ```
     lumpyexpress \
 	-B my.bam \
 	-o output.vcf
-    ```
 
 2. Run LUMPY Express on a single sample with pre-extracted splitters and discordants
-```
-lumpyexpress \
-    -B my.bam \
-    -S my.splitters.bam \
-    -D my.discordants.bam \
-    -o output.vcf
-```
+    lumpyexpress \
+	-B my.bam \
+	-S my.splitters.bam \
+	-D my.discordants.bam \
+	-o output.vcf
 
-##### Run LUMPY Express on jointly on multiple samples
-```
-lumpyexpress \
-    -B sample1.bam,sample2.bam,sample3.bam \
-    -o output_prefix
-```
+3. Run LUMPY Express on jointly on multiple samples
+    ```
+    lumpyexpress \
+	-B sample1.bam,sample2.bam,sample3.bam \
+	-o output_prefix
+    ```
 
-##### Run LUMPY Express jointly on multiple samples with pre-extracted splitters and discordants
-```
-lumpyexpress \
-    -B sample1.bam,sample2.bam,sample3.bam \
-    -S sample1.splitters.bam,sample2.splitters..bam,sample3.splitters.bam \
-    -D sample1.discordants.bam,sample2.discordants.bam,sample3.discordants.bam \
-    -o output_prefix
-```
+4. Run LUMPY Express jointly on multiple samples with pre-extracted splitters and discordants
+    ```
+    lumpyexpress \
+	-B sample1.bam,sample2.bam,sample3.bam \
+	-S sample1.splitters.bam,sample2.splitters..bam,sample3.splitters.bam \
+	-D sample1.discordants.bam,sample2.discordants.bam,sample3.discordants.bam \
+	-o output_prefix
+    ```
 
 
