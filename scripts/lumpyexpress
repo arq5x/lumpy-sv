@@ -6,7 +6,7 @@
 ############################################################
 
 # source the paths to the binaries used in the script
-function source_binaries() {
+source_binaries() {
     if [[ -e $1 ]]
     then
 	echo "Sourcing executables from $1 ..."
@@ -38,7 +38,7 @@ function source_binaries() {
 
 # ensure that the require python modules are installed before
 # beginning analysis
-function check_python_modules() {
+check_python_modules() {
     PYTHON_TEST=$1
     echo -e "\nChecking for required python modules ($PYTHON_TEST)..."
 
@@ -47,7 +47,7 @@ function check_python_modules() {
 }
 
 ## usage
-function usage() {
+usage() {
     echo "
 usage:   lumpyexpress [options]
 
