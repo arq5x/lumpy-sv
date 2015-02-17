@@ -15,12 +15,17 @@ Genome Biology 15 (6): R84.
 4. [Example](#examples)
 
 ## Quick start
+
+Download and install LUMPY and LUMPY Express
 ```
 git clone --recursive git@github.com:arq5x/lumpy-sv.git
 cd lumpy-sv
 make
 cp bin/* /usr/local/bin/.
+```
 
+Run LUMPY Express
+```
 lumpyexpress \
     -B my.bam \
     -o output_prefix
