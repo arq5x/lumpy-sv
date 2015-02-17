@@ -44,10 +44,18 @@ cp bin/* /usr/local/bin/.
 
 ## Usage
 
-#### LUMPY
+LUMPY has two basic workflows: LUMPY (traditional) and LUMPY Express. LUMPY (traditional) is more flexible and customizable, but requires several data pre-processing steps. LUMPY Express is an automated script designed to simplify most standard analyses. 
 
-#### LUMPY-Express
+#### LUMPY Express
+Automated breakpoint detection for standard analyses.
+
+#### LUMPY (traditional)
+Flexible and customizable breakpoint detection for advanced users.
+
+
+
 LUMPY-Express automatically pre-processes a coordinate sorted BAM file 
+
 
 
 
