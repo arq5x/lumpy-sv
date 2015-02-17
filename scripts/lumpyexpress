@@ -18,44 +18,21 @@ function source_binaries() {
 	fi
     else
 	echo "Config file $1 not found. Attempting to auto-source executables"
-	# general
-	SPEEDSEQ_HOME=$( dirname `which speedseq` )
-	SAMBAMBA=`which sambamba || true`
-	BEDTOOLS=`which bedtools || true`
-	BGZIP=`which bgzip || true`
-	TABIX=`which tabix || true`
-	VAWK=`which vawk || true`
-	PARALLEL=`which parallel || true`
-	PYTHON=`which python2.7 || true`
+        # general
+	LUMPY_HOME=$( dirname `which lumpyexpress` )
 
-	# align
-	BWA=`which bwa || true`
-	SAMBLASTER=`which samblaster || true`
-
-	# var/somatic
-	FREEBAYES=`which freebayes || true`
-	VEP=`which variant_effect_predictor.pl || true`
-	VEP_CACHE_DIR=$SPEEDSEQ_HOME/annotations/vep_cache
-
-	# sv
 	LUMPY=`which lumpy || true`
-	PAIREND_DISTRO=`which pairend_distro.py || true`
-	BEDPETOVCF=`which bedpeToVcf || true`
-	LUMPYTOBEDPE=`which lumpyToBedpe || true`
-	SVTYPER=`which svtyper || true`
-	BAMGROUPREADS=`which bamgroupreads.py || true`
-	BAMFILTERRG=`which bamfilterrg.py || true`
+	SAMBLASTER=`which samblaster || true`
+	SAMBAMBA=`which sambamba || true`
+	SAMTOOLS=`which samtools || true`
+	# python 2.7 or newer, must have pysam, numpy installed
+	PYTHON=`which python || true`
 
-        # CNVnator
-	CNVNATOR_WRAPPER=`which cnvnator_wrapper.py || true`
-	CNVNATOR_MULTI=`which cnvnator-multi || true`
-	ANNOTATE_RD=`which annotate_rd.py || true`
-	CNVNATOR_CHROMS_DIR=~/genomes/GRCh37/chroms
-
-	# re-align
-	BAMTOFASTQ=`which bamtofastq.py || true`
-	MBUFFER=`which mbuffer || true`
-	BAMHEADRG=`which bamheadrg.py || true`
+        # python scripts
+	PAIREND_DISTRO=$LUMPY_HOME/scripts/pairend_distro.py
+	BAMGROUPREADS=$LUMPY_HOME/scripts/bamkit/bamgroupreads.py
+	BAMFILTERRG=$LUMPY_HOME/scripts/bamkit/bamfilterrg.py
+	BAMLIBS=$LUMPY_HOME/scripts/bamkit/bamlibs.py
     fi
 }
 
