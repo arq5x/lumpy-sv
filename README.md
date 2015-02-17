@@ -76,9 +76,19 @@ usage:   lumpyexpress [options]
      -h       show this message
 ```
 
+#### Configuration
+LUMPY Express runs several external program whose paths are specified in
+[scripts/lumpyexpress.config](scripts/lumpyexpress.config). This config
+must reside in the same directory as lumpyexpress, or be specified explicitly
+with the -K flag.
+
+The installation script auto-generates a lumpyexpress.config file and places
+it in the "bin" directory.
+
 #### Input
 LUMPY Express expects BWA-MEM aligned BAM files as input. It automatically parses
 sample, library, and read group information using the @RG tags in the BAM header.
+Each BAM file is expected to contain exactly one sample.
 
 The minimum input is a coordinate-sorted BAM file (-B), from which LUMPY Express
 extracts splitters and discordants using SAMBLASTER before running LUMPY.
@@ -87,6 +97,12 @@ BAM files which will bypass SAMBLASTER extraction for faster analysis.
 
 #### Examples
 
+Run LUMPY Express on a single sample. Output is written to output_prefix.vcf
+```
+lumpyexpress \
+    -B my.bam \
+    -o output_prefix
+```
 
 
 ### LUMPY (traditional)
