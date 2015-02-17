@@ -55,7 +55,6 @@ options:
      -B FILE  full BAM file(s) (comma separated) (required)
      -S FILE  split reads BAM file(s) (comma separated)
      -D FILE  discordant reads BAM files(s) (comma separated)
-     -R FILE  indexed reference genome fasta file (required)
      -o STR   output prefix [fullBam.bam]
      -x FILE  BED file to exclude
      -P       output probability curves for each variant
@@ -90,7 +89,7 @@ MIN_NON_OVERLAP=20
 REALIGN=0
 PROB_CURVE=""
 
-while getopts ":hB:S:D:R:o:m:r:x:T:t:PaAdgkvK:" OPTION
+while getopts ":hB:S:D:o:m:r:x:T:t:PaAdgkvK:" OPTION
 do
     case "${OPTION}" in
 	h)
@@ -105,9 +104,6 @@ do
 	    ;;
 	D)
 	    DISC_BAM_STRING="$OPTARG"
-	    ;;
-	R)
-	    REF="$OPTARG"
 	    ;;
 	o)
 	    OUTPUT="$OPTARG"
@@ -203,18 +199,6 @@ fi
 check_python_modules $PYTHON
 
 # Check that the required files exist
-if [[ ! -f $REF ]]
-then
-    usage
-    echo -e "Error: reference fasta file $REF not found\n"
-    exit 1
-fi
-if [[ ! -f $REF.fai && ! -f $(echo ${REF%*.*}).fai ]]
-then
-    usage
-    echo -e "Error: reference fasta file $REF not indexed\n"
-    exit 1
-fi
 if [[ ${#FULL_BAM_LIST[@]} -eq 0 ]]
 then
     usage
