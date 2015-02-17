@@ -43,3 +43,11 @@ cp bin/* /usr/local/bin/.
 ```
 
 ## Usage
+
+#### LUMPY
+
+#### LUMPY-Express
+LUMPY-Express automatically pre-processes a coordinate sorted BAM file 
+
+
+
