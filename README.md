@@ -11,8 +11,8 @@ Genome Biology 15 (6): R84.
 ## Table of Contents
 1. [Quick start](#quick-start)
 2. [Installation](#installation)
-3. [LUMPY Express](#lumpy-express)
-4. [LUMPY (traditional)](#lumpy-traditional)
+3. [LUMPY Express](#lumpy-express): Automated breakpoint detection for standard analyses.
+4. [LUMPY (traditional)](#lumpy-traditional): Flexible and customizable breakpoint detection for advanced users.
 
 ## Quick start
 
@@ -47,11 +47,6 @@ cd lumpy-sv
 make
 cp bin/* /usr/local/bin/.
 ```
-
-## Usage
-
-[LUMPY Express](#lumpy-express): Automated breakpoint detection for standard analyses.  
-[LUMPY (traditional)](#lumpy-traditional): Flexible and customizable breakpoint detection for advanced users.
 
 ## LUMPY Express
 Automated breakpoint detection for standard analyses.
