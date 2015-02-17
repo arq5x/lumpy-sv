@@ -130,7 +130,7 @@ usage:    lumpy [options]
     -bedpe    bedpe_file:<bedpe file>,
               id:<sample name>,
               weight:<sample weight>
-
+```
 
 
 
