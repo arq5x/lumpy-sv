@@ -50,8 +50,8 @@ cp bin/* /usr/local/bin/.
 
 ## Usage
 
-[LUMPY Express](#lumpy-express): automated script for standard analyses  
-[LUMPY (traditional)](#lumpy-traditional): flexible and customizable for specialty analyses
+[LUMPY Express](#lumpy-express): Automated breakpoint detection for standard analyses.
+[LUMPY (traditional)](#lumpy-traditional): Flexible and customizable breakpoint detection for advanced users.
 
 ### LUMPY Express
 Automated breakpoint detection for standard analyses.
