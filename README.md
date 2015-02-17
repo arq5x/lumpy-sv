@@ -44,7 +44,9 @@ cp bin/* /usr/local/bin/.
 
 ## Usage
 
-LUMPY has two basic workflows: LUMPY (traditional) and LUMPY Express. LUMPY (traditional) is more flexible and customizable, but requires several data pre-processing steps. LUMPY Express is an automated script designed to simplify most standard analyses. 
+LUMPY has two basic workflows:
+- LUMPY Express: automated script for standard analyses
+- LUMPY (traditional): flexible and customizable for specialty analyses
 
 #### LUMPY Express
 Automated breakpoint detection for standard analyses.
