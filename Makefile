@@ -73,10 +73,10 @@ lumpyexpress:
 	@echo "SAMTOOLS=`which samtools`" >> $(BIN_DIR)/lumpyexpress.config
 	@echo "PYTHON=`which python`" >> $(BIN_DIR)/lumpyexpress.config
 	@echo "" >> $(BIN_DIR)/lumpyexpress.config
-	@echo "PAIREND_DISTRO=$(SCRIPTS_DIR)/pairend_distro.py" >> $(BIN_DIR)/lumpyexpress.config
-	@echo "BAMGROUPREADS=$(SCRIPTS_DIR)/bamkit/bamgroupreads.py" >> $(BIN_DIR)/lumpyexpress.config
-	@echo "BAMFILTERRG=$(SCRIPTS_DIR)/bamkit/bamfilterrg.py" >> $(BIN_DIR)/lumpyexpress.config
-	@echo "BAMLIBS=$(SCRIPTS_DIR)/bamkit/bamlibs.py" >> $(BIN_DIR)/lumpyexpress.config
+	@echo "PAIREND_DISTRO=$(MKFILE_DIR)/$(SCRIPTS_DIR)/pairend_distro.py" >> $(BIN_DIR)/lumpyexpress.config
+	@echo "BAMGROUPREADS=$(MKFILE_DIR)/$(SCRIPTS_DIR)/bamkit/bamgroupreads.py" >> $(BIN_DIR)/lumpyexpress.config
+	@echo "BAMFILTERRG=$(MKFILE_DIR)/$(SCRIPTS_DIR)/bamkit/bamfilterrg.py" >> $(BIN_DIR)/lumpyexpress.config
+	@echo "BAMLIBS=$(MKFILE_DIR)/$(SCRIPTS_DIR)/bamkit/bamlibs.py" >> $(BIN_DIR)/lumpyexpress.config
 
 .PHONY: all
 
