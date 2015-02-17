@@ -56,8 +56,7 @@ usage:   lumpyexpress [options]
 
 **Required arguments**
 ```
-     -B FILE  full coordinate-sorted BAM file(s) (comma separated)
-     -R FILE  indexed reference genome fasta file
+     -B FILE  coordinate-sorted BAM file(s) (comma separated)
 ```
 
 **Optional arguments**
