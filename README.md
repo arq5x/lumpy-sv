@@ -28,12 +28,12 @@ lumpyexpress \
 
 ## Installation
 
-##### Requirements
-- samtools or sambamba
-- SAMBLASTER
-- python2.7
-    * pysam
-    * numpy
+#### Requirements
+- Samtools [http://www.htslib.org/](http://www.htslib.org/)
+- SAMBLASTER [https://github.com/GregoryFaust/samblaster](https://github.com/GregoryFaust/samblaster)
+- Python 2.7 [https://www.python.org/](https://www.python.org/)
+    * pysam [https://pypi.python.org/pypi/pysam](https://pypi.python.org/pypi/pysam)
+    * numpy [http://www.numpy.org/](http://www.numpy.org/)
 
 ```
 git clone --recursive git@github.com:arq5x/lumpy-sv.git
