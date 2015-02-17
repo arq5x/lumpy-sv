@@ -28,7 +28,7 @@ lumpyexpress \
 
 ## Installation
 
-#### Requirements
+##### Requirements
 - samtools or sambamba
 - SAMBLASTER
 - python2.7
