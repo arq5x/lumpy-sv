@@ -115,7 +115,7 @@ void ShowHelp(void)
          endl <<
          "\t-bedpe"  "\tbedpe_file:<bedpe file>," << endl <<
          "\t\tid:<sample name>," << endl <<
-         "\t\tweight:<sample weight>," << endl <<
+         "\t\tweight:<sample weight>" << endl <<
          endl;
     // end the program here
     exit(1);
