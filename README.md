@@ -92,8 +92,10 @@ The installation script auto-generates a lumpyexpress.config file
 and places it in the "bin" directory.
 
 #### Input
-LUMPY Express expects BWA-MEM aligned BAM files as input. It automatically parses
-sample, library, and read group information using the @RG tags in the BAM header.
+LUMPY Express expects BWA-MEM aligned BAM files as input (using the -M flag to mark
+shorter alignments as secondary).
+It automatically parses sample, library, and read group information using the @RG
+tags in the BAM header.
 Each BAM file is expected to contain exactly one sample.
 
 The minimum input is a coordinate-sorted BAM file (-B), from which LUMPY Express
@@ -172,7 +174,7 @@ usage:    lumpy [options]
     ```
     lumpyexpress \
 	-B sample1.bam,sample2.bam,sample3.bam \
-	-o output_prefix
+	-o output.vcf
     ```
 
 4. Run LUMPY Express jointly on multiple samples with pre-extracted splitters and discordants
@@ -181,7 +183,7 @@ usage:    lumpy [options]
 	-B sample1.bam,sample2.bam,sample3.bam \
 	-S sample1.splitters.bam,sample2.splitters..bam,sample3.splitters.bam \
 	-D sample1.discordants.bam,sample2.discordants.bam,sample3.discordants.bam \
-	-o output_prefix
+	-o output.vcf
     ```
 
 
