@@ -47,7 +47,7 @@ cp bin/* /usr/local/bin/.
 [LUMPY Express](#lumpy-express): automated script for standard analyses  
 [LUMPY (traditional)](#lumpy-traditional): flexible and customizable for specialty analyses
 
-## LUMPY Express
+### LUMPY Express
 Automated breakpoint detection for standard analyses, including data pre-processing.
 
 ```
@@ -76,7 +76,7 @@ usage:   lumpyexpress [options]
      -h       show this message
 ```
 
-##### Input
+#### Input
 LUMPY Express expects BWA-MEM aligned BAM files as input. It automatically parses
 sample, library, and read group information using the @RG tags in the BAM header.
 
@@ -86,7 +86,7 @@ extracts splitters and discordants using SAMBLASTER before running LUMPY.
 Optionally, users may supply coordinate-sorted splitter (-S) and discordant (-D)
 BAM files which will bypass SAMBLASTER pre-processing for faster analysis.
 
-## LUMPY (traditional)
+### LUMPY (traditional)
 Flexible and customizable breakpoint detection for advanced users.
 
 ```
