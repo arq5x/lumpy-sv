@@ -24,13 +24,19 @@ Ryan M Layer, Colby Chiang, Aaron R Quinlan, and Ira M Hall. 2014. "LUMPY: a Pro
 ## Quick start
 ```
 git clone --recursive git@github.com:arq5x/lumpy-sv.git
-
 cd lumpy-sv
 make
+cp bin/* /usr/local/bin/.
 
-bin/lumpyexpress \
+lumpyexpress \
     -B sample.bam \
-    -o out-prefix \
+    -o sample
 ```
 
 ## Installation
+```
+git clone --recursive git@github.com:arq5x/lumpy-sv.git
+cd lumpy-sv
+make
+cp bin/* /usr/local/bin/.
+```
