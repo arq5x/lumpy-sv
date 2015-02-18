@@ -11,9 +11,11 @@ import l_bp
 
 def merge(BP):
 
-
     if len(BP) == 1:
-        print BP[0].l,
+        ##tack on id to SNAME
+        A = BP[0].l.rstrip().split('\t')
+        A[7]+= ':' + A[2]
+        print '\t'.join(A)
         return 0
 
     G = {}
@@ -21,7 +23,6 @@ def merge(BP):
     #print G[0].b.chr_l
     #for i in G:
         #print i,[g[0] for g in G[i].edges]
-
 
     C = []
     _G = G.copy()
@@ -40,6 +41,7 @@ def merge(BP):
             del _G[c]
     
     for c in C:
+        #print len(c)
         L = []
         R = []
         for g_i in c:
@@ -144,8 +146,8 @@ def merge(BP):
 
         gt_list = [] 
 
-        for g in G:
-            A = G[g].b.l.split('\t')
+        for g_i in c:
+            A = G[g_i].b.l.rstrip().split('\t')
             m = l_bp.to_map(A[7])
 
 
@@ -159,9 +161,11 @@ def merge(BP):
             PE += int(m['PE'])
             SR += int(m['SR'])
 
-            s_name_list.append(m['SNAME'])
+            s_name_list.append(m['SNAME'] + ':' + A[2])
 
             gt_list += A[9:]
+
+        SNAME=','.join(s_name_list)
 
         GTS = '\t'.join(gt_list)
 
@@ -189,13 +193,12 @@ def merge(BP):
                          'PE='       + str(PE),
                          'SR='       + str(SR),
                          'PRPOS='    + str(PRPOS),
-                         'PREND='    + str(PREND)])
+                         'PREND='    + str(PREND),
+                         'SNAME='    + str(SNAME)])
 
-        O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT]
+        O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT,GTS]
 
         print '\t'.join([str(o) for o in O])
-
-
 
 def r_cluster(BP_l):
     # need to resort based on the right side, then extract clusters
