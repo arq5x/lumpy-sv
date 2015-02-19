@@ -90,6 +90,14 @@ def header_line_cmp(l1, l2):
         return 1
     elif l2[1] != '#':
         return -1
+
+
+    if l1.find('=') == -1:
+        return 0
+
+    if l2.find('=') == -1:
+        return 1
+
     h1 = l1[:l1.find('=')]
     h2 = l2[:l2.find('=')]
     return cmp(order.index(h1),order.index(h2))

@@ -184,6 +184,7 @@ def merge(BP):
 
         INFO = ';'.join(['SVTYPE='   + str(SVTYPE),
                          'STRANDS='  + str(STRANDS),
+                         'END='      + str(END),
                          'CIPOS='    + str(CIPOS),
                          'CIEND='    + str(CIEND),
                          'CIPOS95='  + str(CIPOS95),
