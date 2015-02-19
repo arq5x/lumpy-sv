@@ -86,11 +86,12 @@ def header_line_cmp(l1, l2):
              '##INFO', \
              '##ALT', \
              '##FORMAT']
+
     if l1[1] != '#':
         return 1
+
     elif l2[1] != '#':
         return -1
-
 
     if l1.find('=') == -1:
         return 0
@@ -100,6 +101,10 @@ def header_line_cmp(l1, l2):
 
     h1 = l1[:l1.find('=')]
     h2 = l2[:l2.find('=')]
+    if h1 not in order:
+        return 0
+    if h2 not in order:
+        return 1
     return cmp(order.index(h1),order.index(h2))
 
 class breakpoint:
