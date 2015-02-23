@@ -9,7 +9,7 @@ from optparse import OptionParser
 from sets import Set
 import l_bp
 
-def merge(BP):
+def merge(BP, sample_order):
 
     if len(BP) == 1:
         ##tack on id to SNAME
@@ -20,9 +20,6 @@ def merge(BP):
 
     G = {}
     l_bp.connect(G, BP, 0)
-    #print G[0].b.chr_l
-    #for i in G:
-        #print i,[g[0] for g in G[i].edges]
 
     C = []
     _G = G.copy()
@@ -39,9 +36,9 @@ def merge(BP):
             G[g].edges = E
         for c in max_clique:
             del _G[c]
+
     
     for c in C:
-        #print len(c)
         L = []
         R = []
         for g_i in c:
@@ -201,7 +198,7 @@ def merge(BP):
 
         print '\t'.join([str(o) for o in O])
 
-def r_cluster(BP_l):
+def r_cluster(BP_l, sample_order):
     # need to resort based on the right side, then extract clusters
     BP_l.sort(key=lambda x: x.start_r)
     BP_l.sort(key=lambda x: x.chr_r)
@@ -219,19 +216,38 @@ def r_cluster(BP_l):
             BP_chr_r = b.chr_r
         else:
             #print len(BP_r)
-            merge(BP_r)
+            merge(BP_r, sample_order)
             BP_r = [b]
             BP_max_end_r = b.end_r
             BP_chr_r = b.chr_r
  
     if len(BP_r) > 0:
         #print len(BP_r)
-        merge(BP_r)
+        merge(BP_r, sample_order)
 
 def l_cluster(file_name):
     vcf_lines = []
     vcf_headers = Set()
     r = l_bp.parse_vcf(file_name, vcf_lines, vcf_headers)
+
+    vcf_headers.add("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\t" + \
+            "VARIOUS\n")
+
+
+    sample_order = []
+    for header in vcf_headers:
+        if header[:8] == '##SAMPLE':
+            sample_order.append(header.rstrip()[13:-1])
+        #elif header[:8] == '##FORMAT':
+            #i,n,t=header[header.find('<')+1:header.find('>')].split(',')[0:3]
+            #print i,n,t
+
+    #exit(1)
+
+    vcf_headers = list(vcf_headers)
+    vcf_headers.sort(cmp=l_bp.header_line_cmp)
+    for h in vcf_headers:
+        print h,
 
     BP_l = []
     BP_sv_type = ''
@@ -251,7 +267,7 @@ def l_cluster(file_name):
             BP_sv_type = b.sv_type
         else:
             #print len(BP_l)
-            r_cluster(BP_l)
+            r_cluster(BP_l, sample_order)
             BP_l = [b]
             BP_max_end_l = b.end_l
             BP_sv_type = b.sv_type
@@ -259,7 +275,7 @@ def l_cluster(file_name):
 
     if len(BP_l) > 0:
         #print len(BP_l)
-        r_cluster(BP_l)
+        r_cluster(BP_l, sample_order)
  
 
 class Usage(Exception):

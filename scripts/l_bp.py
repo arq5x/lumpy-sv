@@ -19,14 +19,14 @@ def parse_vcf(vcf_file_name, vcf_lines, vcf_headers):
     for l in f:
         if l[0] == '#':
             if l[1] != '#':
-                samples = ','.join(l.rstrip().split('\t')[9:])
+                samples = l.rstrip().split('\t')[9:]
             else:
                 vcf_headers.add(l)
         else:
             A = l.split('\t')
             if not 'SECONDARY' in A[7]:
                 if samples != '':
-                    A[7] += ';' + 'SNAME=' + samples
+                    A[7] += ';' + 'SNAME=' + ','.join(samples)
                     l = '\t'.join(A)
                 vcf_lines.append(l)
 
@@ -81,28 +81,34 @@ def vcf_line_cmp(l1, l2):
     return 0
 
 def header_line_cmp(l1, l2):
-    order = ['##fileformat', \
-             '##source', \
+    order = ['##source', \
              '##INFO', \
              '##ALT', \
-             '##FORMAT']
+             '##FORMAT',\
+             '##SAMPLE']
 
+    # make sure ##fileformat is first
+    if l1[:12] == '##fileformat':
+        return -1
+
+    if l2[:12] == '##fileformat':
+        return 1 
+
+    # make sure #CHROM ... is last
     if l1[1] != '#':
         return 1
-
     elif l2[1] != '#':
         return -1
 
     if l1.find('=') == -1:
-        return 0
-
+        return -1 
     if l2.find('=') == -1:
         return 1
 
     h1 = l1[:l1.find('=')]
     h2 = l2[:l2.find('=')]
     if h1 not in order:
-        return 0
+        return -1 
     if h2 not in order:
         return 1
     return cmp(order.index(h1),order.index(h2))
@@ -137,6 +143,16 @@ class breakpoint:
         self.p_l = [float(x) for x in m['PRPOS'].split(',')]
         self.p_r = [float(x) for x in m['PREND'].split(',')]
 
+    def __str__(self):
+        return '\t'.join([str(x) for x in [self.chr_l, \
+                                           self.start_l,\
+                                           self.end_l,\
+                                           self.chr_r,\
+                                           self.start_r, \
+                                           self.end_r, 
+                                           self.sv_type,\
+                                           self.p_l,
+                                           self.p_r]])
     def ovl(self, b):
         if (self.chr_l != b.chr_l) or \
             (self.chr_r != b.chr_r) or \
@@ -149,8 +165,8 @@ class breakpoint:
         c_start_r, c_end_r = [max(self.start_r, b.start_r), \
                               min(self.end_r, b.end_r)]
 
-        c_l_len = c_end_l - c_start_l
-        c_r_len = c_end_r - c_start_r
+        c_l_len = c_end_l - c_start_l + 1
+        c_r_len = c_end_r - c_start_r + 1
 
         if (c_l_len < 1) or (c_r_len < 1):
             return 0

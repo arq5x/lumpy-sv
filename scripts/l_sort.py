@@ -30,9 +30,13 @@ Version: 0.01
             "VARIOUS\n")
 
     for vcf_file_name in vcf_file_names:
-        r = l_bp.parse_vcf(vcf_file_name, vcf_lines, vcf_headers)
+        samples = l_bp.parse_vcf(vcf_file_name, vcf_lines, vcf_headers)
+        for sample in samples:
+            vcf_headers.add("##SAMPLE=<ID=" + sample + ">\n")
 
-    for h in sorted(vcf_headers, cmp=l_bp.header_line_cmp):
+    vcf_headers = list(vcf_headers)
+    vcf_headers.sort(cmp=l_bp.header_line_cmp)
+    for h in vcf_headers:
         print h,
 
     vcf_lines.sort(cmp=l_bp.vcf_line_cmp)
