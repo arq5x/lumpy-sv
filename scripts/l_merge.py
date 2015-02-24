@@ -9,14 +9,73 @@ from optparse import OptionParser
 from sets import Set
 import l_bp
 
-def merge(BP, sample_order):
+def print_var_line(l):
+    A = l.rstrip().split('\t')
+    if A[4] not in ['<DEL>', '<DUP>', '<INV>']:
+        [sv_type,chr_l,chr_r,start_l,end_l,start_r,end_r,m] = l_bp.split_v(l)
+
+        CHROM = chr_r
+        POS = m['END']
+        ID = A[2] + '_2'
+        REF = 'N'
+        ALT = ''
+        if ']' in A[4]:
+            ALT = '[' + chr_l + ':' + A[1] + '[N'
+        else:
+            ALT = 'N]' + chr_l + ':' + A[1] + ']'
+        QUAL = '.'
+        FILTER = '.'
+        SVTYPE = 'BND'
+        STRANDS = m['STRANDS']
+        END = A[1]
+        SVLEN = '0'
+        CIPOS = m['CIEND']
+        CIEND = m['CIPOS']
+        CIPOS95 = m['CIEND95']
+        CIEND95 = m['CIPOS95']
+        IMPRECISE = 'IMPRECISE'
+        SU = m['SU']
+        PE = m['PE']
+        SR = m['SR']
+        PRPOS = m['PREND']
+        PREND = m['PRPOS']
+        SNAME = m['SNAME']
+
+        INFO = ';'.join(['SVTYPE='   + str(SVTYPE),
+                         'STRANDS='  + str(STRANDS),
+                         'END='      + str(END),
+                         'SVLEN='    + str(SVLEN),
+                         'CIPOS='    + str(CIPOS),
+                         'CIEND='    + str(CIEND),
+                         'CIPOS95='  + str(CIPOS95),
+                         'CIEND95='  + str(CIEND95),
+                                       str(IMPRECISE),
+                         'SU='       + str(SU),
+                         'PE='       + str(PE),
+                         'SR='       + str(SR),
+                         'PRPOS='    + str(PRPOS),
+                         'PREND='    + str(PREND),
+                         'SNAME='    + str(SNAME)])
+
+        O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO]
+
+        A[2] += '_1'
+        print '\t'.join(A)
+        print '\t'.join([str(o) for o in O])
+
+    else:
+        print l
+
+def merge(BP, sample_order, v_id):
 
     if len(BP) == 1:
         ##tack on id to SNAME
         A = BP[0].l.rstrip().split('\t')
         A[7]+= ':' + A[2]
-        print '\t'.join(A)
-        return 0
+        v_id += 1
+        A[2] = str(v_id)
+        print_var_line('\t'.join(A))
+        return v_id
 
     G = {}
     l_bp.connect(G, BP, 0)
@@ -118,12 +177,17 @@ def merge(BP, sample_order):
 
         CHROM = G[c[0]].b.chr_l
         POS = new_start_L + max_i_L
-        ID = 1
+        v_id += 1
+        ID = str(v_id)
         REF = 'N'
 
         ALT = ''
         if G[c[0]].b.sv_type == 'BND':
-            ALT = 'N]' + G[c[0]].b.chr_r + ':' + str(new_start_R + max_i_R)
+            ALT = 'N]' + \
+                   G[c[0]].b.chr_r + \
+                   ':' + \
+                   str(new_start_R + max_i_R) + \
+                   ']'
         else:
             ALT = '<' + G[c[0]].b.sv_type + '>'
         QUAL = '.'
@@ -146,7 +210,6 @@ def merge(BP, sample_order):
         for g_i in c:
             A = G[g_i].b.l.rstrip().split('\t')
             m = l_bp.to_map(A[7])
-
 
             for strand_entry in m['STRANDS'].split(','):
                 s_type,s_count = strand_entry.split(':')
@@ -182,6 +245,7 @@ def merge(BP, sample_order):
         INFO = ';'.join(['SVTYPE='   + str(SVTYPE),
                          'STRANDS='  + str(STRANDS),
                          'END='      + str(END),
+                         'SVLEN='    + str(SVLEN),
                          'CIPOS='    + str(CIPOS),
                          'CIEND='    + str(CIEND),
                          'CIPOS95='  + str(CIPOS95),
@@ -194,11 +258,13 @@ def merge(BP, sample_order):
                          'PREND='    + str(PREND),
                          'SNAME='    + str(SNAME)])
 
-        O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT,GTS]
+        #O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT,GTS]
+        O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO]
 
-        print '\t'.join([str(o) for o in O])
+        print_var_line('\t'.join([str(o) for o in O]))
+    return v_id
 
-def r_cluster(BP_l, sample_order):
+def r_cluster(BP_l, sample_order, v_id):
     # need to resort based on the right side, then extract clusters
     BP_l.sort(key=lambda x: x.start_r)
     BP_l.sort(key=lambda x: x.chr_r)
@@ -216,22 +282,24 @@ def r_cluster(BP_l, sample_order):
             BP_chr_r = b.chr_r
         else:
             #print len(BP_r)
-            merge(BP_r, sample_order)
+            v_id = merge(BP_r, sample_order, v_id)
             BP_r = [b]
             BP_max_end_r = b.end_r
             BP_chr_r = b.chr_r
  
     if len(BP_r) > 0:
         #print len(BP_r)
-        merge(BP_r, sample_order)
+        v_id = merge(BP_r, sample_order, v_id)
+
+    return v_id
 
 def l_cluster(file_name):
+    v_id = 0
     vcf_lines = []
     vcf_headers = Set()
-    r = l_bp.parse_vcf(file_name, vcf_lines, vcf_headers)
+    r = l_bp.parse_vcf(file_name, vcf_lines, vcf_headers, add_sname=False)
 
-    vcf_headers.add("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\t" + \
-            "VARIOUS\n")
+    vcf_headers.add("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
 
 
     sample_order = []
@@ -267,7 +335,7 @@ def l_cluster(file_name):
             BP_sv_type = b.sv_type
         else:
             #print len(BP_l)
-            r_cluster(BP_l, sample_order)
+            v_id = r_cluster(BP_l, sample_order, v_id)
             BP_l = [b]
             BP_max_end_l = b.end_l
             BP_sv_type = b.sv_type
@@ -275,7 +343,7 @@ def l_cluster(file_name):
 
     if len(BP_l) > 0:
         #print len(BP_l)
-        r_cluster(BP_l, sample_order)
+        v_id = r_cluster(BP_l, sample_order, v_id)
  
 
 class Usage(Exception):

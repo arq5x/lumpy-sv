@@ -10,7 +10,7 @@ def find_all(a_str, sub):
         yield start
         start += len(sub) # use start += 1 to find overlapping matches
 
-def parse_vcf(vcf_file_name, vcf_lines, vcf_headers):
+def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
     header = ''
     samples = ''
 
@@ -25,7 +25,7 @@ def parse_vcf(vcf_file_name, vcf_lines, vcf_headers):
         else:
             A = l.split('\t')
             if not 'SECONDARY' in A[7]:
-                if samples != '':
+                if add_sname and (samples != ''):
                     A[7] += ';' + 'SNAME=' + ','.join(samples)
                     l = '\t'.join(A)
                 vcf_lines.append(l)
@@ -47,6 +47,7 @@ def split_v(l):
             sep = ']'
         s,e = [x for x in find_all(A[4],sep)]
         chr_r,pos_r = A[4][s+1:e].split(':')
+        m['END'] = pos_r
         pos_r = int(pos_r)
     else:
         pos_r = int(m['END'])
