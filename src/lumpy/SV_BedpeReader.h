@@ -24,14 +24,14 @@ using namespace std;
 
 //{{{struct bedpe_parameters {
 struct bedpe_parameters {
-	string bedpe_file;
+	string bedpe_file,
+	    sample_name;
         /*
 	string bedpe_file,
 		   distro_file;
         */
 	unsigned int back_distance;
 	int weight;
-	int id;
 };
 //}}}
 
@@ -45,7 +45,6 @@ class SV_BedpeReader : public SV_EvidenceReader
                 */
 		unsigned int back_distance;
 		int weight;
-		int id;
 		bool is_open,
 			 have_next_alignment;
 

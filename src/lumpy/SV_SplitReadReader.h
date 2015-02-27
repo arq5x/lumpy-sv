@@ -31,13 +31,13 @@ using namespace BamTools;
 
 //{{{ struct split_read_parameters {
 struct split_read_parameters {
-	string bam_file;
+	string bam_file,
+		sample_name;
 	unsigned int min_non_overlap,
 				 back_distance,
 				 min_mapping_threshold,
                  min_clip;
 	int weight;
-	int id;
 	vector<string> read_group;
 };
 //}}}
@@ -51,7 +51,6 @@ class SV_SplitReadReader : public SV_EvidenceReader
 					 min_mapping_threshold,
                      min_clip;
 		int weight;
-		int id;
 		vector<string> read_group;
 		bool is_open,
 			 have_next_alignment;

@@ -22,6 +22,7 @@ const unsigned int SORT_DEFAULT_MAX_BUFFER_COUNT  = 500000;
 const unsigned int SORT_DEFAULT_MAX_BUFFER_MEMORY = 1024; 
 
 #include "SV_Tools.h"
+#include "SV_EvidenceReader.h"
 
 #include "bedFile.h"
 

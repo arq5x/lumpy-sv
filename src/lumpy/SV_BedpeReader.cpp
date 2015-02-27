@@ -23,12 +23,14 @@ SV_BedpeReader::
 SV_BedpeReader()
 {
     bedpe_file = "";
+    sample_name = "";
     //distro_file = "";
     distro_size = 0;
     weight = 0;
-    id = -1;
-    sample_id = SV_EvidenceReader::counter;
+    ev_id = SV_EvidenceReader::counter;
     SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
+    SV_EvidenceReader::sample_names[ev_id] = sample_name;
+    SV_EvidenceReader::ev_types[ev_id] = "BD";
 }
 //}}}
 
@@ -41,6 +43,8 @@ check_params()
 
     if (bedpe_file.compare("") == 0)
         msg.append("bedpe_file ");
+    if (sample_name.compare("") == 0)
+        msg.append("id ");
     /*
     if (distro_file.compare("") == 0)
         msg.append("distro_file ");
@@ -48,8 +52,6 @@ check_params()
 
     if (weight == 0)
         msg.append("weight ");
-    if (id == -1)
-        msg.append("id ");
 
     return msg;
 }
@@ -64,14 +66,17 @@ add_param(char *param, char *val)
 
     if ( strcmp("bedpe_file", param) == 0 )
         bedpe_file = val;
+    else if ( strcmp("id", param) == 0 ) {
+        sample_name = val;
+	SV_EvidenceReader::sample_names[ev_id] = sample_name;
+	SV_EvidenceReader::ev_types[ev_id] = "BD";
+    }
     /*
     else if ( strcmp("distro_file", param) == 0 )
         distro_file = val;
     */
     else if ( strcmp("weight", param) == 0 )
         weight = atoi(val);
-    else if ( strcmp("id", param) == 0 )
-        id = atoi(val);
     else
         return false;
 
@@ -87,9 +92,9 @@ get_bedpe_parameters()
     struct bedpe_parameters bedpe_param;
 
     bedpe_param.bedpe_file = bedpe_file;
+    bedpe_param.sample_name = sample_name;
     //bedpe_param.distro_file = distro_file;
     bedpe_param.weight = weight;
-    bedpe_param.id = id;
 
     return bedpe_param;
 }
@@ -150,8 +155,7 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
             SV_Bedpe::process_bedpe(&bedpeEntry,
                                     r_bin,
                                     weight,
-                                    id,
-                                    sample_id,
+                                    ev_id,
                                     this);
             bedpeEntry = nullBedpe;
         }
@@ -197,8 +201,7 @@ process_input_chr(string chr,
             SV_Bedpe::process_bedpe(&bedpeEntry,
                                     r_bin,
                                     weight,
-                                    id,
-                                    sample_id,
+                                    ev_id,
                                     this);
             bedpeEntry = nullBedpe;
         }
@@ -225,8 +228,7 @@ process_input_chr_pos(string chr,
             SV_Bedpe::process_bedpe(&bedpeEntry,
                                     r_bin,
                                     weight,
-                                    id,
-                                    sample_id,
+                                    ev_id,
                                     this);
             bedpeEntry = nullBedpe;
         }

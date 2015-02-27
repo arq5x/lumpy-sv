@@ -58,9 +58,9 @@ set_bp_interval_probability(struct breakpoint_interval *i)
 
     unsigned int j;
     if (i->i.strand == '+')
-        src_p = SV_Evidence::distros[sample_id].first;
+        src_p = SV_Evidence::distros[ev_id].first;
     else
-        src_p = SV_Evidence::distros[sample_id].second;
+        src_p = SV_Evidence::distros[ev_id].second;
 
 
     // It is possible that the start of this interval was trucated because it
