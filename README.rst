@@ -64,7 +64,8 @@ Install yaha
     
     git clone git://github.com/GregoryFaust/yaha.git
     cd yaha
-    cp yaha /usr/local/bin/.
+    make
+    cp bin/yaha /usr/local/bin/.
 
 Install bwa
 ::
