@@ -31,6 +31,7 @@
 #include "SV_BedpeReader.h"
 #include "SV_BamReader.h"
 #include "SV_InterChromBamReader.h"
+#include "SV_VcfVariant.h"
 #include "SV_Tools.h"
 #include "genomeFile.h"
 
@@ -81,22 +82,26 @@ void ShowHelp(void)
          "Usage:   " << PROGRAM_NAME << " [OPTIONS] " << endl << endl <<
          "Options: " << endl <<
          "\t-g"	"\tGenome file (defines chromosome order)" << endl <<
-         "\t-e"	"\tShow evidnece for each call" << endl <<
+         "\t-e"	"\tShow evidence for each call" << endl <<
          "\t-w"	"\tFile read windows size (default 1000000)" << endl <<
          "\t-mw"	"\tminimum weight for a call" << endl <<
+         "\t-msw"	"\tminimum per-sample weight for a call" << endl <<
          "\t-tt"	"\ttrim threshold" << endl <<
          "\t-x"	"\texclude file bed file" <<  endl <<
-         "\t-t"	"\ttemp file prefix, must be to a writeable directory" <<
+         "\t-t"	"\ttemp file prefix, must be to a writeable directory" << endl <<
+         "\t-P"	"\toutput probability curve for each variant" << endl <<
+         "\t-b"	"\toutput BEDPE instead of VCF" <<
          endl <<
          "\t-sr"     "\tbam_file:<file name>," << endl <<
+         "\t\tid:<sample name>," << endl <<
          "\t\tback_distance:<distance>," << endl <<
          "\t\tmin_mapping_threshold:<mapping quality>," << endl <<
          "\t\tweight:<sample weight>," << endl <<
-         "\t\tid:<sample id>," << endl <<
          "\t\tmin_clip:<minimum clip length>," << endl <<
          "\t\tread_group:<string>" << endl <<
          endl <<
          "\t-pe"     "\tbam_file:<file name>," << endl <<
+         "\t\tid:<sample name>," << endl <<
          "\t\thisto_file:<file name>," << endl <<
          "\t\tmean:<value>," << endl <<
          "\t\tstdev:<value>," << endl <<
@@ -106,12 +111,11 @@ void ShowHelp(void)
          "\t\tback_distance:<distance>," << endl <<
          "\t\tmin_mapping_threshold:<mapping quality>," << endl <<
          "\t\tweight:<sample weight>," << endl <<
-         "\t\tid:<sample id>," << endl <<
          "\t\tread_group:<string>" << endl <<
          endl <<
          "\t-bedpe"  "\tbedpe_file:<bedpe file>," << endl <<
-         "\t\tweight:<sample weight>," << endl <<
-         "\t\tid:<sample id>" << endl <<
+         "\t\tid:<sample name>," << endl <<
+         "\t\tweight:<sample weight>" << endl <<
          endl;
     // end the program here
     exit(1);
@@ -125,8 +129,11 @@ int main(int argc, char* argv[])
     double trim_threshold = 1e-10;
     double merge_threshold = 1e-10;
     int min_weight = 0;
+    int min_sample_weight = 0;
     bool show_evidence = false;
-    bool has_bams = false, has_bedpes = false;
+    bool has_pe_bams = false,
+	has_sr_bams = false,
+	has_bedpes = false;
     CHR_POS window_size = 1000000;
     string inter_chrom_file_prefix = "./";
     int call_id = 0;
@@ -139,6 +146,7 @@ int main(int argc, char* argv[])
     string genome_file; 
     bool has_genome_file = false;
     int print_prob = 0;
+    int bedpe_output = 0;
     //vector<string> bam_files;
     //}}}
 
@@ -165,7 +173,7 @@ int main(int argc, char* argv[])
 
         if(PARAMETER_CHECK("-pe", 3, parameterLength)) {
             //{{{
-            has_bams = true;
+            has_pe_bams = true;
             SV_PairReader *pe_r = new SV_PairReader();
 
             if ((i+1) < argc) {
@@ -196,7 +204,7 @@ int main(int argc, char* argv[])
                 // Set the distro map
 
                 pe_r->initialize();
-                SV_Evidence::distros[pe_r->sample_id] =
+                SV_Evidence::distros[pe_r->ev_id] =
                     pair<log_space*,log_space*>(
                         SV_Pair::get_bp_interval_probability('+',
                                 pe_r->distro_size,
@@ -204,7 +212,7 @@ int main(int argc, char* argv[])
                         SV_Pair::get_bp_interval_probability('-',
                                 pe_r->distro_size,
                                 pe_r->distro));
-                SV_Evidence::distros_size[pe_r->sample_id] = pe_r->distro_size;
+                SV_Evidence::distros_size[pe_r->ev_id] = pe_r->distro_size;
             } else {
                 cerr << "missing pair end parameters:" << msg << endl;
                 ShowHelp();
@@ -256,7 +264,7 @@ int main(int argc, char* argv[])
             string msg = be_r->check_params();
             if ( msg.compare("") == 0 ) {
                 be_r->initialize();
-                SV_Evidence::distros[be_r->sample_id] =
+                SV_Evidence::distros[be_r->ev_id] =
                     pair<log_space*,log_space*>(
                         SV_Bedpe::
                         get_bp_interval_probability('+',
@@ -266,7 +274,7 @@ int main(int argc, char* argv[])
                         get_bp_interval_probability('-',
                                                     be_r->distro_size,
                                                     be_r->distro));
-                SV_Evidence::distros_size[be_r->sample_id] = be_r->distro_size;
+                SV_Evidence::distros_size[be_r->ev_id] = be_r->distro_size;
                 evidence_readers.push_back(be_r);
             } else {
                 cerr << "missing bedpe parameters:" << msg << endl;
@@ -279,7 +287,7 @@ int main(int argc, char* argv[])
 
         else if(PARAMETER_CHECK("-sr", 3, parameterLength)) {
             //{{{
-            has_bams = true;
+            has_sr_bams = true;
             SV_SplitReadReader *sr_r = new SV_SplitReadReader();
 
             if ((i+1) < argc) {
@@ -293,12 +301,12 @@ int main(int argc, char* argv[])
                     char *val = strtok_r(NULL, ":", &brkb);
 
                     if (val == NULL) {
-                        cerr << "Parameter requied for " << param << endl;
+                        cerr << "Parameter required for " << param << endl;
                         ShowHelp();
                     }
 
                     if ( ! sr_r->add_param(param, val) ) {
-                        cerr << "Unknown pair end parameter:" << param << endl;
+                        cerr << "Unknown split read parameter:" << param << endl;
                         ShowHelp();
                     }
                 }
@@ -307,7 +315,7 @@ int main(int argc, char* argv[])
             string msg = sr_r->check_params();
             if ( msg.compare("") == 0 ) {
                 sr_r->initialize();
-                SV_Evidence::distros[sr_r->sample_id] =
+                SV_Evidence::distros[sr_r->ev_id] =
                     pair<log_space*,log_space*>(
                         SV_SplitRead::
                         get_bp_interval_probability('+',
@@ -316,7 +324,7 @@ int main(int argc, char* argv[])
                         get_bp_interval_probability('-',
                                                     sr_r->back_distance));
 
-                SV_Evidence::distros_size[sr_r->sample_id] =
+                SV_Evidence::distros_size[sr_r->ev_id] =
                     sr_r->back_distance * 2 + 1;
             } else {
                 cerr << "missing split read parameters:" << msg << endl;
@@ -360,6 +368,13 @@ int main(int argc, char* argv[])
             }
         }
 
+        else if(PARAMETER_CHECK("-msw", 4, parameterLength)) {
+            if ((i+1) < argc) {
+                min_sample_weight = atoi(argv[i + 1]);
+                i++;
+            }
+        }
+	
         else if(PARAMETER_CHECK("-w", 2, parameterLength)) {
             if ((i+1) < argc) {
                 window_size = atoi(argv[i + 1]);
@@ -399,6 +414,9 @@ int main(int argc, char* argv[])
             print_prob = 1;
         }
 
+	else if(PARAMETER_CHECK("-b", 2, parameterLength)) {
+            bedpe_output = 1;
+        }
 
         else {
             cerr << endl << "*****ERROR: Unrecognized parameter: " <<
@@ -407,8 +425,8 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (min_weight == 0) {
-        cerr << endl << "*****ERROR: must set min weight *****" <<
+    if (min_weight == 0 && min_sample_weight == 0) {
+        cerr << endl << "*****ERROR: must set min weight or min sample weight  *****" <<
              endl << endl;
         ShowHelp();
     }
@@ -423,7 +441,7 @@ int main(int argc, char* argv[])
         parse_exclude_file(exclude_bed_file, SV_Evidence::exclude_regions);
 
     SV_BamReader *bam_r;
-    if (has_bams) {
+    if (has_pe_bams || has_sr_bams) {
         bam_r = new SV_BamReader(&bam_evidence_readers);
         bam_r->set_inter_chrom_file_name(inter_chrom_file_prefix + ".bam");
         bam_r->initialize();
@@ -441,7 +459,7 @@ int main(int argc, char* argv[])
             genome_order[*chr_itr] = chr_count;
             chr_count += 1;
         }
-    } else if (has_bams) {
+    } else if (has_pe_bams || has_sr_bams) {
         //map<string, SV_EvidenceReader*> bam_evidence_readers;
         //map<string, SV_EvidenceReader*>::iterator bam_itr;
         //bam_itr = bam_evidence_readers.begin();
@@ -471,6 +489,44 @@ int main(int argc, char* argv[])
     }
     //}}}
 
+    // print VCF header
+    if (! bedpe_output) {
+	SV_VcfVariant *header_var = new SV_VcfVariant();
+	map<int,string>::iterator s_itr;
+	for (s_itr = SV_EvidenceReader::sample_names.begin();
+	     s_itr != SV_EvidenceReader::sample_names.end();
+	     ++s_itr)
+	    header_var->add_sample(s_itr->second);
+
+	// add appropriate fields to active_formats
+	header_var->set_sample_field(SV_EvidenceReader::
+				     sample_names.begin()->second,
+				     "GT",
+				     "./.");
+	header_var->set_sample_field(SV_EvidenceReader::
+				     sample_names.begin()->second,
+				     "SU",
+				     "0");
+	
+	if (has_pe_bams)
+	    header_var->set_sample_field(SV_EvidenceReader::
+					 sample_names.begin()->second,
+					 "PE",
+					 "0");
+	if (has_sr_bams)
+	    header_var->set_sample_field(SV_EvidenceReader::
+					 sample_names.begin()->second,
+					 "SR",
+					 "0");
+
+	if (has_bedpes)
+	    header_var->set_sample_field(SV_EvidenceReader::
+					 sample_names.begin()->second,
+					 "BD",
+					 "0");
+    	header_var->print_header();
+    }
+    
     //{{{ process the intra-chrom events that were saved to a file
     CHR_POS max_pos = 0;
     string last_min_chr = "";
@@ -529,19 +585,28 @@ int main(int argc, char* argv[])
                 r_bin.values(min_chr, max_pos);
 
             vector< UCSCElement<SV_BreakPoint*> >::iterator it;
-
             for (it = values.begin(); it < values.end(); ++it) {
                 SV_BreakPoint *bp = it->value;
 
                 // Make sure both ends of the bp are less than or equal to the
                 // current chrom
-                if ( bp->weight >= min_weight ) {
+                if (bp->weight >= min_weight
+		    && bp->get_max_sample_weight() >= min_sample_weight) {
                     //bp->do_it();
                     // make sure there was not an error with trimming
                     if (bp->trim_intervals() > 0) {
-                        bp->print_bedpe(++call_id, print_prob);
-                        if (show_evidence)
-                            bp->print_evidence("\t");
+		        if (bedpe_output) {
+			    bp->print_bedpe(++call_id, print_prob);
+			    if (show_evidence)
+			        bp->print_evidence("\t");
+			}
+			else {
+			    SV_VcfVariant *vcf_var =
+				new SV_VcfVariant(bp,
+						  ++call_id,
+						  print_prob);
+			    vcf_var->print_var();
+			}
                     }
                 }
 
@@ -587,12 +652,22 @@ int main(int argc, char* argv[])
             it != values.end(); ++it) {
         SV_BreakPoint *bp = it->value;
 
-        if ( bp->weight >= min_weight ) {
+	if (bp->weight >= min_weight
+	    && bp->get_max_sample_weight() >= min_sample_weight) {
             //bp->do_it();
             if (bp->trim_intervals() > 0) {
-                bp->print_bedpe(++call_id, print_prob);
-                if (show_evidence)
-                    bp->print_evidence("\t");
+		if (bedpe_output) {
+		    bp->print_bedpe(++call_id, print_prob);
+		    if (show_evidence)
+			bp->print_evidence("\t");
+		}
+		else {
+		    SV_VcfVariant *vcf_var =
+			new SV_VcfVariant(bp,
+					  ++call_id,
+					  print_prob);
+		    vcf_var->print_var();
+		}
             }
         }
 
@@ -716,12 +791,22 @@ int main(int argc, char* argv[])
 
                 for (it = values.begin(); it < values.end(); ++it) {
                     SV_BreakPoint *bp = it->value;
-                    if ( bp->weight >= min_weight ) {
+		    if (bp->weight >= min_weight
+			&& bp->get_max_sample_weight() >= min_sample_weight) {
                         //bp->do_it();
                         if (bp->trim_intervals() > 0) {
-                            bp->print_bedpe(++call_id, print_prob);
-                            if (show_evidence)
-                                bp->print_evidence("\t");
+			    if (bedpe_output) {
+				bp->print_bedpe(++call_id, print_prob);
+				if (show_evidence)
+				    bp->print_evidence("\t");
+			    }
+			    else {
+				SV_VcfVariant *vcf_var =
+				    new SV_VcfVariant(bp,
+						      ++call_id,
+						      print_prob);
+				vcf_var->print_var();
+			    }
                         }
                     }
 
@@ -753,12 +838,22 @@ int main(int argc, char* argv[])
 
         for (it = values.begin(); it != values.end(); ++it) {
             SV_BreakPoint *bp = it->value;
-            if ( bp->weight >= min_weight ) {
+	    if (bp->weight >= min_weight
+		&& bp->get_max_sample_weight() >= min_sample_weight) {
                 //bp->do_it();
                 if (bp->trim_intervals() > 0) {
-                    bp->print_bedpe(++call_id, print_prob);
-                    if (show_evidence)
-                        bp->print_evidence("\t");
+		    if (bedpe_output) {
+			bp->print_bedpe(++call_id, print_prob);
+			if (show_evidence)
+			    bp->print_evidence("\t");
+		    }
+		    else {
+			SV_VcfVariant *vcf_var =
+			    new SV_VcfVariant(bp,
+					      ++call_id,
+					      print_prob);
+			vcf_var->print_var();
+		    }
                 }
             }
 

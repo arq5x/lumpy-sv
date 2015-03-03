@@ -104,12 +104,11 @@ SV_SplitRead::
 SV_SplitRead(vector< BamAlignment > &block,
              const RefVector &refs,
              int _weight,
-             int _id,
-             int _sample_id,
+             int _ev_id,
              SV_SplitReadReader *_reader)
 {
     reader = _reader;
-    sample_id = _sample_id;
+    ev_id = _ev_id;
 
     if ( block.at(0).MapQuality < block.at(1).MapQuality )
         min_mapping_quality = block.at(0).MapQuality;
@@ -186,7 +185,6 @@ SV_SplitRead(vector< BamAlignment > &block,
     }
 
     weight = _weight;
-    id = _id;
 }
 //}}}
 
@@ -196,12 +194,11 @@ SV_SplitRead(const BamAlignment &bam_a,
              const BamAlignment &bam_b,
              const RefVector &refs,
              int _weight,
-             int _id,
-             int _sample_id,
+             int _ev_id,
              SV_SplitReadReader *_reader)
 {
     reader = _reader;
-    sample_id = _sample_id;
+    ev_id = _ev_id;
 
     if ( bam_a.MapQuality < bam_b.MapQuality )
         min_mapping_quality = bam_a.MapQuality;
@@ -280,7 +277,6 @@ SV_SplitRead(const BamAlignment &bam_a,
     }
 
     weight = _weight;
-    id = _id;
 }
 //}}}
 
@@ -607,7 +603,7 @@ print_bedpe(int score)
          score << sep <<
          side_l.strand << "\t" <<
          side_r.strand << "\t" <<
-         "id:" << id << sep <<
+         "id:" << ev_id << sep <<
          "weight:" << weight <<
          endl;
 }
@@ -621,8 +617,7 @@ process_split(const BamAlignment &curr,
               map<string, BamAlignment> &mapped_splits,
               UCSCBins<SV_BreakPoint*> &r_bin,
               int weight,
-              int id,
-              int sample_id,
+              int ev_id,
               SV_SplitReadReader *_reader)
 {
 
@@ -637,8 +632,7 @@ process_split(const BamAlignment &curr,
                                  curr,
                                  refs,
                                  weight,
-                                 id,
-                                 sample_id,
+                                 ev_id,
                                  _reader);
 
             SV_BreakPoint *new_bp = NULL;
@@ -677,8 +671,7 @@ process_intra_chrom_split(const BamAlignment &curr,
                           map<string, BamAlignment> &mapped_splits,
                           UCSCBins<SV_BreakPoint*> &r_bin,
                           int weight,
-                          int id,
-                          int sample_id,
+                          int ev_id,
                           SV_SplitReadReader *_reader)
 {
 
@@ -700,8 +693,7 @@ process_intra_chrom_split(const BamAlignment &curr,
                                      curr,
                                      refs,
                                      weight,
-                                     id,
-                                     sample_id,
+                                     ev_id,
                                      _reader);
 
                 SV_BreakPoint *new_bp = NULL;

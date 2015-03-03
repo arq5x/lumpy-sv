@@ -66,7 +66,7 @@ class SV_BreakPoint
 		int type;
 		int weight;
 		vector<SV_Evidence*> evidence;
-		map<int, int> ids;
+		map<int, int> ev_ids;
 		struct breakpoint_interval interval_l, interval_r;
 		SV_BreakPoint(SV_Evidence *e);
 		SV_BreakPoint();
@@ -136,5 +136,6 @@ class SV_BreakPoint
                                              log_space **product_prob);
                 void get_mixture(struct breakpoint_interval **l_mixture,
                                  struct breakpoint_interval **r_mixture);
+		int get_max_sample_weight();
 };
 #endif

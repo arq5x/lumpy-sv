@@ -22,14 +22,16 @@ SV_SplitReadReader::
 SV_SplitReadReader()
 {
 	bam_file = "";
+	sample_name = "";
 	back_distance = 0;
 	min_non_overlap = 25;
 	weight = -1;
 	min_mapping_threshold = 0;
-	id = -1;
-	sample_id = SV_EvidenceReader::counter;
+	ev_id = SV_EvidenceReader::counter;
 	SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
-    min_clip = 20;
+	SV_EvidenceReader::sample_names[ev_id] = sample_name;
+	SV_EvidenceReader::ev_types[ev_id] = "SR";
+	min_clip = 20;
 }
 //}}}
 
@@ -42,12 +44,12 @@ check_params()
 
 	if (bam_file.compare("") == 0)
 		msg.append("bam_file ");
+	if (sample_name.compare("") == 0)
+		msg.append("id ");
 	if (back_distance == 0)
 		msg.append("back_distance ");
 	if (weight == 0)
 		msg.append("weight ");
-	if (id == -1)
-		msg.append("id ");
 
 	return msg;
 }
@@ -60,14 +62,17 @@ add_param(char *param, char *val)
 {
 	if ( strcmp("bam_file", param) == 0 )
 		bam_file = val;
+	else if ( strcmp("id", param) == 0 ) {
+		sample_name = val;
+		SV_EvidenceReader::sample_names[ev_id] = sample_name;
+		SV_EvidenceReader::ev_types[ev_id] = "SR";
+	}
 	else if ( strcmp("min_non_overlap", param) == 0 )
 		min_non_overlap = atoi(val);
 	else if ( strcmp("back_distance", param) == 0 )
 		back_distance = atoi(val);
 	else if ( strcmp("weight", param) == 0 )
 		weight = atoi(val);
-	else if ( strcmp("id", param) == 0 )
-		id = atoi(val);
 	else if ( strcmp("min_mapping_threshold", param) == 0 )
 		min_mapping_threshold = atoi(val);
 	else if ( strcmp("min_clip", param) == 0 )
@@ -149,8 +154,7 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 									mapped_splits,
 									r_bin,
 									weight,
-									id,
-									sample_id,
+									ev_id,
 									this);
 }
 //}}}
@@ -168,8 +172,7 @@ process_input( BamAlignment &_bam,
 								mapped_splits,
 								r_bin,
 								weight,
-								id,
-								sample_id,
+								ev_id,
 								this);
 }
 //}}}
@@ -188,8 +191,7 @@ process_input( BamAlignment &_bam,
 											mapped_splits,
 											r_bin,
 											weight,
-											id,
-											sample_id,
+											ev_id,
 											this);
 }
 //}}}
@@ -212,8 +214,7 @@ process_input_chr(string chr,
 									mapped_splits,
 									r_bin,
 									weight,
-									id,
-									sample_id,
+									ev_id,
 									this);
 
 		have_next_alignment = reader.GetNextAlignment(bam);
@@ -243,8 +244,7 @@ process_input_chr_pos(string chr,
 									mapped_splits,
 									r_bin,
 									weight,
-									id,
-									sample_id,
+									ev_id,
 									this);
 
 		have_next_alignment = reader.GetNextAlignment(bam);

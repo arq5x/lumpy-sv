@@ -72,8 +72,8 @@ if not options.output_file:
     parser.error('Output file not given')
 
 
-required = 65
-restricted = 384
+required = 97
+restricted = 1436
 flag_mask = required | restricted
 
 L = []

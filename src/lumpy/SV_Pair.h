@@ -67,8 +67,7 @@ class SV_Pair: public SV_Evidence
 				const BamAlignment &bam_b,
 				const RefVector &refs,
 				int weight,
-				int id,
-				int sample_id,
+				int ev_id,
 				SV_PairReader *reader);
 
 		static void process_pair(const BamAlignment &curr,
@@ -76,8 +75,7 @@ class SV_Pair: public SV_Evidence
 								map<string, BamAlignment> &mapped_pairs,
 								UCSCBins<SV_BreakPoint*> &r_bin,
 								int weight,
-								int id,
-								int sample_id,
+								int ev_id,
 								SV_PairReader *reader);
 
 		static void process_intra_chrom_pair(
@@ -87,8 +85,7 @@ class SV_Pair: public SV_Evidence
 								 map<string, BamAlignment> &mapped_pairs,
 								 UCSCBins<SV_BreakPoint*> &r_bin,
 								 int weight,
-								 int id,
-								 int sample_id,
+								 int ev_id,
 								 SV_PairReader *reader);
 
 		static log_space* get_bp_interval_probability(char strand,

@@ -96,11 +96,17 @@ initialize()
     }
     refs = bam_reader.GetReferenceData();
     header = bam_reader.GetHeader().ToString();
+    bam_sort_order = bam_reader.GetHeader().SortOrder;
     has_next_alignment = bam_reader.GetNextAlignment(bam);
     bam.QueryBases.clear();
     bam.AlignedBases.clear();
     bam.Qualities.clear();
 
+    if (bam_sort_order != "coordinate") {
+	cerr << "Error: BAM files must be coordinate sorted" << endl;
+	exit(1);
+    }
+    
     if ( !inter_chrom_reads.Open(tmp_file_name,
                                  header,
                                  refs) ) {

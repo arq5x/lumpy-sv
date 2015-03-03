@@ -57,16 +57,14 @@ class SV_SplitRead: public SV_Evidence
 		SV_SplitRead(vector< BamAlignment > &block,
 					 const RefVector &refs,
 					 int weight,
-					 int id,
-					 int sample_id,
+					 int ev_id,
 					 SV_SplitReadReader *reader);
 
 		SV_SplitRead(const BamAlignment &bam_a,
 					 const BamAlignment &bam_b,
 					 const RefVector &refs,
 					 int _weight,
-					 int _id,
-					 int _sample_id,
+					 int _ev_id,
 					 SV_SplitReadReader *reader);
 
 		/*
@@ -99,8 +97,7 @@ class SV_SplitRead: public SV_Evidence
 								  map<string, BamAlignment> &mapped_splits,
 								  UCSCBins<SV_BreakPoint*> &r_bin,
 								  int weight,
-								  int id,
-								  int sample_id,
+								  int ev_id,
 								  SV_SplitReadReader *reader);
 
 		static void process_intra_chrom_split(
@@ -110,8 +107,7 @@ class SV_SplitRead: public SV_Evidence
 									map<string, BamAlignment> &mapped_splits,
 									UCSCBins<SV_BreakPoint*> &r_bin,
 									int weight,
-									int id,
-									int sample_id,
+									int ev_id,
 									SV_SplitReadReader *reader);
 
 		string evidence_type();

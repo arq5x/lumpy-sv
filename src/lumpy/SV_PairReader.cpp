@@ -24,6 +24,7 @@ SV_PairReader(struct pair_end_parameters pair_end_param)
 {
     is_open = false;
     bam_file = pair_end_param.bam_file;
+    sample_name = pair_end_param.sample_name;
     histo_file = pair_end_param.histo_file;
     mean = pair_end_param.mean;
     stdev = pair_end_param.stdev;
@@ -32,9 +33,11 @@ SV_PairReader(struct pair_end_parameters pair_end_param)
     discordant_z = pair_end_param.discordant_z;
     back_distance = pair_end_param.back_distance;
     weight = pair_end_param.weight;
-    id = pair_end_param.id;
     min_mapping_threshold = pair_end_param.min_mapping_threshold;
-    read_group = pair_end_param.read_group;
+    ev_id = SV_EvidenceReader::counter;
+    SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
+    SV_EvidenceReader::sample_names[ev_id] = sample_name;
+    SV_EvidenceReader::ev_types[ev_id] = "PE";
 }
 //}}}
 
@@ -43,6 +46,7 @@ SV_PairReader::
 SV_PairReader()
 {
     bam_file = "";
+    sample_name = "";
     histo_file = "";
     mean = 0;
     stdev = 0;
@@ -51,10 +55,11 @@ SV_PairReader()
     discordant_z = 0;
     back_distance = 0;
     weight = 0;
-    id = -1;
     min_mapping_threshold = 0;
-    sample_id = SV_EvidenceReader::counter;
+    ev_id = SV_EvidenceReader::counter;
     SV_EvidenceReader::counter = SV_EvidenceReader::counter + 1;
+    SV_EvidenceReader::sample_names[ev_id] = sample_name;
+    SV_EvidenceReader::ev_types[ev_id] = "PE";
 
     inited = false;
 }
@@ -69,6 +74,8 @@ check_params()
 
     if (bam_file.compare("") == 0)
         msg.append("bam_file ");
+    if (sample_name.compare("") == 0)
+        msg.append("id ");
     if (histo_file.compare("") == 0)
         msg.append("histo_file ");
     if (mean == 0)
@@ -85,8 +92,6 @@ check_params()
         msg.append("back_distance ");
     if (weight == 0)
         msg.append("weight ");
-    if (id == -1)
-        msg.append("id ");
 
     return msg;
 }
@@ -99,6 +104,11 @@ add_param(char *param, char *val)
 {
     if ( strcmp("bam_file", param) == 0 )
         bam_file = val;
+    else if ( strcmp("id", param) == 0 ) {
+        sample_name = val;
+	SV_EvidenceReader::sample_names[ev_id] = sample_name;
+	SV_EvidenceReader::ev_types[ev_id] = "PE";
+    }
     else if ( strcmp("histo_file", param) == 0 )
         histo_file = val;
     else if ( strcmp("mean", param) == 0 )
@@ -115,8 +125,6 @@ add_param(char *param, char *val)
         back_distance = atoi(val);
     else if ( strcmp("weight", param) == 0 )
         weight = atoi(val);
-    else if ( strcmp("id", param) == 0 )
-        id = atoi(val);
     else if ( strcmp("min_mapping_threshold", param) == 0 )
         min_mapping_threshold = atoi(val);
     else if ( strcmp("read_group", param) == 0 )
@@ -136,6 +144,7 @@ get_pair_end_parameters()
     struct pair_end_parameters pair_end_param;
 
     pair_end_param.bam_file = bam_file;
+    pair_end_param.sample_name = sample_name;
     pair_end_param.histo_file = histo_file;
     pair_end_param.mean = mean;
     pair_end_param.stdev = stdev;
@@ -144,7 +153,6 @@ get_pair_end_parameters()
     pair_end_param.discordant_z = discordant_z;
     pair_end_param.back_distance = back_distance;
     pair_end_param.weight = weight;
-    pair_end_param.id = id;
     pair_end_param.min_mapping_threshold = min_mapping_threshold;
     pair_end_param.read_group = read_group;
 
@@ -220,8 +228,7 @@ process_input( BamAlignment &_bam,
                               mapped_pairs,
                               r_bin,
                               weight,
-                              id,
-                              sample_id,
+                              ev_id,
                               this);
 }
 //}}}
@@ -241,8 +248,7 @@ process_input( BamAlignment &_bam,
                                           mapped_pairs,
                                           r_bin,
                                           weight,
-                                          id,
-                                          sample_id,
+                                          ev_id,
                                           this);
 }
 //}}}
@@ -313,8 +319,7 @@ process_input_chr(string chr,
                                   mapped_pairs,
                                   r_bin,
                                   weight,
-                                  id,
-                                  sample_id,
+                                  ev_id,
                                   this);
         have_next_alignment = reader.GetNextAlignment(bam);
         if ( bam.RefID < 0 )
@@ -340,8 +345,7 @@ process_input_chr_pos(string chr,
                                   mapped_pairs,
                                   r_bin,
                                   weight,
-                                  id,
-                                  sample_id,
+                                  ev_id,
                                   this);
         have_next_alignment = reader.GetNextAlignment(bam);
         if ( bam.RefID < 0 )
@@ -361,8 +365,7 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
                                   mapped_pairs,
                                   r_bin,
                                   weight,
-                                  id,
-                                  sample_id,
+                                  ev_id,
                                   this);
 }
 //}}}

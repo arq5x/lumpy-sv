@@ -38,6 +38,7 @@ class SV_BamReader : public SV_EvidenceReader
 		BamMultiReader bam_reader;
 		BamAlignment bam;
 		string header;
+		string bam_sort_order;
 		SV_EvidenceReader *curr_reader;
 		BamWriter inter_chrom_reads;
 		string tmp_file_name;

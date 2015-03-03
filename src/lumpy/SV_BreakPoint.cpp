@@ -39,7 +39,7 @@ SV_BreakPoint(SV_Evidence *e)
 {
     evidence.push_back(e);
 
-    ids[e->id] = 1;
+    ev_ids[e->ev_id] = 1;
 }
 //}}}
 
@@ -110,18 +110,18 @@ SV_BreakPoint(SV_BreakPoint *a, SV_BreakPoint *b)
             for (ev_it = b->evidence.begin(); ev_it < b->evidence.end(); ++ev_it)
                 evidence.push_back(*ev_it);
 
-            map<int, int>::iterator id_it;
+            map<int, int>::iterator ev_id_it;
 
-            for (id_it = a->ids.begin(); id_it != a->ids.end(); ++id_it) {
-                if ( ids.find( id_it->first ) == ids.end() )
-                    ids[id_it->first] = 0;
-                ids[id_it->first] += id_it->second;
+            for (ev_id_it = a->ev_ids.begin(); ev_id_it != a->ev_ids.end(); ++ev_id_it) {
+                if ( ev_ids.find( ev_id_it->first ) == ev_ids.end() )
+                    ev_ids[ev_id_it->first] = 0;
+                ev_ids[ev_id_it->first] += ev_id_it->second;
             }
 
-            for (id_it = b->ids.begin(); id_it != b->ids.end(); ++id_it) {
-                if ( ids.find( id_it->first ) == ids.end() )
-                    ids[id_it->first] = 0;
-                ids[id_it->first] += id_it->second;
+            for (ev_id_it = b->ev_ids.begin(); ev_id_it != b->ev_ids.end(); ++ev_id_it) {
+                if ( ev_ids.find( ev_id_it->first ) == ev_ids.end() )
+                    ev_ids[ev_id_it->first] = 0;
+                ev_ids[ev_id_it->first] += ev_id_it->second;
             }
 
             weight += a->weight;
@@ -320,13 +320,13 @@ merge(SV_BreakPoint *p)
     for (ev_it = p->evidence.begin(); ev_it < p->evidence.end(); ++ev_it)
         evidence.push_back(*ev_it);
 
-    map<int, int>::iterator id_it;
+    map<int, int>::iterator ev_id_it;
 
-    for (id_it = p->ids.begin(); id_it != p->ids.end(); ++id_it) {
-        if ( ids.find( id_it->first ) == ids.end() )
-            ids[id_it->first] = 0;
+    for (ev_id_it = p->ev_ids.begin(); ev_id_it != p->ev_ids.end(); ++ev_id_it) {
+        if ( ev_ids.find( ev_id_it->first ) == ev_ids.end() )
+            ev_ids[ev_id_it->first] = 0;
 
-        ids[id_it->first] += id_it->second;
+        ev_ids[ev_id_it->first] += ev_id_it->second;
     }
 
     // find the mean start and end points for the current bp
@@ -380,13 +380,13 @@ merge(SV_BreakPoint *p)
     for (ev_it = p->evidence.begin(); ev_it < p->evidence.end(); ++ev_it)
         evidence.push_back(*ev_it);
 
-    map<int, int>::iterator id_it;
+    map<int, int>::iterator ev_id_it;
 
-    for (id_it = p->ids.begin(); id_it != p->ids.end(); ++id_it) {
-        if ( ids.find( id_it->first ) == ids.end() )
-            ids[id_it->first] = 0;
+    for (ev_id_it = p->ev_ids.begin(); ev_id_it != p->ev_ids.end(); ++ev_id_it) {
+        if ( ev_ids.find( ev_id_it->first ) == ev_ids.end() )
+            ev_ids[ev_id_it->first] = 0;
 
-        ids[id_it->first] += id_it->second;
+        ev_ids[ev_id_it->first] += ev_id_it->second;
     }
 
     this->weight += p->weight;
@@ -467,13 +467,13 @@ merge(SV_BreakPoint *p)
         for (ev_it = p->evidence.begin(); ev_it < p->evidence.end(); ++ev_it)
             evidence.push_back(*ev_it);
 
-        map<int, int>::iterator id_it;
+        map<int, int>::iterator ev_id_it;
 
-        for (id_it = p->ids.begin(); id_it != p->ids.end(); ++id_it) {
-            if ( ids.find( id_it->first ) == ids.end() )
-                ids[id_it->first] = 0;
+        for (ev_id_it = p->ev_ids.begin(); ev_id_it != p->ev_ids.end(); ++ev_id_it) {
+            if ( ev_ids.find( ev_id_it->first ) == ev_ids.end() )
+                ev_ids[ev_id_it->first] = 0;
 
-            ids[id_it->first] += id_it->second;
+            ev_ids[ev_id_it->first] += ev_id_it->second;
         }
 
         this->weight += p->weight;
@@ -942,22 +942,33 @@ print_bedpe(int id, int print_prob)
 
     cout <<  "\t";
 
-    map<int, int>::iterator ids_it;
-    vector<int> _ids;
-    for ( ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
-        _ids.push_back(ids_it->first);
+    map<int, int>::iterator ev_ids_it;
+    vector<int> _ev_ids;
+    for ( ev_ids_it = ev_ids.begin(); ev_ids_it != ev_ids.end(); ++ev_ids_it)
+        _ev_ids.push_back(ev_ids_it->first);
 
-    sort(_ids.begin(), _ids.end());
+    sort(_ev_ids.begin(), _ev_ids.end());
 
-    vector<int>::iterator _ids_it;
-
+    vector<int>::iterator _ev_ids_it;
+    map<string,int> ev_map;
     cout << "IDS:";
-    for ( _ids_it = _ids.begin(); _ids_it != _ids.end(); ++_ids_it) {
-        if (_ids_it != _ids.begin())
-            cout << ";";
-        cout << *_ids_it << "," << ids[*_ids_it];
-    }
+    for (_ev_ids_it = _ev_ids.begin();
+	 _ev_ids_it != _ev_ids.end();
+	 ++_ev_ids_it) {
 
+	string samp = SV_EvidenceReader::sample_names[*_ev_ids_it];
+    	string ev_type = SV_EvidenceReader::ev_types[*_ev_ids_it];
+
+	ev_map[samp + "_" + ev_type] += ev_ids[*_ev_ids_it];
+    }
+    for (map<string,int>::iterator s_it = ev_map.begin();
+	 s_it != ev_map.end();
+	 ++s_it) {
+        if (s_it != ev_map.begin())
+            cout << ";";
+        cout << s_it->first << "," << s_it->second;
+    }
+    
     cout << "\t";
 
     cout << "STRANDS:";
@@ -1291,23 +1302,23 @@ vector<int>
 SV_BreakPoint::
 get_evidence_ids()
 {
-    vector<int> ids;
+    vector<int> ev_ids;
 
     vector<SV_Evidence*>::iterator it;
     for (it = evidence.begin(); it < evidence.end(); ++it) {
         SV_Evidence *e = *it;
-        int id = e->id;
-        ids.push_back(id);
+        int ev_id = e->ev_id;
+        ev_ids.push_back(ev_id);
     }
 
-    sort(ids.begin(), ids.end());
+    sort(ev_ids.begin(), ev_ids.end());
 
     vector<int>::iterator it_id;
-    it_id = unique(ids.begin(), ids.end());
+    it_id = unique(ev_ids.begin(), ev_ids.end());
 
-    ids.resize( it_id - ids.begin() );
+    ev_ids.resize( it_id - ev_ids.begin() );
 
-    return ids;
+    return ev_ids;
 }
 //}}}
 
@@ -1781,6 +1792,7 @@ get_product(vector<SV_BreakPoint *> &bps,
 }
 //}}}
 
+// CC 2014-01-11: get_score is not used in the VCF
 //{{{void SV_BreakPoint:: get_score( vector<SV_BreakPoint *> &bps,
 void
 SV_BreakPoint::
@@ -1998,6 +2010,29 @@ peak_distance(SV_BreakPoint *e,
 #endif
 }
 //}}}
+
+int
+SV_BreakPoint::
+get_max_sample_weight()
+{
+    map<string,int> sample_weights;
+    int max_sample_weight = 0;
+
+    map<int, int>::iterator ids_it;
+    for (ids_it = this->ev_ids.begin();
+	 ids_it != this->ev_ids.end();
+	 ++ids_it)
+	sample_weights[SV_EvidenceReader::sample_names[ids_it->first]] += ids_it->second;
+
+    map<string,int>::iterator sw_it;
+    for (sw_it = sample_weights.begin();
+    	 sw_it != sample_weights.end();
+    	 ++sw_it) {
+    	if (sw_it->second > max_sample_weight)
+    	    max_sample_weight = sw_it->second;
+    }
+    return max_sample_weight;
+}
 
 #if 0
 //{{{ boost::numeric::ublas::matrix<double>* BreakPoint::get_matrix(double
