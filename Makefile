@@ -62,6 +62,7 @@ all:	lumpyexpress
 	done
 
 lumpyexpress:
+	[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
 	cp $(SCRIPTS_DIR)/lumpyexpress $(BIN_DIR)/lumpyexpress
 
 	> $(BIN_DIR)/lumpyexpress.config
