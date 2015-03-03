@@ -67,6 +67,7 @@ def print_var_line(l):
         print l
 
 def merge(BP, sample_order, v_id):
+    #sys.stderr.write(str(len(BP)) + '\n')
 
     if len(BP) == 1:
         ##tack on id to SNAME
@@ -77,31 +78,76 @@ def merge(BP, sample_order, v_id):
         print_var_line('\t'.join(A))
         return v_id
 
-    G = {}
-    l_bp.connect(G, BP, 0)
+    # this find the max clique 
+    #G = {}
+    #l_bp.connect(G, BP, 0)
 
+    #for g in G:
+    #    sys.stderr.write( str(g) + '\t' + str(len(G[g].edges)) + '\n')
+
+    #C = []
+    #_G = G.copy()
+    #while len(_G) != 0:
+    #    R = Set()
+    #    X = Set()
+    #    P = Set(_G.keys())
+    #    clique = [x for x in l_bp.bron_kerbosch(_G, R, P, X)]
+    #    max_clique = sorted(clique, key=len)[0]
+    #    sys.stderr.write(str(max_clique) +'\n')
+    #    C.append(list(max_clique))
+    #    # remove these from the graph
+    #    for g in _G:
+    #        E = [e for e in _G[g].edges if e[0] not in clique]
+    #        G[g].edges = E
+    #    for c in max_clique:
+    #        del _G[c]
+
+    #Sweep the set.  Find the largest intersecting set.  Remove it.  Continue.
+    import heapq
+
+    BP.sort(key=lambda x: x.start_l)
+
+    BP_i = range(len(BP))
     C = []
-    _G = G.copy()
-    while len(_G) != 0:
-        R = Set()
-        X = Set()
-        P = Set(_G.keys())
-        clique = [x for x in l_bp.bron_kerbosch(_G, R, P, X)]
-        max_clique = sorted(clique, key=len)[0]
-        C.append(list(max_clique))
-        # remove these from the graph
-        for g in _G:
-            E = [e for e in _G[g].edges if e[0] not in clique]
-            G[g].edges = E
-        for c in max_clique:
-            del _G[c]
 
-    
+    #print BP_i
+
+    while len(BP_i) > 0:
+        h_l = []
+        max_c = []
+        max_c_len = 0
+        for i in BP_i:
+            while (len(h_l) > 0) and (h_l[0][0] < BP[i].start_l):
+                heapq.heappop(h_l)
+
+            heapq.heappush(h_l, (BP[i].end_l, i))
+
+            # at this point everything in h_l intersects on the left
+            # but we need to take into account what is going on on the right 
+            h_r = []
+            h_l_i = [x[1] for x in h_l]
+            h_l_i.sort(key=lambda x:BP[x].start_r)
+            for j in h_l_i:
+                while (len(h_r) > 0) and (h_r[0][0] < BP[j].start_r):
+                    heapq.heappop(h_r)
+
+                heapq.heappush(h_r, (BP[j].end_r, j))
+
+                if max_c_len < len(h_r):
+                    max_c_len = len(h_r)
+                    max_c = [y[1] for y in h_r]
+
+        C.append(max_c)
+        for c in max_c:
+            BP_i.remove(c)
+
     for c in C:
         L = []
         R = []
-        for g_i in c:
-            b = G[g_i].b
+        #for g_i in c:
+        for b_i in c:
+            #b = G[g_i].b
+            b = BP[b_i]
             L.append([b.start_l,b.end_l,b.p_l])
             R.append([b.start_r,b.end_r,b.p_r])
 
@@ -113,11 +159,17 @@ def merge(BP, sample_order, v_id):
 
         for c_i in range(len(c)):
             for i in range(len(a_L[c_i])):
-                p_L[i] = p_L[i] * a_L[c_i][i]
+                #p_L[i] = p_L[i] * a_L[c_i][i]
+                p_L[i] += a_L[c_i][i]
 
             for i in range(len(a_R[c_i])):
-                p_R[i] = p_R[i] * a_R[c_i][i]
+                #p_R[i] = p_R[i] * a_R[c_i][i]
+                p_R[i] += a_R[c_i][i]
 
+        sum_L = sum(p_L)
+        sum_R = sum(p_R)
+        p_L = [x/sum_L for x in p_L]
+        p_R = [x/sum_L for x in p_R]
 
         [clip_start_L, clip_end_L] = l_bp.trim(p_L)
         [clip_start_R, clip_end_R] = l_bp.trim(p_R)
@@ -175,25 +227,31 @@ def merge(BP, sample_order, v_id):
         CIPOS95=str(ninefive_i_L_start) + ',' + str(ninefive_i_L_end)
         CIEND95=str(ninefive_i_R_start) + ',' + str(ninefive_i_R_end)
 
-        CHROM = G[c[0]].b.chr_l
+        #CHROM = G[c[0]].b.chr_l
+        CHROM = BP[c[0]].chr_l
         POS = new_start_L + max_i_L
         v_id += 1
         ID = str(v_id)
         REF = 'N'
 
         ALT = ''
-        if G[c[0]].b.sv_type == 'BND':
+        #if G[c[0]].b.sv_type == 'BND':
+        if BP[c[0]].sv_type == 'BND':
+            #G[c[0]].b.chr_r + \
             ALT = 'N]' + \
-                   G[c[0]].b.chr_r + \
+                   BP[c[0]].chr_r + \
                    ':' + \
                    str(new_start_R + max_i_R) + \
                    ']'
         else:
-            ALT = '<' + G[c[0]].b.sv_type + '>'
+            #ALT = '<' + G[c[0]].b.sv_type + '>'
+            ALT = '<' + BP[c[0]].sv_type + '>'
         QUAL = '.'
         FILTER = '.'
-        FORMAT = G[c[0]].b.l.split('\t')[8]
-        SVTYPE = G[c[0]].b.sv_type
+        #FORMAT = G[c[0]].b.l.split('\t')[8]
+        FORMAT = BP[c[0]].l.split('\t')[8]
+        #SVTYPE = G[c[0]].b.sv_type
+        SVTYPE = BP[c[0]].sv_type
 
         STRANDS = ''
         strand_map = {}
@@ -207,8 +265,10 @@ def merge(BP, sample_order, v_id):
 
         gt_list = [] 
 
-        for g_i in c:
-            A = G[g_i].b.l.rstrip().split('\t')
+        #for g_i in c:
+        for b_i in c:
+            #A = G[g_i].b.l.rstrip().split('\t')
+            A = BP[b_i].l.rstrip().split('\t')
             m = l_bp.to_map(A[7])
 
             for strand_entry in m['STRANDS'].split(','):
