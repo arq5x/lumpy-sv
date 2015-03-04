@@ -40,6 +40,7 @@ def print_var_line(l):
         PRPOS = m['PREND']
         PREND = m['PRPOS']
         SNAME = m['SNAME']
+        SECONDARY = 'SECONDARY'
 
         INFO = ';'.join(['SVTYPE='   + str(SVTYPE),
                          'STRANDS='  + str(STRANDS),
@@ -50,6 +51,7 @@ def print_var_line(l):
                          'CIPOS95='  + str(CIPOS95),
                          'CIEND95='  + str(CIEND95),
                                        str(IMPRECISE),
+                                       str(SECONDARY),
                          'SU='       + str(SU),
                          'PE='       + str(PE),
                          'SR='       + str(SR),
