@@ -387,7 +387,7 @@ def r_cluster(BP_l, sample_order, v_id):
 
     return v_id
 
-def l_cluster(file_name):
+def l_cluster(file_name, percent_slop=0, fixed_slop=0):
     v_id = 0
     vcf_lines = []
     vcf_headers = Set()
@@ -417,7 +417,9 @@ def l_cluster(file_name):
     BP_chr_l = ''
 
     for l in vcf_lines:
-        b = l_bp.breakpoint(l)
+        b = l_bp.breakpoint(l,
+                            percent_slop=percent_slop,
+                            fixed_slop=fixed_slop)
 
         if (len(BP_l) == 0) or \
            ((b.start_l <= BP_max_end_l) and \
@@ -462,6 +464,26 @@ Version: ira_7
                            "have the format sample:variantID", \
                            metavar="FILE")
 
+    parser.add_option("-p", \
+                      "--percent_slop", \
+                      dest="percent_slop",
+                      type="float",
+                      default=0.0,
+                      help="Increase the the breakpoint confidence " + \
+                           "interval both up and down stream by a given " + \
+                           "proportion of the original size. If both slop " + \
+                           "parameters are set, the max is used.")
+
+    parser.add_option("-f", \
+                      "--fixed_slop", \
+                      dest="fixed_slop",
+                      type="int",
+                      default=0,
+                      help="Increase the the breakpoint confidence " + \
+                           "interval both up and down stream by a given " + \
+                           "fixed size. If both slop " + \
+                           "parameters are set, the max is used.")
+
     (opts, args) = parser.parse_args()
 
     #if opts.inFile is None or opts.configFile is None:
@@ -470,7 +492,9 @@ Version: ira_7
         print
     else:
         try:
-            l_cluster(opts.inFile)
+            l_cluster(opts.inFile,
+                      percent_slop=opts.percent_slop,
+                      fixed_slop=opts.fixed_slop)
         except IOError as err:
             sys.stderr.write("IOError " + str(err) + "\n");
             return
