@@ -416,7 +416,7 @@ then
     rm -r ${TEMP_DIR}
 fi
 
-echo "done"
+echo "LUMPY Express done"
 
 # exit cleanly
 exit 0
