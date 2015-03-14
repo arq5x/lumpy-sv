@@ -264,7 +264,7 @@ then
 	READ_LENGTH=`$SAMT view $FULL_BAM | head -n 10000 | awk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`
 
 	# parse the libraries in the BAM header to extract readgroups from the same library
-	LIB_RG_LIST=(`$BAMLIBS $FULL_BAM`)
+	LIB_RG_LIST=(`$PYTHON $BAMLIBS $FULL_BAM`)
 
 	# process each library's splitters and discordants
 	for j in $( seq 0 $(( ${#LIB_RG_LIST[@]}-1 )) )
@@ -356,7 +356,7 @@ else
 
 	# LIB_RG_LIST contains an element for each library in the BAM file.
 	# These elements are comma delimited strings for the readgroups for each library.
-	LIB_RG_LIST=(`$BAMLIBS ${FULL_BAM_LIST[$i]}`)
+	LIB_RG_LIST=(`$PYTHON $BAMLIBS ${FULL_BAM_LIST[$i]}`)
 
 	# generate the histo, stats, and config files
 	echo "Calculating insert distributions... "
