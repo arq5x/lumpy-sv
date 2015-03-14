@@ -86,10 +86,9 @@ KEEP=0
 OUTPUT=""
 MAX_SPLIT_COUNT=2
 MIN_NON_OVERLAP=20
-REALIGN=0
 PROB_CURVE=""
 
-while getopts ":hB:S:D:o:m:r:x:T:t:PaAdgkvK:" OPTION
+while getopts ":hB:S:D:o:m:r:x:T:t:PAdgkvK:" OPTION
 do
     case "${OPTION}" in
 	h)
@@ -126,9 +125,6 @@ do
 	    ;;
 	P)
 	    PROB_CURVE="-P"
-	    ;;
-	a)
-	    REALIGN=1
 	    ;;
 	A)
 	    ANNOTATE=1
@@ -369,7 +365,7 @@ else
 	    $SAMT view -h ${FULL_BAM_LIST[$i]} \
 		| $PYTHON $BAMFILTERRG -S -n 10000000 --readgroup ${LIB_RG_LIST[$j]} \
 		| grep -v '^@' \
-		| sed -n '9000001,10000000p;10000000q' \
+		| tail -n 1000000 \
 		| $PYTHON $PAIREND_DISTRO -r ${LIB_READ_LENGTH_LIST[$j]} -X 4 -N 1000000 -o ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo \
 		> ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats
 	done
