@@ -23,7 +23,7 @@ def print_var_line(l):
             ALT = '[' + chr_l + ':' + A[1] + '[N'
         else:
             ALT = 'N]' + chr_l + ':' + A[1] + ']'
-        QUAL = '.'
+        QUAL = A[5]
         FILTER = '.'
         SVTYPE = 'BND'
         STRANDS = m['STRANDS']
@@ -273,7 +273,7 @@ def merge(BP, sample_order, v_id):
         else:
             #ALT = '<' + G[c[0]].b.sv_type + '>'
             ALT = '<' + BP[c[0]].sv_type + '>'
-        QUAL = '.'
+        QUAL = 0.0
         FILTER = '.'
         #FORMAT = G[c[0]].b.l.split('\t')[8]
         FORMAT = BP[c[0]].l.split('\t')[8]
@@ -296,6 +296,8 @@ def merge(BP, sample_order, v_id):
         for b_i in c:
             #A = G[g_i].b.l.rstrip().split('\t')
             A = BP[b_i].l.rstrip().split('\t')
+            QUAL += float(A[5])
+
             m = l_bp.to_map(A[7])
 
             for strand_entry in m['STRANDS'].split(','):
@@ -351,6 +353,8 @@ def merge(BP, sample_order, v_id):
             I.append('END=' + str(END))
 
         INFO = ';'.join(I)
+
+        QUAL = str(QUAL)
 
         #O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT,GTS]
         O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO]
