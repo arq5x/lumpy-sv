@@ -148,6 +148,7 @@ class breakpoint:
         self.p_r = [float(x) for x in m['PREND'].split(',')]
 
         if ((percent_slop > 0) or (fixed_slop > 0)):
+
             l_slop = int(max(percent_slop*(self.end_l-self.start_l),fixed_slop))
             r_slop = int(max(percent_slop*(self.end_r-self.start_r),fixed_slop))
 
@@ -178,7 +179,7 @@ class breakpoint:
                 p = float(i)/new_r
                 old_i = int(p*old_r)
                 new_p_r.append(self.p_r[old_i])
-            sum_p_r = sum(new_p_r)
+            sum_p_r = max(1,sum(new_p_r))
             self.p_r = [float(x)/sum_p_r for x in new_p_r]
 
 
