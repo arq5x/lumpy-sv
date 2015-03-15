@@ -151,29 +151,35 @@ class breakpoint:
             l_slop = int(max(percent_slop*(self.end_l-self.start_l),fixed_slop))
             r_slop = int(max(percent_slop*(self.end_r-self.start_r),fixed_slop))
 
-            old_l = self.end_l - self.start_l + 1
+            old_l = float(self.end_l - self.start_l + 1)
             
             self.start_l = max(0,self.start_l-l_slop)
             self.end_l = self.end_l+l_slop
 
+            new_l = float(self.end_l - self.start_l + 1)
+
             new_p_l = []
             for i in range(self.end_l-self.start_l+1):
-                p = float(i)/float(self.end_l-self.start_l+1)
+                p = i/new_l
                 old_i = int(p*old_l)
                 new_p_l.append(self.p_l[old_i])
-            self.p_l = [float(x)/sum(new_p_l) for x in new_p_l]
+            sum_p_l = sum(new_p_l)
+            self.p_l = [float(x)/sum_p_l for x in new_p_l]
 
-            old_r = self.end_r - self.start_r + 1
+            old_r = float(self.end_r - self.start_r + 1)
 
             self.start_r = max(0,self.start_r-r_slop)
             self.end_r = self.end_r+r_slop
 
+            new_r = float(self.end_r - self.start_r + 1)
+
             new_p_r = []
             for i in range(self.end_r-self.start_r+1):
-                p = float(i)/float(self.end_r-self.start_r+1)
+                p = float(i)/new_r
                 old_i = int(p*old_r)
                 new_p_r.append(self.p_r[old_i])
-            self.p_r = [float(x)/sum(new_p_r) for x in new_p_r]
+            sum_p_r = sum(new_p_r)
+            self.p_r = [float(x)/sum_p_r for x in new_p_r]
 
 
     def __str__(self):
