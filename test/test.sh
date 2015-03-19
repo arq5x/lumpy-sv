@@ -4,7 +4,7 @@
 if [ ! -d "../data/" ]
 then
 	echo "../data/ directory does not exist"
-	echo "please download from http://www.cs.virginia.edu/~rl6sf/lumpy/data.tar.gz"
+	echo "please download from http://layerlab.org/lumpy/data.tar.gz"
 	exit
 fi
 
