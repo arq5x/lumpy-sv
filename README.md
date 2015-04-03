@@ -188,8 +188,8 @@ samtools sort sample.splitters.unsorted.bam sample.splitters
 ```
 
 #### Running LUMPY
-LUMPY has two distinct workflows. LUMPY Express is a simplified wrapper for standard analyses.
-LUMPY (traditional) is a more customizable workflow for advanced users and specialized experiments.
+LUMPY has two distinct execution alternatives. LUMPY Express is a simplified wrapper for standard analyses.
+LUMPY (traditional) is more customizable, for advanced users and specialized experiments.
 
 ##### LUMPY Express
 - Run LUMPY Express on a single sample
