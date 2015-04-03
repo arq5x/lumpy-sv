@@ -232,7 +232,7 @@ samtools view -r readgroup1 sample.bam \
     -r 101 \
     -X 4 \
     -N 10000 \
-    -o sample.rg1.histo
+    -o sample.lib1.histo
 ```
 The above script (scripts/pairend_distro.py) will display mean and stdev to screen.
 For these examples we will assume the mean is 500 and the stdev is 50.
@@ -242,30 +242,30 @@ For these examples we will assume the mean is 500 and the stdev is 50.
     lumpy \
         -mw 4 \
         -tt 0 \
-        -pe id:sample,bam_file:sample.discordants.bam,histo_file:sample.rg1.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
+        -pe id:sample,bam_file:sample.discordants.bam,histo_file:sample.lib1.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
         -sr id:sample,bam_file:sample.splitters.bam,back_distance:10,weight:1,min_mapping_threshold:20 \
         > sample.vcf
     ```
 
-- Run LUMPY on a BAM file with multiple read groups.
+- Run LUMPY on a BAM file with multiple libraries.
     ```
     lumpy \
         -mw 4 \
         -tt 0 \
-        -pe id:sample,read_group:rg1,bam_file:sample.discordants.bam,histo_file:sample.rg1.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
-        -pe id:sample,read_group:rg2,bam_file:sample.discordants.bam,histo_file:sample.rg2.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
+        -pe id:sample,read_group:rg1,bam_file:sample.discordants.bam,histo_file:sample.lib1.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
+        -pe id:sample,read_group:rg2,bam_file:sample.discordants.bam,histo_file:sample.lib2.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
         -sr id:sample,bam_file:sample.splitters.bam,back_distance:10,weight:1,min_mapping_threshold:20 \
         > sample.vcf
     ```
 
-- Run LUMPY on multiple samples with multiple read groups.
+- Run LUMPY on multiple samples with multiple libraries.
     ```
     lumpy \
         -mw 4 \
         -tt 0 \
-        -pe id:sample1,read_group:rg1,bam_file:sample1.discordants.bam,histo_file:sample1.rg1.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
-        -pe id:sample1,read_group:rg2,bam_file:sample1.discordants.bam,histo_file:sample1.rg2.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
-        -pe id:sample2,read_group:rg1,bam_file:sample2.discordants.bam,histo_file:sample2.rg1.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
+        -pe id:sample1,bam_file:sample1.discordants.bam,read_group:rg1,read_group:rg2,histo_file:sample1.lib1.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
+        -pe id:sample1,bam_file:sample1.discordants.bam,read_group:rg3,histo_file:sample1.lib2.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
+        -pe id:sample2,bam_file:sample2.discordants.bam,read_group:rg4,histo_file:sample2.lib1.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
         -sr id:sample1,bam_file:sample1.splitters.bam,back_distance:10,weight:1,min_mapping_threshold:20 \
         -sr id:sample2,bam_file:sample2.splitters.bam,back_distance:10,weight:1,min_mapping_threshold:20 \
         > multi_sample.vcf
