@@ -6,7 +6,7 @@
 ############################################################
 
 # source the paths to the binaries used in the script
-function source_binaries() {
+source_binaries() {
     if [[ -e $1 ]]
     then
 	echo "Sourcing executables from $1 ..."
@@ -38,7 +38,7 @@ function source_binaries() {
 
 # ensure that the require python modules are installed before
 # beginning analysis
-function check_python_modules() {
+check_python_modules() {
     PYTHON_TEST=$1
     echo -e "\nChecking for required python modules ($PYTHON_TEST)..."
 
@@ -47,7 +47,7 @@ function check_python_modules() {
 }
 
 ## usage
-function usage() {
+usage() {
     echo "
 usage:   lumpyexpress [options]
 
@@ -55,8 +55,7 @@ options:
      -B FILE  full BAM file(s) (comma separated) (required)
      -S FILE  split reads BAM file(s) (comma separated)
      -D FILE  discordant reads BAM files(s) (comma separated)
-     -R FILE  indexed reference genome fasta file (required)
-     -o STR   output prefix [fullBam.bam]
+     -o FILE  output file [fullBam.bam.vcf]
      -x FILE  BED file to exclude
      -P       output probability curves for each variant
      -m INT   minimum sample weight for a call [4]
@@ -87,10 +86,9 @@ KEEP=0
 OUTPUT=""
 MAX_SPLIT_COUNT=2
 MIN_NON_OVERLAP=20
-REALIGN=0
 PROB_CURVE=""
 
-while getopts ":hB:S:D:R:o:m:r:x:T:t:PaAdgkvK:" OPTION
+while getopts ":hB:S:D:o:m:r:x:T:t:PAdgkvK:" OPTION
 do
     case "${OPTION}" in
 	h)
@@ -105,9 +103,6 @@ do
 	    ;;
 	D)
 	    DISC_BAM_STRING="$OPTARG"
-	    ;;
-	R)
-	    REF="$OPTARG"
 	    ;;
 	o)
 	    OUTPUT="$OPTARG"
@@ -130,9 +125,6 @@ do
 	    ;;
 	P)
 	    PROB_CURVE="-P"
-	    ;;
-	a)
-	    REALIGN=1
 	    ;;
 	A)
 	    ANNOTATE=1
@@ -203,18 +195,6 @@ fi
 check_python_modules $PYTHON
 
 # Check that the required files exist
-if [[ ! -f $REF ]]
-then
-    usage
-    echo -e "Error: reference fasta file $REF not found\n"
-    exit 1
-fi
-if [[ ! -f $REF.fai && ! -f $(echo ${REF%*.*}).fai ]]
-then
-    usage
-    echo -e "Error: reference fasta file $REF not indexed\n"
-    exit 1
-fi
 if [[ ${#FULL_BAM_LIST[@]} -eq 0 ]]
 then
     usage
@@ -235,7 +215,7 @@ done
 # default OUTPUT if not provided
 if test -z "$OUTPUT"
 then
-    OUTPUT=`basename "${FULL_BAM_LIST[0]}"`
+    OUTPUT=`basename "${FULL_BAM_LIST[0]}"`.vcf
 fi
 OUTBASE=`basename "$OUTPUT"`
 
@@ -280,7 +260,7 @@ then
 	READ_LENGTH=`$SAMT view $FULL_BAM | head -n 10000 | awk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`
 
 	# parse the libraries in the BAM header to extract readgroups from the same library
-	LIB_RG_LIST=(`$BAMLIBS $FULL_BAM`)
+	LIB_RG_LIST=(`$PYTHON $BAMLIBS $FULL_BAM`)
 
 	# process each library's splitters and discordants
 	for j in $( seq 0 $(( ${#LIB_RG_LIST[@]}-1 )) )
@@ -372,7 +352,7 @@ else
 
 	# LIB_RG_LIST contains an element for each library in the BAM file.
 	# These elements are comma delimited strings for the readgroups for each library.
-	LIB_RG_LIST=(`$BAMLIBS ${FULL_BAM_LIST[$i]}`)
+	LIB_RG_LIST=(`$PYTHON $BAMLIBS ${FULL_BAM_LIST[$i]}`)
 
 	# generate the histo, stats, and config files
 	echo "Calculating insert distributions... "
@@ -385,7 +365,7 @@ else
 	    $SAMT view -h ${FULL_BAM_LIST[$i]} \
 		| $PYTHON $BAMFILTERRG -S -n 10000000 --readgroup ${LIB_RG_LIST[$j]} \
 		| grep -v '^@' \
-		| sed -n '9000001,10000000p;10000000q' \
+		| tail -n 1000000 \
 		| $PYTHON $PAIREND_DISTRO -r ${LIB_READ_LENGTH_LIST[$j]} -X 4 -N 1000000 -o ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo \
 		> ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats
 	done
@@ -421,14 +401,14 @@ $LUMPY ${PROB_CURVE} \\
     $EXCLUDE_BED_FMT \\
     $LUMPY_DISC_STRING \\
     $LUMPY_SPL_STRING \\
-    > $TEMP_DIR/$OUTBASE.sv.vcf"
+    > $OUTPUT"
 fi
 # call lumpy
 $LUMPY $PROB_CURVE -t ${TEMP_DIR}/${OUTBASE} -msw $MIN_SAMPLE_WEIGHT -tt $TRIM_THRES \
     $EXCLUDE_BED_FMT \
     $LUMPY_DISC_STRING \
     $LUMPY_SPL_STRING \
-    > $OUTPUT.sv.vcf
+    > $OUTPUT
 
 # clean up
 if [[ "$KEEP" -eq 0 ]]
@@ -436,7 +416,7 @@ then
     rm -r ${TEMP_DIR}
 fi
 
-echo "done"
+echo "LUMPY Express done"
 
 # exit cleanly
 exit 0
