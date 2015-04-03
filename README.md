@@ -14,7 +14,8 @@ Genome Biology 15 (6): R84.
 3. [LUMPY Express usage](#lumpy-express-usage): Automated breakpoint detection for standard analyses.
 4. [LUMPY (traditional) usage](#lumpy-traditional-usage): Flexible and customizable breakpoint detection for advanced users.
 5. [Example workflows](#example-workflows)
-6. [Troubleshooting](#troubleshooting)
+6. [Test data](#test-data)
+7. [Troubleshooting](#troubleshooting)
 
 ## Quick start
 
@@ -280,6 +281,13 @@ svtyper \
     -i sample.vcf
     > sample.gt.vcf
 ```
+
+## Test data sets
+The `test/test.sh` script executes lumpy against several simulated data sets
+and compares the results to the known correct result.  The sample data sets can
+be found at http://layerlab.org/lumpy/data.tar.gz.  This tar ball should be
+extracted into the top-level lumpy directory.  The script `test/test.sh` checks
+for the the existence of this directory before running lumpy.
 
 ## Troubleshooting
 All of the bam files that lumpy processes must be position sorted. To check if your bams are sorted correctly, use the check_sorting.py script
