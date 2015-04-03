@@ -282,12 +282,19 @@ is_sane()
     int overlap = min(read_l.end, read_r.end) - max(read_l.start, read_r.start);
     //int non_overlap = min(read_len_a, read_len_b) - overlap;
     // how much does not overlap // overlap is at most read_len
+    
+    if (overlap > 0)
+        return false;
+    else
+        return true;
+    /*
     int non_overlap = min(read_len_a, read_len_b) - overlap;
 
     if ( (overlap > 0) && (abs(non_overlap) < reader->min_non_overlap) )
         return false;
     else
         return true;
+    */
 }
 //}}}
 

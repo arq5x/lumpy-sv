@@ -23,11 +23,10 @@ def print_var_line(l):
             ALT = '[' + chr_l + ':' + A[1] + '[N'
         else:
             ALT = 'N]' + chr_l + ':' + A[1] + ']'
-        QUAL = '.'
+        QUAL = A[5]
         FILTER = '.'
         SVTYPE = 'BND'
         STRANDS = m['STRANDS']
-        END = A[1]
         SVLEN = '0'
         CIPOS = m['CIEND']
         CIEND = m['CIPOS']
@@ -40,27 +39,33 @@ def print_var_line(l):
         PRPOS = m['PREND']
         PREND = m['PRPOS']
         SNAME = m['SNAME']
+        EVENT = m['EVENT']
+        SECONDARY = 'SECONDARY'
+        MATEID=A[2] + '_1'
 
         INFO = ';'.join(['SVTYPE='   + str(SVTYPE),
                          'STRANDS='  + str(STRANDS),
-                         'END='      + str(END),
                          'SVLEN='    + str(SVLEN),
                          'CIPOS='    + str(CIPOS),
                          'CIEND='    + str(CIEND),
                          'CIPOS95='  + str(CIPOS95),
                          'CIEND95='  + str(CIEND95),
                                        str(IMPRECISE),
+                                       str(SECONDARY),
                          'SU='       + str(SU),
                          'PE='       + str(PE),
                          'SR='       + str(SR),
                          'PRPOS='    + str(PRPOS),
                          'PREND='    + str(PREND),
-                         'SNAME='    + str(SNAME)])
+                         'SNAME='    + str(SNAME),
+                         'EVENT='    + str(EVENT),
+                         'MATEID='   + str(MATEID)])
 
         O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO]
 
+        A[7] += ';MATEID=' + A[2] + '_2'
         A[2] += '_1'
-        print '\t'.join(A)
+        print '\t'.join(A[:8])
         print '\t'.join([str(o) for o in O])
 
     else:
@@ -70,11 +75,33 @@ def merge(BP, sample_order, v_id):
     #sys.stderr.write(str(len(BP)) + '\n')
 
     if len(BP) == 1:
-        ##tack on id to SNAME
+        #tack on id to SNAME
         A = BP[0].l.rstrip().split('\t')
         A[7]+= ':' + A[2]
+
+        # reset the id to be unique in this file
         v_id += 1
         A[2] = str(v_id)
+
+        #clip out old mate id
+        s_start=A[7].find('MATEID=')
+        s_end=A[7].find(';',s_start)
+        if (s_end > -1):
+            A[7] = A[7][:s_start] + A[7][s_end+1:]
+        else:
+            A[7] = A[7][:s_start]
+
+        #clip out old event id
+        s_start=A[7].find('EVENT=')
+        s_end=A[7].find(';', s_start)
+        if (s_end > -1):
+            A[7] = A[7][:s_start] + A[7][s_end+1:]
+        else:
+            A[7] = A[7][:s_start]
+
+        #add new mate
+        A[7]+= ';EVENT=' + A[2]
+ 
         print_var_line('\t'.join(A))
         return v_id
 
@@ -246,7 +273,7 @@ def merge(BP, sample_order, v_id):
         else:
             #ALT = '<' + G[c[0]].b.sv_type + '>'
             ALT = '<' + BP[c[0]].sv_type + '>'
-        QUAL = '.'
+        QUAL = 0.0
         FILTER = '.'
         #FORMAT = G[c[0]].b.l.split('\t')[8]
         FORMAT = BP[c[0]].l.split('\t')[8]
@@ -269,6 +296,8 @@ def merge(BP, sample_order, v_id):
         for b_i in c:
             #A = G[g_i].b.l.rstrip().split('\t')
             A = BP[b_i].l.rstrip().split('\t')
+            QUAL += float(A[5])
+
             m = l_bp.to_map(A[7])
 
             for strand_entry in m['STRANDS'].split(','):
@@ -302,21 +331,30 @@ def merge(BP, sample_order, v_id):
         PRPOS=','.join([str(x) for x in p_L])
         PREND=','.join([str(x) for x in p_R])
 
-        INFO = ';'.join(['SVTYPE='   + str(SVTYPE),
-                         'STRANDS='  + str(STRANDS),
-                         'END='      + str(END),
-                         'SVLEN='    + str(SVLEN),
-                         'CIPOS='    + str(CIPOS),
-                         'CIEND='    + str(CIEND),
-                         'CIPOS95='  + str(CIPOS95),
-                         'CIEND95='  + str(CIEND95),
-                                       str(IMPRECISE),
-                         'SU='       + str(SU),
-                         'PE='       + str(PE),
-                         'SR='       + str(SR),
-                         'PRPOS='    + str(PRPOS),
-                         'PREND='    + str(PREND),
-                         'SNAME='    + str(SNAME)])
+
+        I = ['SVTYPE='   + str(SVTYPE),
+             'STRANDS='  + str(STRANDS),
+             'SVLEN='    + str(SVLEN),
+             'CIPOS='    + str(CIPOS),
+             'CIEND='    + str(CIEND),
+             'CIPOS95='  + str(CIPOS95),
+             'CIEND95='  + str(CIEND95),
+                           str(IMPRECISE),
+             'SU='       + str(SU),
+             'PE='       + str(PE),
+             'SR='       + str(SR),
+             'PRPOS='    + str(PRPOS),
+             'PREND='    + str(PREND),
+             'SNAME='    + str(SNAME)]
+
+        if BP[c[0]].sv_type == 'BND':
+            I.append('EVENT=' + str(ID))
+        else:
+            I.append('END=' + str(END))
+
+        INFO = ';'.join(I)
+
+        QUAL = str(QUAL)
 
         #O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT,GTS]
         O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO]
@@ -353,7 +391,7 @@ def r_cluster(BP_l, sample_order, v_id):
 
     return v_id
 
-def l_cluster(file_name):
+def l_cluster(file_name, percent_slop=0, fixed_slop=0):
     v_id = 0
     vcf_lines = []
     vcf_headers = Set()
@@ -383,7 +421,9 @@ def l_cluster(file_name):
     BP_chr_l = ''
 
     for l in vcf_lines:
-        b = l_bp.breakpoint(l)
+        b = l_bp.breakpoint(l,
+                            percent_slop=percent_slop,
+                            fixed_slop=fixed_slop)
 
         if (len(BP_l) == 0) or \
            ((b.start_l <= BP_max_end_l) and \
@@ -428,6 +468,26 @@ Version: ira_7
                            "have the format sample:variantID", \
                            metavar="FILE")
 
+    parser.add_option("-p", \
+                      "--percent_slop", \
+                      dest="percent_slop",
+                      type="float",
+                      default=0.0,
+                      help="Increase the the breakpoint confidence " + \
+                           "interval both up and down stream by a given " + \
+                           "proportion of the original size. If both slop " + \
+                           "parameters are set, the max is used.")
+
+    parser.add_option("-f", \
+                      "--fixed_slop", \
+                      dest="fixed_slop",
+                      type="int",
+                      default=0,
+                      help="Increase the the breakpoint confidence " + \
+                           "interval both up and down stream by a given " + \
+                           "fixed size. If both slop " + \
+                           "parameters are set, the max is used.")
+
     (opts, args) = parser.parse_args()
 
     #if opts.inFile is None or opts.configFile is None:
@@ -436,7 +496,9 @@ Version: ira_7
         print
     else:
         try:
-            l_cluster(opts.inFile)
+            l_cluster(opts.inFile,
+                      percent_slop=opts.percent_slop,
+                      fixed_slop=opts.fixed_slop)
         except IOError as err:
             sys.stderr.write("IOError " + str(err) + "\n");
             return
