@@ -14,6 +14,7 @@ Genome Biology 15 (6): R84.
 3. [LUMPY Express usage](#lumpy-express-usage): Automated breakpoint detection for standard analyses.
 4. [LUMPY (traditional) usage](#lumpy-traditional-usage): Flexible and customizable breakpoint detection for advanced users.
 5. [Example workflows](#example-workflows)
+6. [Troubleshooting](#troubleshooting)
 
 ## Quick start
 
