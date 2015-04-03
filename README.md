@@ -44,7 +44,7 @@ lumpyexpress \
     * SAMBLASTER ([https://github.com/GregoryFaust/samblaster](https://github.com/GregoryFaust/samblaster))
     * Python 2.7 ([https://www.python.org/](https://www.python.org/)) with pysam and NumPy
 
-##### Install LUMPY
+##### Install
 ```
 git clone --recursive git@github.com:arq5x/lumpy-sv.git
 cd lumpy-sv
