@@ -207,29 +207,90 @@ samtools sort sample.splitters.unsorted.bam sample.splitters
     ```
     lumpyexpress \
         -B sample1.bam,sample2.bam,sample3.bam \
-        -S sample1.splitters.bam,sample2.splitters..bam,sample3.splitters.bam \
+        -S sample1.splitters.bam,sample2.splitters.bam,sample3.splitters.bam \
         -D sample1.discordants.bam,sample2.discordants.bam,sample3.discordants.bam \
-        -o samples_multi.vcf
+        -o multi_sample.vcf
+    ```
+
+- Run LUMPY Express on a tumor-normal pair
+    ```
+    lumpyexpress \
+        -B tumor.bam,normal.bam \
+        -S tumor.splitters.bam,normal.splitters.bam \
+        -D tumor.discordants.bam,normal.discordants.bam \
+        -o tumor_normal.vcf
     ```
 
 ##### LUMPY (traditional)
+First, generate empirical insert size statistics on each library in the BAM file
+```
+samtools view -r readgroup1 sample.bam \
+    | tail -n+100000 \
+    | scripts/pairend_distro.py \
+    -r 101 \
+    -X 4 \
+    -N 10000 \
+    -o sample.rg1.histo
+```
+The above script (scripts/pairend_distro.py) will display mean and stdev to screen.
+For these examples we will assume the mean is 500 and the stdev is 50.
+
+- Run LUMPY with paired-end and split-reads.
+    ```
+    lumpy \
+	-mw 4 \
+	-tt 0 \
+	-pe id:sample,bam_file:sample.discordants.bam,histo_file:sample.rg1.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
+	-sr id:sample,bam_file:sample.splitters.bam,back_distance:10,weight:1,min_mapping_threshold:20 \
+	> sample.vcf
+    ```
+
+- Run LUMPY on a BAM file with multiple read groups.
+    ```
+    lumpy \
+	-mw 4 \
+	-tt 0 \
+	-pe id:sample,read_group:rg1,bam_file:sample.discordants.bam,histo_file:sample.rg1.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
+	-pe id:sample,read_group:rg2,bam_file:sample.discordants.bam,histo_file:sample.rg2.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
+	-sr id:sample,bam_file:sample.splitters.bam,back_distance:10,weight:1,min_mapping_threshold:20 \
+    > sample.vcf
+    ```
+
+- Run LUMPY on multiple samples with multiple read groups.
+    ```
+    lumpy \
+	-mw 4 \
+	-tt 0 \
+	-pe id:sample1,read_group:rg1,bam_file:sample1.discordants.bam,histo_file:sample1.rg1.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
+	-pe id:sample1,read_group:rg2,bam_file:sample1.discordants.bam,histo_file:sample1.rg2.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
+	-pe id:sample2,read_group:rg1,bam_file:sample2.discordants.bam,histo_file:sample2.rg1.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,min_mapping_threshold:20 \
+	-sr id:sample1,bam_file:sample1.splitters.bam,back_distance:10,weight:1,min_mapping_threshold:20 \
+	-sr id:sample2,bam_file:sample2.splitters.bam,back_distance:10,weight:1,min_mapping_threshold:20 \
+	> multi_sample.vcf
+    ```
 
 #### Post-processing
-
-
-
+[SVTyper](https://github.com/cc2qe/svtyper) can call genotypes on LUMPY output VCF files
+using a Bayesian maximum likelihood algorithm.
+```
+svtyper \      
+    -B sample.bam \
+    -S sample.splitters.bam \
+    -i sample.vcf
+    > sample.gt.vcf
+```
 
 ## Troubleshooting
 All of the bam files that lumpy processes must be position sorted. To check if your bams are sorted correctly, use the check_sorting.py script
-    ```
-    python ../scripts/check_sorting.py \
-        pe.pos_sorted.bam \
-	sr.pos_sorted.bam \
-	pe.name_sorted.bam
-    # pe.pos_sorted.bam
-    # in order
-    # sr.pos_sorted.bam
-    # in order
-    # pe.name_sorted.bam
-    # out of order:   chr10   102292476   occurred after   chr10   102292893
-    ```
+```
+python ../scripts/check_sorting.py \
+    pe.pos_sorted.bam \
+    sr.pos_sorted.bam \
+    pe.name_sorted.bam
+# pe.pos_sorted.bam
+# in order
+# sr.pos_sorted.bam
+# in order
+# pe.name_sorted.bam
+# out of order:   chr10   102292476   occurred after   chr10   102292893
+```
