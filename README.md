@@ -282,7 +282,7 @@ svtyper \
     > sample.gt.vcf
 ```
 
-## Test data sets
+## Test data
 The `test/test.sh` script executes lumpy against several simulated data sets
 and compares the results to the known correct result.  The sample data sets can
 be found at http://layerlab.org/lumpy/data.tar.gz.  This tar ball should be
