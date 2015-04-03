@@ -153,8 +153,9 @@ usage:    lumpy [options]
 ## Example workflows
 
 #### Pre-processing
-We recommend aligning data with [SpeedSeq](https://github.com/cc2qe/speedseq), which automatically
-marks duplicates and extracts split and discordant read pairs.
+We recommend aligning data with [SpeedSeq](https://github.com/cc2qe/speedseq), which
+performs BWA-MEM alignment, marks duplicates and extracts split and discordant
+read-pairs.
 ```
 speedseq align -R "@RG\tID:id\tSM:sample\tLB:lib" \
     human_g1k_v37.fasta \
@@ -164,35 +165,42 @@ speedseq align -R "@RG\tID:id\tSM:sample\tLB:lib" \
 
 Otherwise, data may be aligned with BWA-MEM, using the `-M` flag to mark shorter split-reads as
 secondary alignments
-    ```
-    bwa mem -M human_g1k_v37.fasta sample.1.fq sample.2.fq \
-        | samtools view -S -b - \
-        > sample.pesr.bam
-    ```
+```
+# Align the data
+bwa mem -M human_g1k_v37.fasta sample.1.fq sample.2.fq \
+    | samtools view -S -b - \
+    > sample.bam
 
+
+# Extract the disordant paired-end alignments.
+samtools view -b -F 1294 sample.bam > sample.discordants.unsorted.bam
+
+# Extract the split-read alignments
+samtools view -h sample.bam \
+    | scripts/extractSplitReads_BwaMem -i stdin \
+    | samtools view -Sb - \
+    > sample.splitters.unsorted.bam
+
+# Sort both alignments
+samtools sort sample.discordants.unsorted.bam sample.discordants
+samtools sort sample.splitters.unsorted.bam sample.splitters
+```
 
 #### LUMPY Express
 - Run LUMPY Express on a single sample
     ```
     lumpyexpress \
-        -B my.bam \
-        -o output.vcf
+        -B sample.bam \
+        -o sample.vcf
     ```
 
 - Run LUMPY Express on a single sample with pre-extracted splitters and discordants
     ```
     lumpyexpress \
-        -B my.bam \
-        -S my.splitters.bam \
-        -D my.discordants.bam \
-        -o output.vcf
-    ```
-
-- Run LUMPY Express on jointly on multiple samples
-    ```
-    lumpyexpress \
-        -B sample1.bam,sample2.bam,sample3.bam \
-        -o output.vcf
+        -B sample.bam \
+        -S sample.splitters.bam \
+        -D sample.discordants.bam \
+        -o sample.vcf
     ```
 
 - Run LUMPY Express jointly on multiple samples with pre-extracted splitters and discordants
@@ -201,7 +209,7 @@ secondary alignments
         -B sample1.bam,sample2.bam,sample3.bam \
         -S sample1.splitters.bam,sample2.splitters..bam,sample3.splitters.bam \
         -D sample1.discordants.bam,sample2.discordants.bam,sample3.discordants.bam \
-        -o output.vcf
+        -o samples_multi.vcf
     ```
 
 #### LUMPY (traditional)
