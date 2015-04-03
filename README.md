@@ -164,13 +164,12 @@ speedseq align -R "@RG\tID:id\tSM:sample\tLB:lib" \
 ```
 
 Otherwise, data may be aligned with BWA-MEM, using the `-M` flag to mark shorter split-reads as
-secondary alignments
+secondary alignments.
 ```
 # Align the data
 bwa mem -M human_g1k_v37.fasta sample.1.fq sample.2.fq \
     | samtools view -S -b - \
     > sample.bam
-
 
 # Extract the disordant paired-end alignments.
 samtools view -b -F 1294 sample.bam > sample.discordants.unsorted.bam
@@ -186,7 +185,8 @@ samtools sort sample.discordants.unsorted.bam sample.discordants
 samtools sort sample.splitters.unsorted.bam sample.splitters
 ```
 
-#### LUMPY Express
+#### Running LUMPY
+##### LUMPY Express
 - Run LUMPY Express on a single sample
     ```
     lumpyexpress \
@@ -212,7 +212,9 @@ samtools sort sample.splitters.unsorted.bam sample.splitters
         -o samples_multi.vcf
     ```
 
-#### LUMPY (traditional)
+##### LUMPY (traditional)
+
+#### Post-processing
 
 
 
@@ -220,15 +222,14 @@ samtools sort sample.splitters.unsorted.bam sample.splitters
 ## Troubleshooting
 All of the bam files that lumpy processes must be position sorted. To check if your bams are sorted correctly, use the check_sorting.py script
     ```
-    $ python ../scripts/check_sorting.py \
+    python ../scripts/check_sorting.py \
         pe.pos_sorted.bam \
 	sr.pos_sorted.bam \
 	pe.name_sorted.bam
-
-    pe.pos_sorted.bam
-    in order
-    sr.pos_sorted.bam
-    in order
-    pe.name_sorted.bam
-    out of order:   chr10   102292476   occurred after   chr10   102292893
+    # pe.pos_sorted.bam
+    # in order
+    # sr.pos_sorted.bam
+    # in order
+    # pe.name_sorted.bam
+    # out of order:   chr10   102292476   occurred after   chr10   102292893
     ```
