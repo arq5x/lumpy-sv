@@ -11,8 +11,8 @@ Genome Biology 15 (6): R84.
 ## Table of Contents
 1. [Quick start](#quick-start)
 2. [Installation](#installation)
-3. [LUMPY Express](#lumpy-express): Automated breakpoint detection for standard analyses.
-4. [LUMPY (traditional)](#lumpy-traditional): Flexible and customizable breakpoint detection for advanced users.
+3. [LUMPY Express usage](#lumpy-express-usage): Automated breakpoint detection for standard analyses.
+4. [LUMPY (traditional) usage](#lumpy-traditional-usage): Flexible and customizable breakpoint detection for advanced users.
 5. [Example workflows](#example-workflows)
 
 ## Quick start
@@ -51,7 +51,7 @@ make
 cp bin/* /usr/local/bin/.
 ```
 
-## LUMPY Express
+## LUMPY Express usage
 Automated breakpoint detection for standard analyses.
 
 ```
@@ -104,7 +104,7 @@ BAM files which will bypass SAMBLASTER extraction for faster analysis.
 #### Output
 LUMPY Express produces a VCF file according to [VCF spec 4.2](https://samtools.github.io/hts-specs/VCFv4.2.pdf).
 
-## LUMPY (traditional)
+## LUMPY (traditional) usage
 Flexible and customizable breakpoint detection for advanced users.
 
 ```
