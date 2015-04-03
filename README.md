@@ -41,9 +41,7 @@ lumpyexpress \
 - LUMPY Express (optional)
     * Samtools ([http://www.htslib.org/](http://www.htslib.org/))
     * SAMBLASTER ([https://github.com/GregoryFaust/samblaster](https://github.com/GregoryFaust/samblaster))
-    * Python 2.7 ([https://www.python.org/](https://www.python.org/))
-	- pysam ([https://pypi.python.org/pypi/pysam](https://pypi.python.org/pypi/pysam))
-	- NumPy ([http://docs.scipy.org/doc/numpy/user/install.html](http://docs.scipy.org/doc/numpy/user/install.html))
+    * Python 2.7 ([https://www.python.org/](https://www.python.org/)) with pysam and NumPy
 
 ##### Install LUMPY
 ```
@@ -154,15 +152,34 @@ usage:    lumpy [options]
 
 ## Example workflows
 
+#### Pre-processing
+We recommend aligning data with [SpeedSeq](https://github.com/cc2qe/speedseq), which automatically
+marks duplicates and extracts split and discordant read pairs.
+```
+speedseq align -R "@RG\tID:id\tSM:sample\tLB:lib" \
+    human_g1k_v37.fasta \
+    sample.1.fq \
+    sample.2.fq
+```
+
+Otherwise, data may be aligned with BWA-MEM, using the `-M` flag to mark shorter split-reads as
+secondary alignments
+    ```
+    bwa mem -M human_g1k_v37.fasta sample.1.fq sample.2.fq \
+        | samtools view -S -b - \
+        > sample.pesr.bam
+    ```
+
+
 #### LUMPY Express
-1. Run LUMPY Express on a single sample
+- Run LUMPY Express on a single sample
     ```
     lumpyexpress \
         -B my.bam \
         -o output.vcf
     ```
 
-2. Run LUMPY Express on a single sample with pre-extracted splitters and discordants
+- Run LUMPY Express on a single sample with pre-extracted splitters and discordants
     ```
     lumpyexpress \
         -B my.bam \
@@ -171,18 +188,39 @@ usage:    lumpy [options]
         -o output.vcf
     ```
 
-3. Run LUMPY Express on jointly on multiple samples
+- Run LUMPY Express on jointly on multiple samples
     ```
     lumpyexpress \
         -B sample1.bam,sample2.bam,sample3.bam \
         -o output.vcf
     ```
 
-4. Run LUMPY Express jointly on multiple samples with pre-extracted splitters and discordants
+- Run LUMPY Express jointly on multiple samples with pre-extracted splitters and discordants
     ```
     lumpyexpress \
         -B sample1.bam,sample2.bam,sample3.bam \
         -S sample1.splitters.bam,sample2.splitters..bam,sample3.splitters.bam \
         -D sample1.discordants.bam,sample2.discordants.bam,sample3.discordants.bam \
         -o output.vcf
+    ```
+
+#### LUMPY (traditional)
+
+
+
+
+## Troubleshooting
+All of the bam files that lumpy processes must be position sorted. To check if your bams are sorted correctly, use the check_sorting.py script
+    ```
+    $ python ../scripts/check_sorting.py \
+        pe.pos_sorted.bam \
+	sr.pos_sorted.bam \
+	pe.name_sorted.bam
+
+    pe.pos_sorted.bam
+    in order
+    sr.pos_sorted.bam
+    in order
+    pe.name_sorted.bam
+    out of order:   chr10   102292476   occurred after   chr10   102292893
     ```
