@@ -271,6 +271,46 @@ For these examples we will assume the mean is 500 and the stdev is 50.
         > multi_sample.vcf
     ```
 
+- Run LUMPY with regions of very high coverage excluded
+    We can direct lumpy to ignore certain regions by using the
+    exclude region option. In this example we find and then
+    exclude regions that have very high coverage. First we
+    use the get_coverages.py script to find the min, max, and
+    mean coverages of the the sr and pe bam files, and to
+    create coverage profiles for both files.
+
+    ```
+    python ../scripts/get_coverages.py \
+        sample.pe.sort.bam \
+	sample.sr.sort.bam
+    # sample.pe.sort.bam.coverage  min:1   max:14  mean(non-zero):2.35557521272
+    # sample.sr.sort.bam.coverage  min:1   max:7   mean(non-zero):1.08945936729
+    ```
+
+From this output, we will choose to exclude regions that have more than 10x
+coverage.  To create the exclude file we will use the get_exclude_regions.py
+script to create the exclude.bed file
+::
+
+        python ../scripts/get_exclude_regions.py \
+	                10 \
+			                exclude.bed \
+					                sample.pe.sort.bam \
+							                sample.sr.sort.bam
+
+We now rerun lumpy with the exclude (-x) option
+::
+
+        ../bin/lumpy \
+	                -mw 4 \
+			                -tt 0.0 \
+					                -x exclude.bed \
+							                -pe \
+									                bam_file:sample.pe.sort.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:150,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:1,min_mapping_threshold:1\
+											                -sr \
+													                bam_file:sample.sr.sort.bam,back_distance:20,weight:1,id:2,min_mapping_threshold:1 \
+															                > sample.pesr.exclude.bedpe
+
 #### Post-processing
 [SVTyper](https://github.com/cc2qe/svtyper) can call genotypes on LUMPY output VCF files
 using a Bayesian maximum likelihood algorithm.
