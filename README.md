@@ -77,7 +77,7 @@ usage:   lumpyexpress [options]
 -T DIR    temp directory [./output_prefix.XXXXXXXXXXXX]
 -k        keep temporary files
 -K FILE   path to lumpyexpress.config file
-	    (default: same directory as lumpyexpress)
+            (default: same directory as lumpyexpress)
 -v        verbose
 -h        show this message
 ```
