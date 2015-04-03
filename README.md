@@ -67,19 +67,19 @@ usage:   lumpyexpress [options]
 
 **Optional arguments**
 ```
-     -S FILE  split reads BAM file(s) (comma separated)
-     -D FILE  discordant reads BAM files(s) (comma separated)
-     -o STR   output [fullBam.bam.vcf]
-     -x FILE  BED file to exclude
-     -P       output probability curves for each variant
-     -m INT   minimum sample weight for a call [4]
-     -r FLOAT trim threshold [0]
-     -T DIR   temp directory [./output_prefix.XXXXXXXXXXXX]
-     -k       keep temporary files
-     -K FILE  path to lumpyexpress.config file
-                (default: same directory as lumpyexpress)
-     -v       verbose
-     -h       show this message
+-S FILE   split reads BAM file(s) (comma separated)
+-D FILE   discordant reads BAM files(s) (comma separated)
+-o STR    output [fullBam.bam.vcf]
+-x FILE   BED file to exclude
+-P        output probability curves for each variant
+-m INT    minimum sample weight for a call [4]
+-r FLOAT  trim threshold [0]
+-T DIR    temp directory [./output_prefix.XXXXXXXXXXXX]
+-k        keep temporary files
+-K FILE   path to lumpyexpress.config file
+	    (default: same directory as lumpyexpress)
+-v        verbose
+-h        show this message
 ```
 
 #### Configuration
@@ -115,51 +115,42 @@ usage:    lumpy [options]
 
 **Options**
 ```
-     -g       Genome file (defines chromosome order)
-     -e       Show evidence for each call
-     -w       File read windows size (default 1000000)
-     -mw      minimum weight across all samples for a call
-     -msw     minimum per-sample weight for a call
-     -tt      trim threshold
-     -x       exclude file bed file
-     -t       temp file prefix, must be to a writeable directory
-     -P       output probability curve for each variant
-     -b       output as BEDPE instead of VCF
+-g       Genome file (defines chromosome order)
+-e       Show evidence for each call
+-w       File read windows size (default 1000000)
+-mw      minimum weight across all samples for a call
+-msw     minimum per-sample weight for a call
+-tt      trim threshold
+-x       exclude file bed file
+-t       temp file prefix, must be to a writeable directory
+-P       output probability curve for each variant
+-b       output as BEDPE instead of VCF
 
-     -sr      bam_file:<file name>,
-              id:<sample name>,
-              back_distance:<distance>,
-              min_mapping_threshold:<mapping quality>,
-              weight:<sample weight>,
-              min_clip:<minimum clip length>,
-              read_group:<string>
+-sr      bam_file:<file name>,
+         id:<sample name>,
+       	 back_distance:<distance>,
+         min_mapping_threshold:<mapping quality>,
+         weight:<sample weight>,
+         min_clip:<minimum clip length>,
+         read_group:<string>
 
-     -pe      bam_file:<file name>,
-              id:<sample name>,
-              histo_file:<file name>,
-              mean:<value>,
-              stdev:<value>,
-              read_length:<length>,
-              min_non_overlap:<length>,
-              discordant_z:<z value>,
-              back_distance:<distance>,
-              min_mapping_threshold:<mapping quality>,
-              weight:<sample weight>,
-              read_group:<string>
+-pe      bam_file:<file name>,
+         id:<sample name>,
+         histo_file:<file name>,
+         mean:<value>,
+         stdev:<value>,
+         read_length:<length>,
+         min_non_overlap:<length>,
+         discordant_z:<z value>,
+         back_distance:<distance>,
+         min_mapping_threshold:<mapping quality>,
+         weight:<sample weight>,
+         read_group:<string>
 
-    -bedpe    bedpe_file:<bedpe file>,
-              id:<sample name>,
-              weight:<sample weight>
+-bedpe   bedpe_file:<bedpe file>,
+         id:<sample name>,
+         weight:<sample weight>
 ```
-
-#### Option details
-##### -tt trim threshold
-Each predicted breakpoint interval has a probability array associated with it.
-The intervals can be trimmed of values that are below some trimming
-percentile. We recommend "-tt 0.0" (no trimming) since LUMPY now reports both
-the 95% confidence interval and the most probable single base for each
-breakpoint.
-
 
 ## Example workflows
 
