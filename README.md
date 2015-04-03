@@ -152,6 +152,15 @@ usage:    lumpy [options]
               weight:<sample weight>
 ```
 
+#### Option details
+- `-tt trim threshold`
+    Each predicted breakpoint interval has a probability array associated with it.
+    The intervals can be trimmed of values that are below some trimming
+    percentile. We recommend "-tt 0.0" (no trimming) since LUMPY now reports both
+    the 95% confidence interval and the most probable single base for each
+    breakpoint.
+
+
 ## Example workflows
 
 #### Pre-processing
