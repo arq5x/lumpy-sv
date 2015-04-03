@@ -1,7 +1,7 @@
 LUMPY
 =====
 
-A probabilistic framework for structural variant discovery
+A probabilistic framework for structural variant discovery.
 
 Ryan M Layer, Colby Chiang, Aaron R Quinlan, and Ira M Hall. 2014.
 "LUMPY: a Probabilistic Framework for Structural Variant Discovery."
@@ -13,6 +13,7 @@ Genome Biology 15 (6): R84.
 2. [Installation](#installation)
 3. [LUMPY Express](#lumpy-express): Automated breakpoint detection for standard analyses.
 4. [LUMPY (traditional)](#lumpy-traditional): Flexible and customizable breakpoint detection for advanced users.
+5. [Example workflows](#example-workflows)
 
 ## Quick start
 
@@ -34,11 +35,16 @@ lumpyexpress \
 ## Installation
 
 ##### Requirements
-- Samtools ([http://www.htslib.org/](http://www.htslib.org/))
-- SAMBLASTER ([https://github.com/GregoryFaust/samblaster](https://github.com/GregoryFaust/samblaster))
-- Python 2.7 ([https://www.python.org/](https://www.python.org/))
-    * pysam ([https://pypi.python.org/pypi/pysam](https://pypi.python.org/pypi/pysam))
-    * NumPy ([http://docs.scipy.org/doc/numpy/user/install.html](http://docs.scipy.org/doc/numpy/user/install.html))
+- LUMPY
+    - g++ compiler
+    - CMake
+
+- LUMPY Express (optional)
+    - Samtools ([http://www.htslib.org/](http://www.htslib.org/))
+    - SAMBLASTER ([https://github.com/GregoryFaust/samblaster](https://github.com/GregoryFaust/samblaster))
+    - Python 2.7 ([https://www.python.org/](https://www.python.org/))
+	- pysam ([https://pypi.python.org/pypi/pysam](https://pypi.python.org/pypi/pysam))
+	- NumPy ([http://docs.scipy.org/doc/numpy/user/install.html](http://docs.scipy.org/doc/numpy/user/install.html))
 
 ##### Install LUMPY
 ```
@@ -101,40 +107,6 @@ BAM files which will bypass SAMBLASTER extraction for faster analysis.
 #### Output
 LUMPY Express produces a VCF file according to [VCF spec 4.2](https://samtools.github.io/hts-specs/VCFv4.2.pdf).
 
-#### Examples
-
-1. Run LUMPY Express on a single sample
-    ```
-    lumpyexpress \
-        -B my.bam \
-        -o output.vcf
-    ```
-
-2. Run LUMPY Express on a single sample with pre-extracted splitters and discordants
-    ```
-    lumpyexpress \
-        -B my.bam \
-        -S my.splitters.bam \
-        -D my.discordants.bam \
-        -o output.vcf
-    ```
-
-3. Run LUMPY Express on jointly on multiple samples
-    ```
-    lumpyexpress \
-        -B sample1.bam,sample2.bam,sample3.bam \
-        -o output.vcf
-    ```
-
-4. Run LUMPY Express jointly on multiple samples with pre-extracted splitters and discordants
-    ```
-    lumpyexpress \
-        -B sample1.bam,sample2.bam,sample3.bam \
-        -S sample1.splitters.bam,sample2.splitters..bam,sample3.splitters.bam \
-        -D sample1.discordants.bam,sample2.discordants.bam,sample3.discordants.bam \
-        -o output.vcf
-    ```
-
 ## LUMPY (traditional)
 Flexible and customizable breakpoint detection for advanced users.
 
@@ -181,3 +153,37 @@ usage:    lumpy [options]
               weight:<sample weight>
 ```
 
+## Example workflows
+
+#### LUMPY Express
+1. Run LUMPY Express on a single sample
+    ```
+    lumpyexpress \
+        -B my.bam \
+        -o output.vcf
+    ```
+
+2. Run LUMPY Express on a single sample with pre-extracted splitters and discordants
+    ```
+    lumpyexpress \
+        -B my.bam \
+        -S my.splitters.bam \
+        -D my.discordants.bam \
+        -o output.vcf
+    ```
+
+3. Run LUMPY Express on jointly on multiple samples
+    ```
+    lumpyexpress \
+        -B sample1.bam,sample2.bam,sample3.bam \
+        -o output.vcf
+    ```
+
+4. Run LUMPY Express jointly on multiple samples with pre-extracted splitters and discordants
+    ```
+    lumpyexpress \
+        -B sample1.bam,sample2.bam,sample3.bam \
+        -S sample1.splitters.bam,sample2.splitters..bam,sample3.splitters.bam \
+        -D sample1.discordants.bam,sample2.discordants.bam,sample3.discordants.bam \
+        -o output.vcf
+    ```
