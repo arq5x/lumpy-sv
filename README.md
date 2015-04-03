@@ -303,11 +303,11 @@ For these examples we will assume the mean is 500 and the stdev is 50.
     ```
     lumpy \
         -mw 4 \
-	-tt 0.0 \
-	-x exclude.bed \
-	-pe bam_file:sample.discordants.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,id:sample,min_mapping_threshold:1 \
-	-sr bam_file:sample.sr.sort.bam,back_distance:10,weight:1,id:sample,min_mapping_threshold:1 \
-	> sample.exclude.vcf
+        -tt 0.0 \
+        -x exclude.bed \
+        -pe bam_file:sample.discordants.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,id:sample,min_mapping_threshold:1 \
+        -sr bam_file:sample.sr.sort.bam,back_distance:10,weight:1,id:sample,min_mapping_threshold:1 \
+        > sample.exclude.vcf
     ```
 
 #### Post-processing
