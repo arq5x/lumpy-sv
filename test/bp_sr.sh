@@ -19,6 +19,7 @@ OUT_DIR=`dirname $SR_BAM`
 OUT_FILE=`basename $SR_BAM .bam`
 
 ../bin/lumpy \
+    -b \
 	-mw $WEIGHT \
     -tt $TT \
     -sr \

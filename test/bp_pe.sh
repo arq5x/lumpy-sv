@@ -30,6 +30,7 @@ MEAN=`echo $MEAN_STDEV | cut -d " " -f1 | cut -d ":" -f2`
 STDEV=`echo $MEAN_STDEV | cut -d " " -f2 | cut -d ":" -f2`
 
 ../bin/lumpy \
+    -b \
 	-mw $WEIGHT \
     -tt $TT \
     -pe \
