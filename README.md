@@ -92,8 +92,7 @@ The installation Makefile auto-generates a lumpyexpress.config file
 and places it in the "bin" directory.
 
 #### Input
-LUMPY Express expects BWA-MEM aligned BAM files as input (using the -M flag to mark
-shorter alignments as secondary).
+LUMPY Express expects BWA-MEM aligned BAM files as input.
 It automatically parses sample, library, and read group information using the @RG
 tags in the BAM header.
 Each BAM file is expected to contain exactly one sample.
@@ -165,11 +164,11 @@ speedseq align -R "@RG\tID:id\tSM:sample\tLB:lib" \
     sample.2.fq
 ```
 
-Otherwise, data may be aligned with BWA-MEM, using the `-M` flag to mark shorter split-reads as
-secondary alignments.
+Otherwise, data may be aligned with BWA-MEM.
+
 ```
 # Align the data
-bwa mem -M human_g1k_v37.fasta sample.1.fq sample.2.fq \
+bwa mem human_g1k_v37.fasta sample.1.fq sample.2.fq \
     | samtools view -S -b - \
     > sample.bam
 
