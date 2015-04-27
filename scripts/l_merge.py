@@ -269,6 +269,8 @@ def merge(BP, sample_order, v_id):
         #if G[c[0]].b.sv_type == 'BND':
         if BP[c[0]].sv_type == 'BND':
             #G[c[0]].b.chr_r + \
+            # this is very wrong: strand orientation
+            # is destroyed when merging breakend variants
             ALT = 'N]' + \
                    BP[c[0]].chr_r + \
                    ':' + \
