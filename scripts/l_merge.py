@@ -73,7 +73,7 @@ def print_var_line(l):
         print '\t'.join([str(o) for o in O])
 
     else:
-        print l
+        print '\t'.join(A[:8])
 
 def merge(BP, sample_order, v_id):
     #sys.stderr.write(str(len(BP)) + '\n')
