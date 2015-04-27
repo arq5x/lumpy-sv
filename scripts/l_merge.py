@@ -19,9 +19,13 @@ def print_var_line(l):
         ID = A[2] + '_2'
         REF = 'N'
         ALT = ''
-        if ']' in A[4]:
+        if A[4][0] == '[':
             ALT = '[' + chr_l + ':' + A[1] + '[N'
-        else:
+        elif A[4][0] == ']':
+            ALT = 'N[' + chr_l + ':' + A[1] + '['
+        elif A[4][-1] == '[':
+            ALT = ']' + chr_l + ':' + A[1] + ']N'
+        elif A[4][-1] == ']':
             ALT = 'N]' + chr_l + ':' + A[1] + ']'
         QUAL = A[5]
         FILTER = '.'
