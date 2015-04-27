@@ -398,11 +398,10 @@ def r_cluster(BP_l, sample_order, v_id):
 def l_cluster(file_name, percent_slop=0, fixed_slop=0):
     v_id = 0
     vcf_lines = []
-    vcf_headers = Set()
+    vcf_headers = list()
     r = l_bp.parse_vcf(file_name, vcf_lines, vcf_headers, add_sname=False)
 
-    vcf_headers.add("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
-
+    vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
 
     sample_order = []
     for header in vcf_headers:
@@ -414,8 +413,6 @@ def l_cluster(file_name, percent_slop=0, fixed_slop=0):
 
     #exit(1)
 
-    vcf_headers = list(vcf_headers)
-    vcf_headers.sort(cmp=l_bp.header_line_cmp)
     for h in vcf_headers:
         print h,
 
