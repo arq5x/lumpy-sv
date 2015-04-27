@@ -329,7 +329,10 @@ def merge(BP, sample_order, v_id):
             strand_types_counts.append(strand + ':' + str(strand_map[strand]))
         STRANDS = ','.join(strand_types_counts)
 
-        SVLEN = (new_start_L + max_i_L) - (new_start_R + max_i_R)
+        if SVTYPE=='DEL':
+            SVLEN = (new_start_L + max_i_L) - (new_start_R + max_i_R)
+        else:
+            SVLEN = (new_start_R + max_i_R) - (new_start_L + max_i_L)
         END = new_start_R + max_i_R
         CIPOS=','.join([str(x) for x in [-1*max_i_L, len(p_L) - max_i_L - 1]])
         CIEND=','.join([str(x) for x in [-1*max_i_R, len(p_R) - max_i_R - 1]])
