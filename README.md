@@ -173,7 +173,7 @@ bwa mem -M human_g1k_v37.fasta sample.1.fq sample.2.fq \
     | samtools view -S -b - \
     > sample.bam
 
-# Extract the disordant paired-end alignments.
+# Extract the discordant paired-end alignments.
 samtools view -b -F 1294 sample.bam > sample.discordants.unsorted.bam
 
 # Extract the split-read alignments
@@ -192,13 +192,6 @@ LUMPY has two distinct execution alternatives. LUMPY Express is a simplified wra
 LUMPY (traditional) is more customizable, for advanced users and specialized experiments.
 
 ##### LUMPY Express
-- Run LUMPY Express on a single sample
-    ```
-    lumpyexpress \
-        -B sample.bam \
-        -o sample.vcf
-    ```
-
 - Run LUMPY Express on a single sample with pre-extracted splitters and discordants
     ```
     lumpyexpress \
