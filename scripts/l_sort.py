@@ -23,16 +23,16 @@ Version: 0.01
     vcf_lines = []
     vcf_headers = list()
 
+    for vcf_file_name in vcf_file_names:
+        samples = l_bp.parse_vcf(vcf_file_name, vcf_lines, vcf_headers)
+        for sample in samples:
+            vcf_headers.append("##SAMPLE=<ID=" + sample + ">\n")
+
     vcf_headers.append("##INFO=<ID=SNAME,Number=.,Type=String," + \
             "Description=\"Source sample name\">\n")
 
     vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\t" + \
             "VARIOUS\n")
-
-    for vcf_file_name in vcf_file_names:
-        samples = l_bp.parse_vcf(vcf_file_name, vcf_lines, vcf_headers)
-        for sample in samples:
-            vcf_headers.append("##SAMPLE=<ID=" + sample + ">\n")
 
     vcf_headers = list(vcf_headers)
     vcf_headers.sort(cmp=l_bp.header_line_cmp)
