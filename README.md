@@ -31,6 +31,8 @@ Run LUMPY Express
 ```
 lumpyexpress \
     -B my.bam \
+    -S my.splitters.bam \
+    -D my.discordants.bam \
     -o output.vcf
 ```
 
@@ -63,12 +65,13 @@ usage:   lumpyexpress [options]
 **Required arguments**
 ```
      -B FILE  coordinate-sorted BAM file(s) (comma separated)
+     -S FILE  split reads BAM file(s) (comma separated)
+     -D FILE  discordant reads BAM files(s) (comma separated)
+
 ```
 
 **Optional arguments**
 ```
--S FILE   split reads BAM file(s) (comma separated)
--D FILE   discordant reads BAM files(s) (comma separated)
 -o STR    output [fullBam.bam.vcf]
 -x FILE   BED file to exclude
 -P        output probability curves for each variant
@@ -172,7 +175,7 @@ bwa mem human_g1k_v37.fasta sample.1.fq sample.2.fq \
     | samtools view -S -b - \
     > sample.bam
 
-# Extract the disordant paired-end alignments.
+# Extract the discordant paired-end alignments.
 samtools view -b -F 1294 sample.bam > sample.discordants.unsorted.bam
 
 # Extract the split-read alignments
@@ -191,13 +194,6 @@ LUMPY has two distinct execution alternatives. LUMPY Express is a simplified wra
 LUMPY (traditional) is more customizable, for advanced users and specialized experiments.
 
 ##### LUMPY Express
-- Run LUMPY Express on a single sample
-    ```
-    lumpyexpress \
-        -B sample.bam \
-        -o sample.vcf
-    ```
-
 - Run LUMPY Express on a single sample with pre-extracted splitters and discordants
     ```
     lumpyexpress \
