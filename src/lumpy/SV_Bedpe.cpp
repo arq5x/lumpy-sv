@@ -79,9 +79,12 @@ SV_Bedpe(const BEDPE *bedpeEntry,
                 type = SV_BreakPoint::DUPLICATION;
             } else if (type_string.compare("INVERSION") == 0) {
                 type = SV_BreakPoint::INVERSION;
+            } else if (type_string.compare("TRANSLOCATION") == 0) {
+                type = SV_BreakPoint::TRANSLOCATION;
             } else {
                 cerr << "ERROR IN BEDPE FILE.  TYPE \""<< type_string <<
-                     "\" not supported (DELETION,DUPLICATION,INVERSION)" <<
+                     "\" not supported " <<
+                     "(DELETION,DUPLICATION,INVERSION,TRANSLOCATION)" <<
                      endl;
                 abort();
             }
