@@ -21,7 +21,7 @@ Genome Biology 15 (6): R84.
 
 Download and install
 ```
-git clone --recursive git@github.com:arq5x/lumpy-sv.git
+git clone --recursive https://github.com/arq5x/lumpy-sv.git
 cd lumpy-sv
 make
 cp bin/* /usr/local/bin/.
