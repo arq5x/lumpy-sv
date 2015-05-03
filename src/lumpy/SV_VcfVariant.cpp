@@ -687,7 +687,8 @@ print_header()
 	"##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl <<
 	"##FORMAT=<ID=SU,Number=1,Type=Integer,Description=\"Number of pieces of evidence supporting the variant\">" << endl <<
 	"##FORMAT=<ID=PE,Number=1,Type=Integer,Description=\"Number of paired-end reads supporting the variant\">" << endl <<
-	"##FORMAT=<ID=SR,Number=1,Type=Integer,Description=\"Number of split reads supporting the variant\">" << endl;
+	"##FORMAT=<ID=SR,Number=1,Type=Integer,Description=\"Number of split reads supporting the variant\">" << endl <<
+    	"##FORMAT=<ID=BD,Number=1,Type=Integer,Description=\"Amount of BED evidence supporting the variant\">" << endl;
 
     cout <<
 	"#CHROM" << sep <<
