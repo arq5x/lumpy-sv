@@ -43,9 +43,9 @@ lumpyexpress \
     * g++ compiler
     * CMake
 - LUMPY Express (optional)
-    * Samtools ([http://www.htslib.org/](http://www.htslib.org/))
-    * SAMBLASTER ([https://github.com/GregoryFaust/samblaster](https://github.com/GregoryFaust/samblaster))
-    * Python 2.7 ([https://www.python.org/](https://www.python.org/)) with pysam and NumPy
+    * Samtools (0.1.18+) ([http://www.htslib.org/](http://www.htslib.org/))
+    * SAMBLASTER (0.1.19+) ([https://github.com/GregoryFaust/samblaster](https://github.com/GregoryFaust/samblaster))
+    * Python 2.7 ([https://www.python.org/](https://www.python.org/)) with pysam (0.8.0+) and NumPy (1.8.1+)
 
 ##### Install
 ```
