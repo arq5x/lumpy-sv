@@ -21,7 +21,7 @@ Genome Biology 15 (6): R84.
 
 Download and install
 ```
-git clone --recursive git@github.com:arq5x/lumpy-sv.git
+git clone --recursive https://github.com/arq5x/lumpy-sv.git
 cd lumpy-sv
 make
 cp bin/* /usr/local/bin/.
@@ -31,6 +31,8 @@ Run LUMPY Express
 ```
 lumpyexpress \
     -B my.bam \
+    -S my.splitters.bam \
+    -D my.discordants.bam \
     -o output.vcf
 ```
 
@@ -41,9 +43,9 @@ lumpyexpress \
     * g++ compiler
     * CMake
 - LUMPY Express (optional)
-    * Samtools ([http://www.htslib.org/](http://www.htslib.org/))
-    * SAMBLASTER ([https://github.com/GregoryFaust/samblaster](https://github.com/GregoryFaust/samblaster))
-    * Python 2.7 ([https://www.python.org/](https://www.python.org/)) with pysam and NumPy
+    * Samtools (0.1.18+) ([http://www.htslib.org/](http://www.htslib.org/))
+    * SAMBLASTER (0.1.19+) ([https://github.com/GregoryFaust/samblaster](https://github.com/GregoryFaust/samblaster))
+    * Python 2.7 ([https://www.python.org/](https://www.python.org/)) with pysam (0.8.0+) and NumPy (1.8.1+)
 
 ##### Install
 ```
@@ -63,12 +65,13 @@ usage:   lumpyexpress [options]
 **Required arguments**
 ```
      -B FILE  coordinate-sorted BAM file(s) (comma separated)
+     -S FILE  split reads BAM file(s) (comma separated)
+     -D FILE  discordant reads BAM files(s) (comma separated)
+
 ```
 
 **Optional arguments**
 ```
--S FILE   split reads BAM file(s) (comma separated)
--D FILE   discordant reads BAM files(s) (comma separated)
 -o STR    output [fullBam.bam.vcf]
 -x FILE   BED file to exclude
 -P        output probability curves for each variant
@@ -92,8 +95,7 @@ The installation Makefile auto-generates a lumpyexpress.config file
 and places it in the "bin" directory.
 
 #### Input
-LUMPY Express expects BWA-MEM aligned BAM files as input (using the -M flag to mark
-shorter alignments as secondary).
+LUMPY Express expects BWA-MEM aligned BAM files as input.
 It automatically parses sample, library, and read group information using the @RG
 tags in the BAM header.
 Each BAM file is expected to contain exactly one sample.
@@ -165,15 +167,15 @@ speedseq align -R "@RG\tID:id\tSM:sample\tLB:lib" \
     sample.2.fq
 ```
 
-Otherwise, data may be aligned with BWA-MEM, using the `-M` flag to mark shorter split-reads as
-secondary alignments.
+Otherwise, data may be aligned with BWA-MEM.
+
 ```
 # Align the data
-bwa mem -M human_g1k_v37.fasta sample.1.fq sample.2.fq \
+bwa mem human_g1k_v37.fasta sample.1.fq sample.2.fq \
     | samtools view -S -b - \
     > sample.bam
 
-# Extract the disordant paired-end alignments.
+# Extract the discordant paired-end alignments.
 samtools view -b -F 1294 sample.bam > sample.discordants.unsorted.bam
 
 # Extract the split-read alignments
@@ -192,13 +194,6 @@ LUMPY has two distinct execution alternatives. LUMPY Express is a simplified wra
 LUMPY (traditional) is more customizable, for advanced users and specialized experiments.
 
 ##### LUMPY Express
-- Run LUMPY Express on a single sample
-    ```
-    lumpyexpress \
-        -B sample.bam \
-        -o sample.vcf
-    ```
-
 - Run LUMPY Express on a single sample with pre-extracted splitters and discordants
     ```
     lumpyexpress \

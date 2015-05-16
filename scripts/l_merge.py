@@ -302,7 +302,8 @@ def merge(BP, sample_order, v_id):
         for b_i in c:
             #A = G[g_i].b.l.rstrip().split('\t')
             A = BP[b_i].l.rstrip().split('\t')
-            QUAL += float(A[5])
+            if A[5].isdigit():
+                QUAL += float(A[5])
 
             m = l_bp.to_map(A[7])
 

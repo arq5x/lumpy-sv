@@ -73,7 +73,7 @@ if not options.output_file:
 
 
 required = 97
-restricted = 1436
+restricted = 3484
 flag_mask = required | restricted
 
 L = []
