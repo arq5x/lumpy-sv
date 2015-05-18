@@ -19,9 +19,13 @@ def print_var_line(l):
         ID = A[2] + '_2'
         REF = 'N'
         ALT = ''
-        if ']' in A[4]:
+        if A[4][0] == '[':
             ALT = '[' + chr_l + ':' + A[1] + '[N'
-        else:
+        elif A[4][0] == ']':
+            ALT = 'N[' + chr_l + ':' + A[1] + '['
+        elif A[4][-1] == '[':
+            ALT = ']' + chr_l + ':' + A[1] + ']N'
+        elif A[4][-1] == ']':
             ALT = 'N]' + chr_l + ':' + A[1] + ']'
         QUAL = A[5]
         FILTER = '.'
@@ -69,7 +73,7 @@ def print_var_line(l):
         print '\t'.join([str(o) for o in O])
 
     else:
-        print l
+        print '\t'.join(A[:8])
 
 def merge(BP, sample_order, v_id):
     #sys.stderr.write(str(len(BP)) + '\n')
@@ -265,6 +269,8 @@ def merge(BP, sample_order, v_id):
         #if G[c[0]].b.sv_type == 'BND':
         if BP[c[0]].sv_type == 'BND':
             #G[c[0]].b.chr_r + \
+            # this is very wrong: strand orientation
+            # is destroyed when merging breakend variants
             ALT = 'N]' + \
                    BP[c[0]].chr_r + \
                    ':' + \
@@ -324,7 +330,10 @@ def merge(BP, sample_order, v_id):
             strand_types_counts.append(strand + ':' + str(strand_map[strand]))
         STRANDS = ','.join(strand_types_counts)
 
-        SVLEN = (new_start_L + max_i_L) - (new_start_R + max_i_R)
+        if SVTYPE=='DEL':
+            SVLEN = (new_start_L + max_i_L) - (new_start_R + max_i_R)
+        else:
+            SVLEN = (new_start_R + max_i_R) - (new_start_L + max_i_L)
         END = new_start_R + max_i_R
         CIPOS=','.join([str(x) for x in [-1*max_i_L, len(p_L) - max_i_L - 1]])
         CIEND=','.join([str(x) for x in [-1*max_i_R, len(p_R) - max_i_R - 1]])
@@ -395,11 +404,10 @@ def r_cluster(BP_l, sample_order, v_id):
 def l_cluster(file_name, percent_slop=0, fixed_slop=0):
     v_id = 0
     vcf_lines = []
-    vcf_headers = Set()
+    vcf_headers = list()
     r = l_bp.parse_vcf(file_name, vcf_lines, vcf_headers, add_sname=False)
 
-    vcf_headers.add("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
-
+    vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
 
     sample_order = []
     for header in vcf_headers:
@@ -411,8 +419,6 @@ def l_cluster(file_name, percent_slop=0, fixed_slop=0):
 
     #exit(1)
 
-    vcf_headers = list(vcf_headers)
-    vcf_headers.sort(cmp=l_bp.header_line_cmp)
     for h in vcf_headers:
         print h,
 

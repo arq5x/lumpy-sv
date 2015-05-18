@@ -21,7 +21,11 @@ def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
             if l[1] != '#':
                 samples = l.rstrip().split('\t')[9:]
             else:
-                vcf_headers.add(l)
+                # ignore fileDate
+                if l[:10] == '##fileDate':
+                    continue
+                if l not in vcf_headers:
+                    vcf_headers.append(l)
         else:
             A = l.split('\t')
             if not 'SECONDARY' in A[7]:
