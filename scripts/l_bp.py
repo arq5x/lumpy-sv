@@ -62,8 +62,9 @@ def split_v(l):
     start_r = pos_r + int(m['CIEND'].split(',')[0])
     end_r = pos_r + int(m['CIEND'].split(',')[1])
         
+    strands = m['STRANDS']
 
-    return [m['SVTYPE'],chr_l,chr_r,start_l,end_l,start_r,end_r,m]
+    return [m['SVTYPE'],chr_l,chr_r,start_l,end_l,start_r,end_r,strands,m]
 
 def to_map(s):
     m = {}
@@ -130,6 +131,8 @@ class breakpoint:
     p_r = []
 
     sv_type = ''
+
+    strands = ''
     
     l = ''
 
@@ -146,6 +149,7 @@ class breakpoint:
         self.end_l,\
         self.start_r, \
         self.end_r, 
+        self.strands,
         m] = split_v(l)
 
         self.p_l = [float(x) for x in m['PRPOS'].split(',')]
@@ -195,6 +199,7 @@ class breakpoint:
                                            self.start_r, \
                                            self.end_r, 
                                            self.sv_type,\
+                                           self.strands,\
                                            self.p_l,
                                            self.p_r]])
     def ovl(self, b):

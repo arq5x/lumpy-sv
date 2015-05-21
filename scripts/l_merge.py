@@ -41,25 +41,42 @@ def ls_add(x, y):
 def print_var_line(l):
     A = l.rstrip().split('\t')
     if A[4] not in ['<DEL>', '<DUP>', '<INV>']:
-        [sv_type,chr_l,chr_r,start_l,end_l,start_r,end_r,m] = l_bp.split_v(l)
+        [sv_type,chr_l,chr_r,start_l,end_l,start_r,end_r,strands,m] = \
+                l_bp.split_v(l)
 
         CHROM = chr_r
         POS = m['END']
         ID = A[2] + '_2'
         REF = 'N'
         ALT = ''
-        if A[4][0] == '[':
-            ALT = '[' + chr_l + ':' + A[1] + '[N'
-        elif A[4][0] == ']':
-            ALT = 'N[' + chr_l + ':' + A[1] + '['
-        elif A[4][-1] == '[':
-            ALT = ']' + chr_l + ':' + A[1] + ']N'
-        elif A[4][-1] == ']':
+        STRANDS = ''
+
+        if m['STRANDS'][:2] == '++':
+            STRANDS = '++'
             ALT = 'N]' + chr_l + ':' + A[1] + ']'
+        elif m['STRANDS'][:2] == '-+':
+            STRANDS = '+-'
+            ALT = 'N[' + chr_l + ':' + A[1] + '['
+        elif m['STRANDS'][:2] == '+-':
+            STRANDS = '-+'
+            ALT = ']' + chr_l + ':' + A[1] + ']N'
+        elif m['STRANDS'][:2] == '--':
+            STRANDS = '--'
+            ALT = '[' + chr_l + ':' + A[1] + '[N'
+
+#        if A[4][0] == '[':
+#            ALT = '[' + chr_l + ':' + A[1] + '[N'
+#        elif A[4][0] == ']':
+#            ALT = 'N[' + chr_l + ':' + A[1] + '['
+#        elif A[4][-1] == '[':
+#            ALT = ']' + chr_l + ':' + A[1] + ']N'
+#        elif A[4][-1] == ']':
+#            ALT = 'N]' + chr_l + ':' + A[1] + ']'
+
         QUAL = A[5]
         FILTER = '.'
         SVTYPE = 'BND'
-        STRANDS = m['STRANDS']
+        #STRANDS = m['STRANDS']
         SVLEN = '0'
         CIPOS = m['CIEND']
         CIEND = m['CIPOS']
@@ -344,11 +361,37 @@ def merge(BP, sample_order, v_id, use_product):
             #G[c[0]].b.chr_r + \
             # this is very wrong: strand orientation
             # is destroyed when merging breakend variants
-            ALT = 'N]' + \
-                   BP[c[0]].chr_r + \
-                   ':' + \
-                   str(new_start_R + max_i_R) + \
-                   ']'
+            #ALT = 'N]' + \
+                   #BP[c[0]].chr_r + \
+                   #':' + \
+                   #str(new_start_R + max_i_R) + \
+                   #']'
+
+            if BP[c[0]].strands[:2] == '++':
+                ALT = 'N]' + \
+                        BP[c[0]].chr_r + \
+                        ':' + \
+                        str(new_start_R + max_i_R) + \
+                        ']'
+            elif BP[c[0]].strands[:2] == '-+':
+                ALT = ']' + \
+                        BP[c[0]].chr_r + \
+                        ':' + \
+                        str(new_start_R + max_i_R) + \
+                        ']N'
+            elif BP[c[0]].strands[:2] == '+-':
+                ALT = 'N[' + \
+                        BP[c[0]].chr_r + \
+                        ':' + \
+                        str(new_start_R + max_i_R) + \
+                        '['
+            elif BP[c[0]].strands[:2] == '--':
+                ALT = '[' + \
+                        BP[c[0]].chr_r + \
+                        ':' + \
+                        str(new_start_R + max_i_R) + \
+                        '[N'
+
         else:
             #ALT = '<' + G[c[0]].b.sv_type + '>'
             ALT = '<' + BP[c[0]].sv_type + '>'
