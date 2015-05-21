@@ -64,7 +64,7 @@ def split_v(l):
         
     strands = m['STRANDS']
 
-    return [m['SVTYPE'],chr_l,chr_r,start_l,end_l,start_r,end_r,strands,m]
+    return [m['SVTYPE'],chr_l,chr_r,strands,start_l,end_l,start_r,end_r,m]
 
 def to_map(s):
     m = {}
@@ -80,6 +80,9 @@ def to_map(s):
 def vcf_line_cmp(l1, l2):
     v1 = split_v(l1)
     v2 = split_v(l2)
+
+    v1[3] = v1[3][:2]
+    v2[3] = v2[3][:2]
 
     for i in range(len(v1)-1):
         if v1[i] != v2[i]:
@@ -145,11 +148,11 @@ class breakpoint:
         [self.sv_type,\
         self.chr_l, \
         self.chr_r,\
+        self.strands,
         self.start_l,\
         self.end_l,\
         self.start_r, \
         self.end_r, 
-        self.strands,
         m] = split_v(l)
 
         self.p_l = [float(x) for x in m['PRPOS'].split(',')]
