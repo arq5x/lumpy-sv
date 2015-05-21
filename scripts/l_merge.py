@@ -40,6 +40,7 @@ def ls_add(x, y):
 
 def print_var_line(l):
     A = l.rstrip().split('\t')
+
     if A[4] not in ['<DEL>', '<DUP>', '<INV>']:
         [sv_type,chr_l,chr_r,strands,start_l,end_l,start_r,end_r,m] = \
                 l_bp.split_v(l)

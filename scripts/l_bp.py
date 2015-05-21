@@ -29,10 +29,40 @@ def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
         else:
             A = l.split('\t')
             if not 'SECONDARY' in A[7]:
+
                 if add_sname and (samples != ''):
                     A[7] += ';' + 'SNAME=' + ','.join(samples)
                     l = '\t'.join(A)
-                vcf_lines.append(l)
+
+                
+                if 'SVTYPE=BND' in A[7]:
+                    m = re.search(r"(\[|\])(.*)(\[|\])",A[4])
+                    o_chr,o_pos = m.group(2).split(':')
+
+                    if (o_chr == A[0]) and (('--:' in A[7]) != ('++' in A[7])):
+                        neg_s = A[7].find('--:')
+                        pos_s = A[7].find('++:')
+
+                        if neg_s > 0:
+                            neg_e = neg_s + A[7][neg_s:].find(';') 
+                            pre=A[7][:neg_s]
+                            mid=A[7][neg_s:neg_e]
+                            post=A[7][neg_e:]
+                            A[7] = pre + '++:0,' + mid + post
+                        else:
+                            pos_e = pos_s + A[7][pos_s:].find(';') 
+                            pre=A[7][:pos_s]
+                            mid=A[7][pos_s:pos_e]
+                            post=A[7][pos_e:]
+                            A[7] = pre + mid + ',--:0' + post
+
+                        A[7] = 'SVTYPE=INV' + A[7][10:] + ';END=' + o_pos
+                        A[4] = '<INV>'
+                        vcf_lines.append('\t'.join(A))
+                    else:
+                        vcf_lines.append(l)
+                else:
+                    vcf_lines.append(l)
 
     return samples
 
