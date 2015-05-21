@@ -31,6 +31,10 @@ Version: 0.01
     vcf_headers.append("##INFO=<ID=SNAME,Number=.,Type=String," + \
             "Description=\"Source sample name\">\n")
 
+    vcf_headers.append("##INFO=<ID=ALG,Number=1,Type=String," + \
+            "Description=\"Evidence PDF aggregation algorithm\">\n")
+
+
     vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\t" + \
             "VARIOUS\n")
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env python -u
+from operator import add
+import time
 import sys
 import numpy as np
 import glob
@@ -26,7 +28,7 @@ class breakpoint:
     evidence_size = 0
     src_file = ''
 
-    def __init__(self, line):
+    def __init__(self, l):
         A = l.rstrip().split('\t')
         self.chr_l = A[0]
         self.start_l = int(A[1])
@@ -118,9 +120,10 @@ def trim(A):
             break               
     return [clip_start, clip_end]
 
-def cluster(BP):
+def max_filter(BP):
     R = []
     L = []
+    
     for b in BP:
         L.append([b.start_l,b.end_l,b.p_l])
         R.append([b.start_r,b.end_r,b.p_r])
@@ -131,152 +134,204 @@ def cluster(BP):
     sum_L = [sum(x) for x in zip(*a_L)]
     sum_R = [sum(x) for x in zip(*a_R)]
 
-
     max_i_L = sum_L.index(max(sum_L))
     max_i_R = sum_R.index(max(sum_R))
 
     max_o_L = max_i_L + start_L
     max_o_R = max_i_R + start_R
 
-
-    in_BP = []
-    out_BP = []
+    in_BP_i = []
+    out_BP_i = []
 
     for b_i in range(len(BP)):
         if max_o_L >= BP[b_i].start_l and \
            max_o_L <= BP[b_i].end_l and \
            max_o_R >= BP[b_i].start_r and \
            max_o_R <= BP[b_i].end_r:
-            in_BP.append(b_i)
+            in_BP_i.append(b_i)
         else:
-            out_BP.append(b_i)
+            out_BP_i.append(b_i)
+
+    return [in_BP_i, out_BP_i]
+
+def merge(BP):
+
+    # optionally filter the collection
+    #in_BP_i, out_BP_i = max_filter(BP)
+
+    # no filter
+    in_BP_i = range(len(BP))
+    out_BP_i = []
 
     if len(in_BP) > 0:
-        p_L = [1] * len(a_L[0])
-        p_R = [1] * len(a_R[0])
+        # get the common interval
+        max_start_l = 0
+        min_end_l =  sys.maxint
+
+        max_start_r = 0
+        min_end_r =  sys.maxint
 
         for b_i in in_BP:
-            for i in range(len(a_L[b_i])):
-                p_L[i] = p_L[i] * a_L[b_i][i]
+            # left side
+            if BP[i].start_l > max_start_l:
+                max_start_l = BP[i].start_l
+            if BP[i].end_l < min_end_l:
+                min_end_l = BP[i].end_l
 
-            for i in range(len(a_R[b_i])):
-                p_R[i] = p_R[i] * a_R[b_i][i]
+            # right side
+            if BP[i].start_r > max_start_r:
+                max_start_r = BP[i].start_r
 
-        [clip_start_L, clip_end_L] = trim(p_L)
-        [clip_start_R, clip_end_R] = trim(p_R)
+            if BP[i].end_r < min_end_r:
+                min_end_r = BP[i].end_r
 
-        new_start_L = start_L + clip_start_L
-        new_end_L = end_L - clip_end_L
 
-        new_start_R = start_R + clip_start_R
-        new_end_R = end_R - clip_end_R
 
-        chr_L = BP[0].chr_l
-        chr_R = BP[0].chr_r
+    if len(out_BP) > 0:
+        re_merge = []
+        for i in out_BP:
+            re_merge.append(BP[i])
 
-        print '\t'.join([\
-                chr_L, \
-                str(new_start_L), \
-                str(new_end_L), \
-                chr_R, \
-                str(new_start_R), \
-                str(new_end_R), \
-                "0", \
-                str(len(in_BP)), \
-                BP[0].strand_l, \
-                BP[0].strand_r, \
-                BP[0].sv_type, \
-                "LP:" + ','.join(\
-                    [str(x) for x in p_L[clip_start_L:len(p_L)-clip_end_L]]), \
-                "RP:" + ','.join(\
-                    [str(x) for x in p_R[clip_start_R:len(p_R)-clip_end_R]])\
-                ])
+        if len(in_BP) == 0:
+            print
+            print '\t', max_o_L, max_o_R
+            for r in re_merge:
+                print r
+            exit(1)
+        else:
+            print 'R\t',
+            re_merge.sort(key=lambda x: x.start_l)
+            re_merge.sort(key=lambda x: x.sv_type)
+            re_merge.sort(key=lambda x: x.chr_l)
+            r_cluster(re_merge)
 
-parser = OptionParser()
 
-parser.add_option("-d",
-    "--data_file",
-    dest="data_file",
-    help="Sorted lumpy data file")
+#        print '\t'.join([\
+#                chr_L, \
+#                str(new_start_L), \
+#                str(new_end_L), \
+#                chr_R, \
+#                str(new_start_R), \
+#                str(new_end_R), \
+#                "0", \
+#                str(len(in_BP)), \
+#                BP[0].strand_l, \
+#                BP[0].strand_r, \
+#                BP[0].sv_type, \
+#                "LP:" + ','.join(\
+#                    [str(x) for x in p_L[clip_start_L:len(p_L)-clip_end_L]]), \
+#                "RP:" + ','.join(\
+#                    [str(x) for x in p_R[clip_start_R:len(p_R)-clip_end_R]])\
+#                ])
 
-(options, args) = parser.parse_args()
+# Scan the list of calls that intersect on the left side.  These must first be
+# esolted based on the rigth side coordinates.  Merge when a call does not
+# intersect the current collection.
+def r_cluster(BP_l):
+    # need to resort based on the right side, then extract clusters
+    BP_l.sort(key=lambda x: x.start_r)
+    BP_l.sort(key=lambda x: x.sv_type)
+    BP_l.sort(key=lambda x: x.chr_r)
 
-if not options.data_file:
-    parser.error('Data not given')
-
-f = open(options.data_file,'r')
-
-BP_l = []
-BP_starts_l = []
-BP_ends_l = []
-
-for l in f:
-    bp = breakpoint(l)
-
-    #print len(BP_l),
-
-    if (len(BP_l) == 0) or \
-        (sum(BP_starts_l)/len(BP_starts_l) <= bp.end_l and \
-         sum(BP_ends_l)/len(BP_ends_l) >= bp.start_l):
-        BP_l.append(bp)
-        BP_starts_l.append(bp.start_l)
-        BP_ends_l.append(bp.end_l)
-    else:
-        # at this point all of the left ends intersect, but there could be
-        # multiple clusters here that have different left ends so reprocess 
-        # BP_l and cluster on the right side
-        BP_r = []
-        BP_starts_r = []
-        BP_ends_r = []
-        for bp_l in BP_l:
-            if (len(BP_r) == 0) or \
-                (sum(BP_starts_r)/len(BP_starts_r) <= bp_l.end_l and \
-                 sum(BP_ends_r)/len(BP_ends_r) >= bp_l.start_l):
-                BP_r.append(bp_l)
-                BP_starts_r.append(bp_l.start_l)
-                BP_ends_r.append(bp_l.end_l)
-            else:    
-                #print
-                cluster(BP_r)
-                BP_r = []
-                BP_starts_r = []
-                BP_ends_r = []
-                BP.append(bp_l)
-                BP_starts_r.append(bp_l.start_l)
-                BP_ends_r.append(bp_l.end_l)
-        if len(BP_r) > 0:
-            #print
-            cluster(BP_r)
-
-        BP_l = []
-        BP_starts_l = []
-        BP_ends_l = []
-        BP_l.append(bp)
-        BP_starts_l.append(bp.start_l)
-        BP_ends_l.append(bp.end_l)
-
-if len(BP_l) > 0:
     BP_r = []
     BP_starts_r = []
     BP_ends_r = []
     for bp_l in BP_l:
         if (len(BP_r) == 0) or \
-            (sum(BP_starts_r)/len(BP_starts_r) <= bp_l.end_l and \
-             sum(BP_ends_r)/len(BP_ends_r) >= bp_l.start_l):
+            (sum(BP_starts_r)/len(BP_starts_r) <= bp_l.end_r and \
+             sum(BP_ends_r)/len(BP_ends_r) >= bp_l.start_r):
             BP_r.append(bp_l)
-            BP_starts_r.append(bp_l.start_l)
-            BP_ends_r.append(bp_l.end_l)
-        else:
-            #print
-            cluster(BP_r)
+            BP_starts_r.append(bp_l.start_r)
+            BP_ends_r.append(bp_l.end_r)
+        else:    
+            merge(BP_r)
             BP_r = []
             BP_starts_r = []
             BP_ends_r = []
-            BP.append(bp_l)
-            BP_starts_r.append(bp_l.start_l)
-            BP_ends_r.append(bp_l.end_l)
+            BP_r.append(bp_l)
+            BP_starts_r.append(bp_l.start_r)
+            BP_ends_r.append(bp_l.end_r)
     if len(BP_r) > 0:
-        #print
-        cluster(BP_r)
+        merge(BP_r)
 
+# The input file should be sorted, collect calls that intersect on the left
+# side as soon as a call is found that does not intersect the current
+# collection repeat the process for the right side
+def l_cluster(in_file):
 
+    f = open(in_file, 'r')
+
+    BP_l = []
+    BP_starts_l = []
+    BP_ends_l = []
+
+    for l in f:
+        bp = breakpoint(l)
+
+        if (len(BP_l) == 0) or \
+            (sum(BP_starts_l)/len(BP_starts_l) <= bp.end_l and \
+             sum(BP_ends_l)/len(BP_ends_l) >= bp.start_l):
+            BP_l.append(bp)
+            BP_starts_l.append(bp.start_l)
+            BP_ends_l.append(bp.end_l)
+        else:
+            # at this point all of the left ends intersect, but there could be
+            # multiple clusters here that have different left ends so reprocess 
+            # BP_l and cluster on the right side
+
+            r_cluster(BP_l)
+
+            BP_l = []
+            BP_starts_l = []
+            BP_ends_l = []
+            BP_l.append(bp)
+            BP_starts_l.append(bp.start_l)
+            BP_ends_l.append(bp.end_l)
+
+    if len(BP_l) > 0:
+        r_cluster(BP_l)
+
+class Usage(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
+def main():
+
+    usage = """%prog -i <file>
+lmerge
+Author: Ryan Layer & Ira Hall
+Description: merge lumpy calls.
+Version: ira_7
+    """
+
+    parser = OptionParser(usage)
+    parser.add_option("-i", \
+                      "--inFile", \
+                      dest="inFile",
+                      help="A sorted lumpy output file generated by " + \
+                           "lsort; or stdin (-i stdin). Column 7 must " + \
+                           "have the format sample:variantID", \
+                           metavar="FILE")
+
+#    parser.add_option("-c", \
+#                      "--configFile", \
+#                      dest="configFile", \
+#                      help="The config file: sample,id,evidenceType,path", \
+#                      metavar="FILE")
+
+    (opts, args) = parser.parse_args()
+
+    #if opts.inFile is None or opts.configFile is None:
+    if opts.inFile is None:
+        parser.print_help()
+        print
+    else:
+        try:
+            #l_cluster(opts.inFile, opts.configFile)
+            l_cluster(opts.inFile)
+        except IOError as err:
+            sys.stderr.write("IOError " + str(err) + "\n");
+            return
+
+if __name__ == "__main__":
+    sys.exit(main())

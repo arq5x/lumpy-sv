@@ -9,6 +9,35 @@ from optparse import OptionParser
 from sets import Set
 import l_bp
 
+def get_p(ls):
+    return np.exp(ls)
+
+def get_ls(p):
+    if p == 0:
+        return float("-inf")
+    else:
+        return np.log(p)
+
+def ls_multiply(x, y):
+    if (x == float("-inf")) or (y == float("-inf")):
+        return float("-inf")
+    else:
+        return x + y
+
+def ls_divide(x, y):
+    return x - y
+
+def ls_add(x, y):
+    if x == float("-inf"):
+        return y
+    elif y == float("-inf"):
+        return x
+    elif (x < y):
+        return y + np.log(1 + np.exp(x - y))
+    else:
+        return x + np.log(1 + np.exp(y - x))
+
+
 def print_var_line(l):
     A = l.rstrip().split('\t')
     if A[4] not in ['<DEL>', '<DUP>', '<INV>']:
@@ -75,7 +104,7 @@ def print_var_line(l):
     else:
         print '\t'.join(A[:8])
 
-def merge(BP, sample_order, v_id):
+def merge(BP, sample_order, v_id, use_product):
     #sys.stderr.write(str(len(BP)) + '\n')
 
     if len(BP) == 1:
@@ -105,6 +134,9 @@ def merge(BP, sample_order, v_id):
 
         #add new mate
         A[7]+= ';EVENT=' + A[2]
+
+        #add new alg
+        A[7]+= ';ALG=PROD'
  
         print_var_line('\t'.join(A))
         return v_id
@@ -185,8 +217,8 @@ def merge(BP, sample_order, v_id):
         [start_R, end_R, a_R] = l_bp.align_intervals(R)
         [start_L, end_L, a_L] = l_bp.align_intervals(L)
 
-        p_L = [1] * len(a_L[0])
-        p_R = [1] * len(a_R[0])
+        p_L = [0] * len(a_L[0])
+        p_R = [0] * len(a_R[0])
 
         for c_i in range(len(c)):
             for i in range(len(a_L[c_i])):
@@ -196,6 +228,47 @@ def merge(BP, sample_order, v_id):
             for i in range(len(a_R[c_i])):
                 #p_R[i] = p_R[i] * a_R[c_i][i]
                 p_R[i] += a_R[c_i][i]
+
+        ALG = 'SUM'
+
+        if use_product:
+            pmax_i_L = p_L.index(max(p_L))
+            pmax_i_R = p_R.index(max(p_R))
+
+            miss = 0
+            for c_i in range(len(c)):
+                if (a_L[c_i][pmax_i_L] == 0) or (a_R[c_i][pmax_i_R] == 0):
+                    miss += 1
+                    #exit(1)
+            if miss == 0:
+                ALG = "PROD"
+                ls_p_L = [get_ls(1)] * len(a_L[0])
+                ls_p_R = [get_ls(1)] * len(a_R[0])
+                for c_i in range(len(c)):
+                    for i in range(len(a_L[c_i])):
+                        ls_p_L[i] = ls_multiply(ls_p_L[i], get_ls(a_L[c_i][i]))
+                        #p_L[i] = p_L[i] * a_L[c_i][i]
+
+                    for i in range(len(a_R[c_i])):
+                        ls_p_R[i] = ls_multiply(ls_p_R[i], get_ls(a_R[c_i][i]))
+                        #p_R[i] = p_R[i] * a_R[c_i][i]
+
+                ls_sum_L = get_ls(0)
+                ls_sum_R = get_ls(0)
+
+                for ls_p in ls_p_L:
+                    ls_sum_L = ls_add(ls_sum_L, ls_p)
+
+                for ls_p in ls_p_R:
+                    ls_sum_R = ls_add(ls_sum_R, ls_p)
+
+                p_L = []
+                for ls_p in ls_p_L:
+                    p_L.append(get_p(ls_divide(ls_p, ls_sum_L)))
+
+                p_R = []
+                for ls_p in ls_p_R:
+                    p_R.append(get_p(ls_divide(ls_p, ls_sum_R)))
 
         sum_L = sum(p_L)
         sum_R = sum(p_R)
@@ -355,6 +428,7 @@ def merge(BP, sample_order, v_id):
              'SR='       + str(SR),
              'PRPOS='    + str(PRPOS),
              'PREND='    + str(PREND),
+             'ALG='      + str(ALG),
              'SNAME='    + str(SNAME)]
 
         if BP[c[0]].sv_type == 'BND':
@@ -372,7 +446,7 @@ def merge(BP, sample_order, v_id):
         print_var_line('\t'.join([str(o) for o in O]))
     return v_id
 
-def r_cluster(BP_l, sample_order, v_id):
+def r_cluster(BP_l, sample_order, v_id, use_product):
     # need to resort based on the right side, then extract clusters
     BP_l.sort(key=lambda x: x.start_r)
     BP_l.sort(key=lambda x: x.chr_r)
@@ -390,18 +464,18 @@ def r_cluster(BP_l, sample_order, v_id):
             BP_chr_r = b.chr_r
         else:
             #print len(BP_r)
-            v_id = merge(BP_r, sample_order, v_id)
+            v_id = merge(BP_r, sample_order, v_id, use_product)
             BP_r = [b]
             BP_max_end_r = b.end_r
             BP_chr_r = b.chr_r
  
     if len(BP_r) > 0:
         #print len(BP_r)
-        v_id = merge(BP_r, sample_order, v_id)
+        v_id = merge(BP_r, sample_order, v_id, use_product)
 
     return v_id
 
-def l_cluster(file_name, percent_slop=0, fixed_slop=0):
+def l_cluster(file_name, percent_slop=0, fixed_slop=0, use_product=False):
     v_id = 0
     vcf_lines = []
     vcf_headers = list()
@@ -442,7 +516,7 @@ def l_cluster(file_name, percent_slop=0, fixed_slop=0):
             BP_sv_type = b.sv_type
         else:
             #print len(BP_l)
-            v_id = r_cluster(BP_l, sample_order, v_id)
+            v_id = r_cluster(BP_l, sample_order, v_id, use_product)
             BP_l = [b]
             BP_max_end_l = b.end_l
             BP_sv_type = b.sv_type
@@ -450,7 +524,7 @@ def l_cluster(file_name, percent_slop=0, fixed_slop=0):
 
     if len(BP_l) > 0:
         #print len(BP_l)
-        v_id = r_cluster(BP_l, sample_order, v_id)
+        v_id = r_cluster(BP_l, sample_order, v_id, use_product)
  
 
 class Usage(Exception):
@@ -495,6 +569,14 @@ Version: ira_7
                            "fixed size. If both slop " + \
                            "parameters are set, the max is used.")
 
+    parser.add_option("--product", \
+                      dest="use_product",
+                      action="store_true",
+                      default=False,
+                      help="Calculate breakpoint PDF and position " + \
+                           "using product.")
+
+
     (opts, args) = parser.parse_args()
 
     #if opts.inFile is None or opts.configFile is None:
@@ -505,7 +587,8 @@ Version: ira_7
         try:
             l_cluster(opts.inFile,
                       percent_slop=opts.percent_slop,
-                      fixed_slop=opts.fixed_slop)
+                      fixed_slop=opts.fixed_slop,
+                      use_product=opts.use_product)
         except IOError as err:
             sys.stderr.write("IOError " + str(err) + "\n");
             return
