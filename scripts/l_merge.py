@@ -41,6 +41,23 @@ def ls_add(x, y):
 def print_var_line(l):
     A = l.rstrip().split('\t')
 
+    if A[4] == '<INV>' and ('--:0' in A[7] or '++:0' in A[7]):
+        [sv_type,chr_l,chr_r,strands,start_l,end_l,start_r,end_r,m] = \
+                l_bp.split_v(l)
+
+        STRANDS = ''
+        if '--:0' in m['STRANDS']:
+            STRANDS = m['STRANDS'][:-5]
+        else:
+            STRANDS = m['STRANDS'][:-5]
+
+        if STRANDS[:2] == '++':
+            ALT = 'N]' + chr_l + ':' + m['END'] + ']'
+        elif STRANDS[:2] == '--':
+            ALT = '[' + chr_l + ':' + m['END'] + '[N'
+
+        exit(1)
+
     if A[4] not in ['<DEL>', '<DUP>', '<INV>']:
         [sv_type,chr_l,chr_r,strands,start_l,end_l,start_r,end_r,m] = \
                 l_bp.split_v(l)
@@ -126,9 +143,18 @@ def merge(BP, sample_order, v_id, use_product):
     #sys.stderr.write(str(len(BP)) + '\n')
 
     if len(BP) == 1:
-        #tack on id to SNAME
         A = BP[0].l.rstrip().split('\t')
-        A[7]+= ':' + A[2]
+        #tack on id to SNAME
+        #A[7]+= ':' + A[2]
+        s_start=A[7].find('SNAME=')
+        s_end=A[7].find(';',s_start)
+        if (s_end > -1):
+            A[7] = A[7][:s_start] + \
+                    A[7][s_start:s_end] + \
+                    ':' + A[2] + \
+                    A[7][s_end:]
+        else:
+            A[7]+= ':' + A[2]
 
         # reset the id to be unique in this file
         v_id += 1
