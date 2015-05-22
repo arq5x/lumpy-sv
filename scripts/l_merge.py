@@ -45,57 +45,18 @@ def print_var_line(l):
         [sv_type,chr_l,chr_r,strands,start_l,end_l,start_r,end_r,m] = \
                 l_bp.split_v(l)
 
-        STRANDS = ''
-        if '--:0' in m['STRANDS']:
-            STRANDS = m['STRANDS'][:-5]
-        else:
-            STRANDS = m['STRANDS'][:-5]
+        STRAND_DICT = dict(x.split(':') for x in m['STRANDS'].split(','))
+        for o in STRAND_DICT.keys():
+            if STRAND_DICT[o] == '0':
+                del(STRAND_DICT[o])
+        STRANDS = ','.join(['%s:%s' % (o,STRAND_DICT[o]) for o in STRAND_DICT])
 
         if STRANDS[:2] == '++':
             ALT = 'N]' + chr_l + ':' + m['END'] + ']'
         elif STRANDS[:2] == '--':
             ALT = '[' + chr_l + ':' + m['END'] + '[N'
 
-        exit(1)
-
-    if A[4] not in ['<DEL>', '<DUP>', '<INV>']:
-        [sv_type,chr_l,chr_r,strands,start_l,end_l,start_r,end_r,m] = \
-                l_bp.split_v(l)
-
-        CHROM = chr_r
-        POS = m['END']
-        ID = A[2] + '_2'
-        REF = 'N'
-        ALT = ''
-        STRANDS = ''
-
-        if m['STRANDS'][:2] == '++':
-            STRANDS = '++'
-            ALT = 'N]' + chr_l + ':' + A[1] + ']'
-        elif m['STRANDS'][:2] == '-+':
-            STRANDS = '+-'
-            ALT = 'N[' + chr_l + ':' + A[1] + '['
-        elif m['STRANDS'][:2] == '+-':
-            STRANDS = '-+'
-            ALT = ']' + chr_l + ':' + A[1] + ']N'
-        elif m['STRANDS'][:2] == '--':
-            STRANDS = '--'
-            ALT = '[' + chr_l + ':' + A[1] + '[N'
-
-#        if A[4][0] == '[':
-#            ALT = '[' + chr_l + ':' + A[1] + '[N'
-#        elif A[4][0] == ']':
-#            ALT = 'N[' + chr_l + ':' + A[1] + '['
-#        elif A[4][-1] == '[':
-#            ALT = ']' + chr_l + ':' + A[1] + ']N'
-#        elif A[4][-1] == ']':
-#            ALT = 'N]' + chr_l + ':' + A[1] + ']'
-
-        QUAL = A[5]
-        FILTER = '.'
         SVTYPE = 'BND'
-        #STRANDS = m['STRANDS']
-        SVLEN = '0'
         CIPOS = m['CIEND']
         CIEND = m['CIPOS']
         CIPOS95 = m['CIEND95']
@@ -107,13 +68,67 @@ def print_var_line(l):
         PRPOS = m['PREND']
         PREND = m['PRPOS']
         SNAME = m['SNAME']
-        EVENT = m['EVENT']
+        EVENT = A[2]
+
+        A[4] = ALT
+        A[7] = ';'.join(['SVTYPE='   + str(SVTYPE),
+                         'STRANDS='  + str(STRANDS),
+                         'CIPOS='    + str(CIPOS),
+                         'CIEND='    + str(CIEND),
+                         'CIPOS95='  + str(CIPOS95),
+                         'CIEND95='  + str(CIEND95),
+                                       str(IMPRECISE),
+                         'SU='       + str(SU),
+                         'PE='       + str(PE),
+                         'SR='       + str(SR),
+                         'PRPOS='    + str(PRPOS),
+                         'PREND='    + str(PREND),
+                         'SNAME='    + str(SNAME),
+                         'EVENT='    + str(EVENT)])
+
+        # reconstruct the line
+        l = '\t'.join(A)
+
+    if A[4] not in ['<DEL>', '<DUP>', '<INV>']:
+        [sv_type,chr_l,chr_r,strands,start_l,end_l,start_r,end_r,m] = \
+                l_bp.split_v(l)
+
+        CHROM = chr_r
+        POS = m['END']
+        ID = A[2] + '_2'
+        REF = 'N'
+        ALT = ''
+
+        if A[4][0] == '[':
+            ALT = '[' + chr_l + ':' + A[1] + '[N'
+        elif A[4][0] == ']':
+            ALT = 'N[' + chr_l + ':' + A[1] + '['
+        elif A[4][-1] == '[':
+            ALT = ']' + chr_l + ':' + A[1] + ']N'
+        elif A[4][-1] == ']':
+            ALT = 'N]' + chr_l + ':' + A[1] + ']'
+
+        QUAL = A[5]
+        FILTER = '.'
+        SVTYPE = 'BND'
+        STRANDS = m['STRANDS']
+        CIPOS = m['CIEND']
+        CIEND = m['CIPOS']
+        CIPOS95 = m['CIEND95']
+        CIEND95 = m['CIPOS95']
+        IMPRECISE = 'IMPRECISE'
+        SU = m['SU']
+        PE = m['PE']
+        SR = m['SR']
+        PRPOS = m['PREND']
+        PREND = m['PRPOS']
+        SNAME = m['SNAME']
+        EVENT = A[2]
         SECONDARY = 'SECONDARY'
         MATEID=A[2] + '_1'
 
         INFO = ';'.join(['SVTYPE='   + str(SVTYPE),
                          'STRANDS='  + str(STRANDS),
-                         'SVLEN='    + str(SVLEN),
                          'CIPOS='    + str(CIPOS),
                          'CIEND='    + str(CIEND),
                          'CIPOS95='  + str(CIPOS95),
