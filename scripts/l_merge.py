@@ -195,7 +195,10 @@ def merge(BP, sample_order, v_id, use_product):
         A[7]+= ';EVENT=' + A[2]
 
         #add new alg
-        A[7]+= ';ALG=PROD'
+        if use_product:
+            A[7]+= ';ALG=PROD'
+        else:
+            A[7] += ';ALG=SUM'
  
         print_var_line('\t'.join(A))
         return v_id
@@ -289,7 +292,6 @@ def merge(BP, sample_order, v_id, use_product):
                 p_R[i] += a_R[c_i][i]
 
         ALG = 'SUM'
-
         if use_product:
             pmax_i_L = p_L.index(max(p_L))
             pmax_i_R = p_R.index(max(p_R))
