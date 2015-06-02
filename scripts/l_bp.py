@@ -195,12 +195,25 @@ class breakpoint:
             r_slop = int(max(percent_slop*(self.end_r-self.start_r),fixed_slop))
 
             # pad each interval with slop_prob on each side.
-            # then normalize so each probability curve sums to 1.
+            self.start_l = self.start_l-l_slop
+            self.end_l = self.end_l+l_slop
             new_p_l = [slop_prob] * l_slop + self.p_l + [slop_prob] * l_slop
+
+            self.start_r = self.start_r-r_slop
+            self.end_r = self.end_r+r_slop
+            new_p_r = [slop_prob] * r_slop + self.p_r + [slop_prob] * r_slop
+
+            # chew off overhang if self.start_l or self.start_r less than 0
+            if self.start_l < 0:
+                new_p_l = new_p_l[-self.start_l:]
+                self.start_l = 0
+            if self.start_r < 0:
+                new_p_r = new_p_r[-self.start_r:]
+                self.start_r = 0
+
+            # normalize so each probability curve sums to 1.
             sum_p_l = sum(new_p_l)
             self.p_l = [float(x)/sum_p_l for x in new_p_l]
-
-            new_p_r = [slop_prob] * r_slop + self.p_r + [slop_prob] * r_slop
             sum_p_r = sum(new_p_r)
             self.p_r = [float(x)/sum_p_r for x in new_p_r]
 
