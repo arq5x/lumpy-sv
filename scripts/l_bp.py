@@ -188,20 +188,19 @@ class breakpoint:
         self.p_l = [float(x) for x in m['PRPOS'].split(',')]
         self.p_r = [float(x) for x in m['PREND'].split(',')]
 
-        slop_coeff = 1e-3
-
+        slop_prob = 1e-100
         if ((percent_slop > 0) or (fixed_slop > 0)):
 
             l_slop = int(max(percent_slop*(self.end_l-self.start_l),fixed_slop))
             r_slop = int(max(percent_slop*(self.end_r-self.start_r),fixed_slop))
 
-            # pad each interval with (edge probability * slop_coeff) on each side.
+            # pad each interval with slop_prob on each side.
             # then normalize so each probability curve sums to 1.
-            new_p_l = [self.p_l[0] * slop_coeff] * l_slop + self.p_l + [self.p_l[-1] * slop_coeff] * l_slop
+            new_p_l = [slop_prob] * l_slop + self.p_l + [slop_prob] * l_slop
             sum_p_l = sum(new_p_l)
             self.p_l = [float(x)/sum_p_l for x in new_p_l]
 
-            new_p_r = [self.p_r[0] * slop_coeff] * r_slop + self.p_r + [self.p_r[-1] * slop_coeff] * r_slop
+            new_p_r = [slop_prob] * r_slop + self.p_r + [slop_prob] * r_slop
             sum_p_r = sum(new_p_r)
             self.p_r = [float(x)/sum_p_r for x in new_p_r]
 
