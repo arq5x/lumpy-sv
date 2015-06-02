@@ -6,9 +6,9 @@ from optparse import OptionParser
 
 parser = OptionParser()
 
-parser.add_option("-b",
-    "--bedpe_file",
-    dest="bedpe_file",
+parser.add_option("-i",
+    "--bedpe",
+    dest="bedpe",
     help="BEDPE file")
 
 parser.add_option("-n",
@@ -20,23 +20,32 @@ parser.add_option("-n",
 
 (options, args) = parser.parse_args()
 
-if not options.bedpe_file:
+if not options.bedpe:
     parser.error('BEDPE file not given')
 
-f = open(options.bedpe_file,'r')
+f = open(options.bedpe,'r')
 
 print 'track type=bedGraph name="' + options.name + '"' 
 
-for l in f:
-    A = l.rstrip().split('\t')
-    L=[float(x) for x in A[15][3:].split(',')] 
-    R=[float(x) for x in A[16][3:].split(',')] 
+for line in f:
+    if line[0] == '#':
+        continue
 
-    l_chr = A[0]
-    l_start = int(A[1])
+    v = line.rstrip().split('\t')
+    info = dict()
+    for s in v[12].split(';'):
+        s_v = s.split('=')
+        if len(s_v) == 2:
+            info[s_v[0]] = s_v[1]
 
-    r_chr = A[3]
-    r_start = int(A[4])
+    L=[float(x) for x in info['PRPOS'].split(',')] 
+    R=[float(x) for x in info['PREND'].split(',')] 
+
+    l_chr = v[0]
+    l_start = int(v[1])
+
+    r_chr = v[3]
+    r_start = int(v[4])
 
     c = 0
     for p in L:
