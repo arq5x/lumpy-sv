@@ -188,41 +188,64 @@ class breakpoint:
         self.p_l = [float(x) for x in m['PRPOS'].split(',')]
         self.p_r = [float(x) for x in m['PREND'].split(',')]
 
+        slop_prob = 1e-100
         if ((percent_slop > 0) or (fixed_slop > 0)):
 
             l_slop = int(max(percent_slop*(self.end_l-self.start_l),fixed_slop))
             r_slop = int(max(percent_slop*(self.end_r-self.start_r),fixed_slop))
 
-            old_l = float(self.end_l - self.start_l + 1)
-            
-            self.start_l = max(0,self.start_l-l_slop)
+            # pad each interval with slop_prob on each side.
+            self.start_l = self.start_l-l_slop
             self.end_l = self.end_l+l_slop
+            new_p_l = [slop_prob] * l_slop + self.p_l + [slop_prob] * l_slop
 
-            new_l = float(self.end_l - self.start_l + 1)
+            self.start_r = self.start_r-r_slop
+            self.end_r = self.end_r+r_slop
+            new_p_r = [slop_prob] * r_slop + self.p_r + [slop_prob] * r_slop
 
-            new_p_l = []
-            for i in range(self.end_l-self.start_l+1):
-                p = i/new_l
-                old_i = int(p*old_l)
-                new_p_l.append(self.p_l[old_i])
+            # chew off overhang if self.start_l or self.start_r less than 0
+            if self.start_l < 0:
+                new_p_l = new_p_l[-self.start_l:]
+                self.start_l = 0
+            if self.start_r < 0:
+                new_p_r = new_p_r[-self.start_r:]
+                self.start_r = 0
+
+            # normalize so each probability curve sums to 1.
             sum_p_l = sum(new_p_l)
             self.p_l = [float(x)/sum_p_l for x in new_p_l]
-
-            old_r = float(self.end_r - self.start_r + 1)
-
-            self.start_r = max(0,self.start_r-r_slop)
-            self.end_r = self.end_r+r_slop
-
-            new_r = float(self.end_r - self.start_r + 1)
-
-            new_p_r = []
-            for i in range(self.end_r-self.start_r+1):
-                p = float(i)/new_r
-                old_i = int(p*old_r)
-                new_p_r.append(self.p_r[old_i])
-            sum_p_r = max(1,sum(new_p_r))
+            sum_p_r = sum(new_p_r)
             self.p_r = [float(x)/sum_p_r for x in new_p_r]
 
+            # old_l = float(self.end_l - self.start_l + 1)
+            
+            # self.start_l = max(0,self.start_l-l_slop)
+            # self.end_l = self.end_l+l_slop
+
+            # new_l = float(self.end_l - self.start_l + 1)
+
+            # new_p_l = []
+            # for i in range(self.end_l-self.start_l+1):
+            #     p = i/new_l
+            #     old_i = int(p*old_l)
+            #     new_p_l.append(self.p_l[old_i])
+            # sum_p_l = sum(new_p_l)
+            # self.p_l = [float(x)/sum_p_l for x in new_p_l]
+
+            # old_r = float(self.end_r - self.start_r + 1)
+
+            # self.start_r = max(0,self.start_r-r_slop)
+            # self.end_r = self.end_r+r_slop
+
+            # new_r = float(self.end_r - self.start_r + 1)
+
+            # new_p_r = []
+            # for i in range(self.end_r-self.start_r+1):
+            #     p = float(i)/new_r
+            #     old_i = int(p*old_r)
+            #     new_p_r.append(self.p_r[old_i])
+            # sum_p_r = max(1,sum(new_p_r))
+            # self.p_r = [float(x)/sum_p_r for x in new_p_r]
 
     def __str__(self):
         return '\t'.join([str(x) for x in [self.chr_l, \
