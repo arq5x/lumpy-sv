@@ -44,7 +44,7 @@ for i in range(1,len(sys.argv)):
     f = open(genome_file,'r')
     total_len = 0.0
     for l in f:
-        total_len += int(l.rstrip().split('\t')[1])
+        total_len += float(l.rstrip().split('\t')[1])
     f.close()
 
     coverage_file = bam_file + '.coverage'
@@ -53,8 +53,8 @@ for i in range(1,len(sys.argv)):
     W = []
     for l in f:
         a = l.rstrip().split('\t')
-        if int(a[3]) > 0:
-            C.append(int(a[3])) 
+        if float(a[3]) > 0:
+            C.append(float(a[3])) 
             W.append((float(a[2])-float(a[1]))/total_len)
     min_c = min(C)
     max_c = max(C)
