@@ -257,7 +257,7 @@ then
 	FULL_BAM=${FULL_BAM_LIST[$i]}
 
 	# calc readlength if not provided
-	READ_LENGTH=`$SAMT view $FULL_BAM | head -n 10000 | awk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`
+	READ_LENGTH=`$SAMT view $FULL_BAM | head -n 10000 | gawk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`
 
 	# parse the libraries in the BAM header to extract readgroups from the same library
 	LIB_RG_LIST=(`$PYTHON $BAMLIBS $FULL_BAM`)
@@ -272,7 +272,7 @@ then
 		| $SAMBLASTER --acceptDupMarks --excludeDups --addMateTags --maxSplitCount $MAX_SPLIT_COUNT --minNonOverlap $MIN_NON_OVERLAP \\
 		--splitterFile $TEMP_DIR/spl_pipe --discordantFile $TEMP_DIR/disc_pipe \\
 		| $SAMT view -S /dev/stdin \\
-		| awk '{ if (NR<=1000000) print > \"/dev/stdout\" ; else print > \"/dev/null\" }' \\
+		| gawk '{ if (NR<=1000000) print > \"/dev/stdout\" ; else print > \"/dev/null\" }' \\
 		| $PYTHON $PAIREND_DISTRO -r $READ_LENGTH -X 4 -N 1000000 -o ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo \\
 		> ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats
 
@@ -286,7 +286,7 @@ then
 		| $SAMBLASTER --acceptDupMarks --excludeDups --addMateTags --maxSplitCount $MAX_SPLIT_COUNT --minNonOverlap $MIN_NON_OVERLAP \
 		    --splitterFile $TEMP_DIR/spl_pipe --discordantFile $TEMP_DIR/disc_pipe \
 		| $SAMT view -S /dev/stdin \
-		| awk '{ if (NR<=1000000) print > "/dev/stdout" ; else print > "/dev/null" }' \
+		| gawk '{ if (NR<=1000000) print > "/dev/stdout" ; else print > "/dev/null" }' \
 		| $PYTHON $PAIREND_DISTRO -r $READ_LENGTH -X 4 -N 1000000 -o ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo \
 		> ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats &
 
@@ -298,7 +298,7 @@ then
 
 	    # generate discordant pair string for LUMPY
 	    DISC_BAM=$TEMP_DIR/$OUTBASE.sample$(($i+1)).discordants.bam
-	    DISC_SAMPLE=`$SAMT view -H $FULL_BAM | grep -m 1 "^@RG" | awk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	    DISC_SAMPLE=`$SAMT view -H $FULL_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	    RG_STRING=`echo "${LIB_RG_LIST[$j]}" | sed 's/,/,read_group:/g' | sed 's/^/read_group:/g'`
 	    MEAN=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^mean" | sed 's/mean\://g'`
 	    STDEV=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^stdev" | sed 's/stdev\://g'`
@@ -306,7 +306,7 @@ then
 
 	    # generate split-read string for LUMPY
 	    SPL_BAM=$TEMP_DIR/$OUTBASE.sample$(($i+1)).splitters.bam
-	    SPL_SAMPLE=`$SAMT view -H $FULL_BAM | grep -m 1 "^@RG" | awk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	    SPL_SAMPLE=`$SAMT view -H $FULL_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	    LUMPY_SPL_STRING="$LUMPY_SPL_STRING -sr bam_file:${SPL_BAM},back_distance:10,min_mapping_threshold:20,weight:1,id:${SPL_SAMPLE},min_clip:20,${RG_STRING}"
 	done
 
@@ -359,7 +359,7 @@ else
 	for j in $( seq 0 $(( ${#LIB_RG_LIST[@]}-1 )) )
 	do
 	    # calculate read length if not provided
-	    LIB_READ_LENGTH_LIST+=(`$SAMT view ${FULL_BAM_LIST[$i]} | head -n 10000 | awk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`)
+	    LIB_READ_LENGTH_LIST+=(`$SAMT view ${FULL_BAM_LIST[$i]} | head -n 10000 | gawk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`)
 	    echo "Library read groups: ${LIB_RG_LIST[$j]}"
 	    echo "Library read length: ${LIB_READ_LENGTH_LIST[$j]}"
 	    $SAMT view -h ${FULL_BAM_LIST[$i]} \
@@ -372,7 +372,7 @@ else
 	echo "done"
 
 	# construct LUMPY_SPL_STRING
-	SPL_SAMPLE=`$SAMT view -H $SPL_BAM | grep -m 1 "^@RG" | awk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	SPL_SAMPLE=`$SAMT view -H $SPL_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	LUMPY_SPL_STRING="$LUMPY_SPL_STRING -sr bam_file:${SPL_BAM},back_distance:10,min_mapping_threshold:20,weight:1,id:${SPL_SAMPLE},min_clip:20"
 
 	# construct LUMPY_DISC_STRING
@@ -380,7 +380,7 @@ else
 	do
 	    echo $(( ${#FULL_BAM_LIST[@]}-1 ))
 	    DISC_BAM=${DISC_BAM_LIST[$i]}
-	    DISC_SAMPLE=`$SAMT view -H $DISC_BAM | grep -m 1 "^@RG" | awk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	    DISC_SAMPLE=`$SAMT view -H $DISC_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	    MEAN=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^mean" | sed 's/mean\://g'`
 	    STDEV=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^stdev" | sed 's/stdev\://g'`
 	    RG_STRING=`echo "${LIB_RG_LIST[$j]}" | sed 's/,/,read_group:/g' | sed 's/^/read_group:/g'`
