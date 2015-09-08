@@ -278,11 +278,31 @@ is_sane()
     // |--------| "non_overlap"
     //
 
+#ifdef TRACE
+    cerr << "READ LEN\t" <<
+            read_len_a << "\t" <<
+            read_len_b << endl;
+#endif 
+
+    if ( (read_len_a == 0) || (read_len_b == 0) )
+        return false;
+
 
     int overlap = min(read_l.end, read_r.end) - max(read_l.start, read_r.start);
     //int non_overlap = min(read_len_a, read_len_b) - overlap;
     // how much does not overlap // overlap is at most read_len
-    
+    //
+#ifdef TRACE
+    cerr << "OVERLAP\t" <<
+            read_l.chr << " " << 
+            read_l.start  << " " << 
+            read_l.end  << "\t" << 
+            read_r.chr << " " << 
+            read_r.start  << " " << 
+            read_r.end  << "\t" <<
+            overlap << endl;
+#endif 
+
     if (overlap > 0)
         return false;
     else
