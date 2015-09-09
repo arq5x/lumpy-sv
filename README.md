@@ -1,3 +1,7 @@
+For questions and discussion about LUMPY please visit the forum at: 
+
+https://groups.google.com/forum/#!forum/lumpy-discuss
+
 LUMPY
 =====
 
