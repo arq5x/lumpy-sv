@@ -1,4 +1,5 @@
-#!/usr/bin/env python -u
+#!/usr/bin/env python
+
 from operator import add
 import time
 import sys
@@ -68,6 +69,7 @@ def print_var_line(l):
         PRPOS = m['PREND']
         PREND = m['PRPOS']
         SNAME = m['SNAME']
+        SULIST = m.get('SULIST', m['SU'])  # Fall back to single SU as default
         EVENT = A[2]
 
         A[4] = ALT
@@ -84,6 +86,7 @@ def print_var_line(l):
                          'PRPOS='    + str(PRPOS),
                          'PREND='    + str(PREND),
                          'SNAME='    + str(SNAME),
+                         'SULIST='    + str(SULIST),
                          'EVENT='    + str(EVENT)])
 
         # reconstruct the line
@@ -123,6 +126,7 @@ def print_var_line(l):
         PRPOS = m['PREND']
         PREND = m['PRPOS']
         SNAME = m['SNAME']
+        SULIST = m.get('SULIST', m['SU'])  # Fall back to single SU as default
         EVENT = A[2]
         SECONDARY = 'SECONDARY'
         MATEID=A[2] + '_1'
@@ -141,6 +145,7 @@ def print_var_line(l):
                          'PRPOS='    + str(PRPOS),
                          'PREND='    + str(PREND),
                          'SNAME='    + str(SNAME),
+                         'SULIST='    + str(SULIST),
                          'EVENT='    + str(EVENT),
                          'MATEID='   + str(MATEID)])
 
@@ -458,6 +463,8 @@ def merge(BP, sample_order, v_id, use_product):
 
         gt_list = [] 
 
+        su_list = []
+
         #for g_i in c:
         for b_i in c:
             #A = G[g_i].b.l.rstrip().split('\t')
@@ -481,9 +488,13 @@ def merge(BP, sample_order, v_id, use_product):
 
             gt_list += A[9:]
 
+            su_list.append(m['SU'])
+
         SNAME=','.join(s_name_list)
 
         GTS = '\t'.join(gt_list)
+
+        SULIST = ','.join(su_list)
 
         strand_types_counts = []
         for strand in strand_map:
@@ -516,7 +527,8 @@ def merge(BP, sample_order, v_id, use_product):
              'PRPOS='    + str(PRPOS),
              'PREND='    + str(PREND),
              'ALG='      + str(ALG),
-             'SNAME='    + str(SNAME)]
+             'SNAME='    + str(SNAME),
+             'SULIST='   + str(SULIST)]
 
         if BP[c[0]].sv_type == 'BND':
             I.append('EVENT=' + str(ID))

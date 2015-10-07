@@ -54,7 +54,13 @@ def unscaled_upper_mad(xs):
     above the median.
     """
     med = np.median(xs)
-    return med, np.median(xs[xs > med] - med)
+    if len(xs[xs > med]):
+        umad = np.median(xs[xs > med] - med)
+    else:
+        # When lengths are all the same, return a safe default.
+        # This is common with simulated data used for testing.
+        umad = 1
+    return med, umad
 
 
 (options, args) = parser.parse_args()
