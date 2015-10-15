@@ -21,7 +21,7 @@ export CXX		= g++
 export CXXFLAGS = -Wall -O2 -D_FILE_OFFSET_BITS=64 -fPIC
 export LIBS		= -lz
 export BT_ROOT  = src/utils/BamTools/
-export MKFILE_DIR = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+export MKFILE_DIR = $(abspath $(PWD))
 
 SUBDIRS = $(SRC_DIR)/lumpy
 
