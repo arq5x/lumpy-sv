@@ -362,32 +362,38 @@ def merge(BP, sample_order, v_id, use_product):
         ninefive_i_L_total = p_L[max_i_L]
         updated = 0
         while (ninefive_i_L_total < 0.95):
-                if ninefive_i_L_start > 0:
-                    ninefive_i_L_start -= 1
-                    ninefive_i_L_total += p_L[ninefive_i_L_start]
-                    updated = 1
-                if ninefive_i_L_end < len(p_L)-1:
-                    ninefive_i_L_end += 1
-                    ninefive_i_L_total += p_L[ninefive_i_L_end]
-                    updated = 1
-                if not updated:
-                    break
+            if (ninefive_i_L_start <= 0) and (ninefive_i_L_end >= (len(p_L)-1)):
+                break
+            ninefive_i_L_start = max(0, ninefive_i_L_start - 1)
+            ninefive_i_L_end = min(len(p_L)-1, ninefive_i_L_end +1)
+            ninefive_i_L_total = sum(p_L[ninefive_i_L_start:ninefive_i_L_end+1])
+        ninefive_i_L_start = ninefive_i_L_start - max_i_L
+        ninefive_i_L_end = ninefive_i_L_end - max_i_L
 
         ninefive_i_R_start = max_i_R
         ninefive_i_R_end = max_i_R
         ninefive_i_R_total = p_R[max_i_R]
         updated = 0
         while (ninefive_i_R_total < 0.95):
-                if ninefive_i_R_start > 0:
-                    ninefive_i_R_start -= 1
-                    ninefive_i_R_total += p_R[ninefive_i_R_start]
-                    updated = 1
-                if ninefive_i_R_end < len(p_R)-1:
-                    ninefive_i_R_end += 1
-                    ninefive_i_R_total += p_R[ninefive_i_R_end]
-                    updated = 1
-                if not updated:
-                    break
+            if (ninefive_i_R_start <= 0) and (ninefive_i_R_end >= len(p_R)-1):
+                break
+            ninefive_i_R_start = max(0, ninefive_i_R_start - 1)
+            ninefive_i_R_end = min(len(p_R)-1, ninefive_i_R_end +1)
+            ninefive_i_R_total = sum(p_R[ninefive_i_R_start:ninefive_i_R_end+1])
+        #print '***',ninefive_i_R_start,ninefive_i_R_end,max_i_R,
+        ninefive_i_R_end = ninefive_i_R_end - max_i_R
+        ninefive_i_R_start = ninefive_i_R_start - max_i_R
+        #print ninefive_i_R_start,ninefive_i_R_end
+#                if ninefive_i_R_start > 0:
+#                    ninefive_i_R_start -= 1
+#                    ninefive_i_R_total += p_R[ninefive_i_R_start]
+#                    updated = 1
+#                if ninefive_i_R_end < len(p_R)-1:
+#                    ninefive_i_R_end += 1
+#                    ninefive_i_R_total += p_R[ninefive_i_R_end]
+#                    updated = 1
+#                if not updated:
+#                    break
  
         CIPOS95=str(ninefive_i_L_start) + ',' + str(ninefive_i_L_end)
         CIEND95=str(ninefive_i_R_start) + ',' + str(ninefive_i_R_end)
@@ -501,6 +507,13 @@ def merge(BP, sample_order, v_id, use_product):
         PRPOS=','.join([str(x) for x in p_L])
         PREND=','.join([str(x) for x in p_R])
 
+
+        if (int(CIPOS.split(',')[0]) > int(CIPOS95.split(',')[0])) or \
+            (int(CIPOS.split(',')[1]) < int(CIPOS95.split(',')[1])) or \
+            (int(CIEND.split(',')[0]) > int(CIEND95.split(',')[0])) or \
+            (int(CIEND.split(',')[1]) < int(CIEND95.split(',')[1])):
+            sys.stderr.write(CIPOS + "\t" + str(CIPOS95) + "\n")
+            sys.stderr.write(CIEND + "\t" + str(CIEND95) + "\n")
 
         I = ['SVTYPE='   + str(SVTYPE),
              'STRANDS='  + str(STRANDS),
