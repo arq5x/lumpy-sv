@@ -68,6 +68,7 @@ def print_var_line(l):
         PRPOS = m['PREND']
         PREND = m['PRPOS']
         SNAME = m['SNAME']
+        ALG = m['ALG']
         EVENT = A[2]
 
         A[4] = ALT
@@ -83,6 +84,7 @@ def print_var_line(l):
                          'SR='       + str(SR),
                          'PRPOS='    + str(PRPOS),
                          'PREND='    + str(PREND),
+                         'ALG='      + str(ALG),
                          'SNAME='    + str(SNAME),
                          'EVENT='    + str(EVENT)])
 
@@ -124,6 +126,7 @@ def print_var_line(l):
         PREND = m['PRPOS']
         SNAME = m['SNAME']
         EVENT = A[2]
+        ALG = m['ALG']
         SECONDARY = 'SECONDARY'
         MATEID=A[2] + '_1'
 
@@ -140,6 +143,7 @@ def print_var_line(l):
                          'SR='       + str(SR),
                          'PRPOS='    + str(PRPOS),
                          'PREND='    + str(PREND),
+                         'ALG='      + str(ALG),
                          'SNAME='    + str(SNAME),
                          'EVENT='    + str(EVENT),
                          'MATEID='   + str(MATEID)])
