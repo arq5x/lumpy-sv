@@ -180,7 +180,7 @@ def merge(BP, sample_order, v_id, use_product):
         s_end=A[7].find(';',s_start)
         if (s_end > -1):
             A[7] = A[7][:s_start] + A[7][s_end+1:]
-        else:
+        elif (s_start > -1):
             A[7] = A[7][:s_start]
 
         #clip out old event id
@@ -188,7 +188,7 @@ def merge(BP, sample_order, v_id, use_product):
         s_end=A[7].find(';', s_start)
         if (s_end > -1):
             A[7] = A[7][:s_start] + A[7][s_end+1:]
-        else:
+        elif (s_start > -1):
             A[7] = A[7][:s_start]
 
         #add new mate
