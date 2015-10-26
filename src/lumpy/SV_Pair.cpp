@@ -284,7 +284,7 @@ is_sane()
             read_len_b << endl;
 #endif 
 
-    if ( (read_len_a == 0) || (read_len_b == 0) )
+    if ( (read_len_a <= 0) || (read_len_b <= 0) )
         return false;
 
 
