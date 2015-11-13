@@ -31,15 +31,15 @@ using namespace std;
 
 class SV_Pair: public SV_Evidence
 {
-	friend ostream& operator<<(ostream& out, const SV_Pair& p);
+    friend ostream& operator<<(ostream& out, const SV_Pair& p);
 
-	private:
-		//void set_bp_interval_probability(struct breakpoint_interval *i);
-		static void set_bp_interval_start_end(struct breakpoint_interval *i,
-											  struct interval *target_interval,
-											  struct interval *target_pair,
-											  unsigned int back_distance,
-											  unsigned int distro_size);
+    private:
+        //void set_bp_interval_probability(struct breakpoint_interval *i);
+        static void set_bp_interval_start_end(struct breakpoint_interval *i,
+                                              struct interval *target_interval,
+                                              struct interval *target_pair,
+                                              unsigned int back_distance,
+                                              unsigned int distro_size);
 
 	public:
 		//static double insert_mean;

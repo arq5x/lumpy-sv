@@ -466,9 +466,7 @@ process_pair(const BamAlignment &curr,
              (count_clipped(curr.CigarData) > 0) &&
              (count_clipped(mapped_pairs[curr.Name].CigarData) > 0) ) {
             SV_BreakPoint *new_bp = new_pair->get_bp();
-
 #ifdef TRACE
-
             cerr << "READ\t" << 
                     refs.at(mapped_pairs[curr.Name].RefID).RefName << "," <<
                     mapped_pairs[curr.Name].Position << "," <<
@@ -486,7 +484,6 @@ process_pair(const BamAlignment &curr,
         } else {
             delete(new_pair);
         }
-
         mapped_pairs.erase(curr.Name);
     }
 }

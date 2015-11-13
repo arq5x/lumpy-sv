@@ -43,6 +43,13 @@ SV_InterChromBamReader(string _inter_chrom_bam_file,
 SV_InterChromBamReader::
 ~SV_InterChromBamReader()
 {
+    /*
+    map<pair<string,string>, SV_EvidenceReader*>::iterator it;
+    for (it = bam_evidence_readers->begin();
+            it != bam_evidence_readers->end();
+            ++it)
+        delete(it->second);
+    */
 }
 //}}}
 

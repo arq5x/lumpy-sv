@@ -30,6 +30,7 @@ class SV_EvidenceReader
 
 public:
     static int counter;
+    virtual ~SV_EvidenceReader();
     static map<int, string> sample_names;
     static map<int, string> ev_types;
     

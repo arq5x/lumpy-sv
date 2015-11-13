@@ -17,9 +17,11 @@ export SRC_DIR	= src
 export UTIL_DIR	= src/utils
 export SCRIPTS_DIR = scripts
 export CXX		= g++
+export ZLIB_PATH=$(HOME)/src/zlib-1.2.8
 #export CXXFLAGS = -Wall -O0 -g -fno-inline -fkeep-inline-functions -D_FILE_OFFSET_BITS=64 -fPIC -DDEBUG -D_DEBUG -DTRACE
-export CXXFLAGS = -Wall -O2 -D_FILE_OFFSET_BITS=64 -fPIC
-export LIBS		= -lz
+#export CXXFLAGS = -Wall -O0 -g -fno-inline -fkeep-inline-functions -D_FILE_OFFSET_BITS=64 -fPIC 
+export CXXFLAGS = -Wall -O2 -D_FILE_OFFSET_BITS=64 -fPIC 
+export LIBS		= -lz -L $(ZLIB_PATH)
 export BT_ROOT  = src/utils/BamTools/
 export MKFILE_DIR = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 

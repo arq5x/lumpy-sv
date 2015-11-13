@@ -25,6 +25,7 @@ using namespace std;
 class SV_VcfVariant
 {
  public:
+    ~SV_VcfVariant();
     SV_VcfVariant();
     SV_VcfVariant(SV_BreakPoint *bp,
 		  int bp_id,

@@ -44,51 +44,52 @@ struct split_read_parameters {
 
 class SV_SplitReadReader : public SV_EvidenceReader
 {
-	public:
-		string bam_file;
-		unsigned int min_non_overlap,
-					 back_distance,
-					 min_mapping_threshold,
-                     min_clip;
-		int weight;
-		vector<string> read_group;
-		bool is_open,
-			 have_next_alignment;
+    public:
+        string bam_file;
+        unsigned int min_non_overlap,
+                     back_distance,
+                     min_mapping_threshold,
+                 min_clip;
+        int weight;
+        vector<string> read_group;
+        bool is_open,
+        have_next_alignment;
 
-		BamAlignment bam;
-		BamReader reader;
-		map<string, BamAlignment> mapped_splits;
-		string header;
-		RefVector refs;
-		bool inited;
+        BamAlignment bam;
+        BamReader reader;
+        map<string, BamAlignment> mapped_splits;
+        string header;
+        RefVector refs;
+        bool inited;
 
-		SV_SplitReadReader();
-		bool add_param(char *param, char *val);
-		string check_params();
-		void initialize();
-		void set_statics();
-		void unset_statics();
-		//void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
-		
-		void process_input( BamAlignment &_bam,
-							RefVector &_ref,
-							UCSCBins<SV_BreakPoint*> &r_bin);
+        ~SV_SplitReadReader();
+        SV_SplitReadReader();
+        bool add_param(char *param, char *val);
+        string check_params();
+        void initialize();
+        void set_statics();
+        void unset_statics();
+        //void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
 
-		void process_input( BamAlignment &_bam,
-							RefVector &_ref,
-							BamWriter &inter_chrom_reads,
-							UCSCBins<SV_BreakPoint*> &r_bin);
+        void process_input( BamAlignment &_bam,
+        RefVector &_ref,
+        UCSCBins<SV_BreakPoint*> &r_bin);
 
-		//void process_input_chr(string chr,
-							   //UCSCBins<SV_BreakPoint*> &r_bin);
-		//void process_input_chr_pos(string chr,
-								   //CHR_POS pos,
-								   //UCSCBins<SV_BreakPoint*> &r_bin);
-		void terminate();
-		string get_curr_chr();
-		CHR_POS get_curr_pos();
-		bool has_next();
-		string get_source_file_name();
+        void process_input(BamAlignment &_bam,
+                           RefVector &_ref,
+                           BamWriter &inter_chrom_reads,
+                           UCSCBins<SV_BreakPoint*> &r_bin);
+
+        //void process_input_chr(string chr,
+        //UCSCBins<SV_BreakPoint*> &r_bin);
+        //void process_input_chr_pos(string chr,
+        //CHR_POS pos,
+        //UCSCBins<SV_BreakPoint*> &r_bin);
+        void terminate();
+        string get_curr_chr();
+        CHR_POS get_curr_pos();
+        bool has_next();
+        string get_source_file_name();
 };
 
 #endif

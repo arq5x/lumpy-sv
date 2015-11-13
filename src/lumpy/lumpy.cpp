@@ -525,6 +525,7 @@ int main(int argc, char* argv[])
 					 "BD",
 					 "0");
     	header_var->print_header();
+        delete(header_var);
     }
     
     //{{{ process the intra-chrom events that were saved to a file
@@ -606,6 +607,7 @@ int main(int argc, char* argv[])
 						  ++call_id,
 						  print_prob);
 			    vcf_var->print_var();
+                            delete(vcf_var);
 			}
                     }
                 }
@@ -865,6 +867,13 @@ int main(int argc, char* argv[])
             delete bp;
         }
         //}}}
+
+        for ( i_er = inter_chrom_evidence_readers.begin();
+                i_er != inter_chrom_evidence_readers.end();
+                ++i_er) {
+            SV_EvidenceReader *er = *i_er;
+            delete(er);
+        }
     }
     //}}}
 
@@ -883,8 +892,11 @@ int main(int argc, char* argv[])
     for ( i_er = evidence_readers.begin();
             i_er != evidence_readers.end();
             ++i_er) {
-        delete(*i_er);
+        SV_EvidenceReader *er = *i_er;
+        delete(er);
     }
+    evidence_readers.clear();
+    bam_evidence_readers.clear();
     //}}}
 
     return 0;

@@ -45,11 +45,15 @@ SV_BamReader(map<pair<string,string>, SV_EvidenceReader*> *_bam_evidence_readers
 SV_BamReader::
 ~SV_BamReader()
 {
+    //cerr << "~SV_BamReader()" << endl;
+
     map<pair<string,string>, SV_EvidenceReader*>::iterator it;
     for (it = bam_evidence_readers->begin();
             it != bam_evidence_readers->end();
             ++it)
         delete(it->second);
+
+    bam_evidence_readers->clear();
 }
 //}}}
 

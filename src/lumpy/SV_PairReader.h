@@ -31,76 +31,77 @@ using namespace BamTools;
 
 //{{{struct pair_end_parameters {
 struct pair_end_parameters {
-	string bam_file,
-		   sample_name,
-		   histo_file;
-	double mean, stdev;
-	unsigned int read_length,
-				 min_non_overlap,
-				 discordant_z,
-				 back_distance,
-				 min_mapping_threshold;
-	int weight;
-        vector<string> read_group;
+    string bam_file,
+           sample_name,
+           histo_file;
+    double mean, stdev;
+    unsigned int read_length,
+                 min_non_overlap,
+                 discordant_z,
+                 back_distance,
+                 min_mapping_threshold;
+    int weight;
+    vector<string> read_group;
 };
 //}}}
 
 class SV_PairReader : public SV_EvidenceReader
 {
-	public:
-		string bam_file,
-			histo_file;
-		double mean, stdev;
-		unsigned int read_length,
-					 min_non_overlap,
-					 discordant_z,
-					 back_distance,
-					 min_mapping_threshold;
-		int weight;
-		vector<string> read_group;
-		bool is_open,
-			 have_next_alignment;
-		double *histo;
-		double *distro;
-		unsigned int histo_start,histo_end;
-		int distro_size;
+    public:
+        string bam_file,
+               histo_file;
+        double mean, stdev;
+        unsigned int read_length,
+                     min_non_overlap,
+                     discordant_z,
+                     back_distance,
+                     min_mapping_threshold;
+        int weight;
+        vector<string> read_group;
+        bool is_open,
+             have_next_alignment;
+        double *histo;
+        double *distro;
+        unsigned int histo_start,histo_end;
+        int distro_size;
 
-		BamAlignment bam;
-		BamReader reader;
-		map<string, BamAlignment> mapped_pairs;
-		string header;
-		RefVector refs;
-		bool inited;
+        BamAlignment bam;
+        BamReader reader;
+        map<string, BamAlignment> mapped_pairs;
+        string header;
+        RefVector refs;
+        bool inited;
 
-		SV_PairReader();
-		SV_PairReader(struct pair_end_parameters pair_end_param);
-		bool add_param(char *param, char *val);
-		string check_params();
-		struct pair_end_parameters get_pair_end_parameters();
-		void initialize();
-		void set_statics();
-		void unset_statics();
-		//void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
-		
-		void process_input( BamAlignment &_bam,
-							RefVector &_ref,
-							BamWriter &inter_chrom_reads,
-							UCSCBins<SV_BreakPoint*> &r_bin);
+        ~SV_PairReader();
+        SV_PairReader();
+        SV_PairReader(struct pair_end_parameters pair_end_param);
+        bool add_param(char *param, char *val);
+        string check_params();
+        struct pair_end_parameters get_pair_end_parameters();
+        void initialize();
+        void set_statics();
+        void unset_statics();
+        //void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
+            
+        void process_input(BamAlignment &_bam,
+                           RefVector &_ref,
+                           BamWriter &inter_chrom_reads,
+                           UCSCBins<SV_BreakPoint*> &r_bin);
 
-		void process_input( BamAlignment &_bam,
-							RefVector &_ref,
-							UCSCBins<SV_BreakPoint*> &r_bin);
+        void process_input(BamAlignment &_bam,
+                           RefVector &_ref,
+                           UCSCBins<SV_BreakPoint*> &r_bin);
 
-		//void process_input_chr(string chr,
-							   //UCSCBins<SV_BreakPoint*> &r_bin);
-		//void process_input_chr_pos(string chr,
-								   //CHR_POS pos,
-								   //UCSCBins<SV_BreakPoint*> &r_bin);
-		void terminate();
-		string get_curr_chr();
-		CHR_POS get_curr_pos();
-		bool has_next();
-		string get_source_file_name();
+        //void process_input_chr(string chr,
+                               //UCSCBins<SV_BreakPoint*> &r_bin);
+                               //void process_input_chr_pos(string chr,
+                               //CHR_POS pos,
+                               //UCSCBins<SV_BreakPoint*> &r_bin);
+        void terminate();
+        string get_curr_chr();
+        CHR_POS get_curr_pos();
+        bool has_next();
+        string get_source_file_name();
 };
 
 #endif

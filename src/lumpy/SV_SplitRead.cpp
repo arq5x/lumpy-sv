@@ -649,8 +649,7 @@ process_split(const BamAlignment &curr,
                 }
             } else {
                 //cerr << "not sane" << endl;
-
-                free(new_split_read);
+                delete(new_split_read);
             }
 
         } catch (int) {
@@ -704,11 +703,11 @@ process_intra_chrom_split(const BamAlignment &curr,
                         new_bp->cluster(r_bin);
                     } else {
                         cerr << "Alignment name:" << curr.Name << endl;
-                        free(new_split_read);
+                        delete(new_split_read);
                     }
-                } else
-                    free(new_split_read);
-
+                } else {
+                    delete(new_split_read);
+                }
             } catch (int) {
                 cerr << "Error creating split read: " << endl;
             }
