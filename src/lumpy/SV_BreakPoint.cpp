@@ -643,6 +643,13 @@ trim_intervals()
     free(p_l);
     free(p_r);
 
+    vector<SV_BreakPoint *>::iterator bp_it;
+    for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
+        SV_BreakPoint *tmp_bp = *bp_it;
+        delete tmp_bp;
+    }
+
+
     return 1;
 }
 //}}}
@@ -676,11 +683,11 @@ SV_BreakPoint:: trim_interval(log_space *interval_v,
      * than the given threshold
      */
 
-    while ( ((l > 0) || (r < size)) && (total < get_ls(p_trim_threshold)) ){
+    while ( ((l > 0) || (r < (size-1))) && (total < get_ls(p_trim_threshold)) ){
         if ( l == 0 ) {
             total = ls_add(total, interval_v[r+1]);
             ++r;
-        } else if ( r == size ) {
+        } else if ( r == (size - 1) ) {
             total = ls_add(total, interval_v[l-1]);
             --l;
         } else if ( interval_v[l] > interval_v[r+1] ) {
@@ -1164,10 +1171,10 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
         }
 
         // non left to match against
-        if (tmp_hits_r.size() < 1)
+        if (tmp_hits_r.size() < 1) {
             insert(r_bin);
         // one match so merge
-        else if  (tmp_hits_r.size() == 1) {
+        } else if  (tmp_hits_r.size() == 1) {
             // addr of the bp in both sets (and only item in the intersection)
             SV_BreakPoint *bp = tmp_hits_r[0].value;
             if ( this->merge(bp) ) {
@@ -1180,10 +1187,14 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
 
                 delete bp;
                 this->insert(r_bin);
+            } else {
+                delete(this);
             }
             // more than one match
         } else {
+            delete(this);
 #if 0
+//{{{
             cerr << "X" << endl;
             int top_hit = -1;
             int curr = 0;
@@ -1257,6 +1268,7 @@ cluster( UCSCBins<SV_BreakPoint*> &r_bin)
                 delete bp;
                 this->insert(r_bin);
             }
+//}}}
 #endif
         }
     }

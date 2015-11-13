@@ -65,6 +65,16 @@ SV_PairReader()
 }
 //}}}
 
+//{{{SV_PairReader:: ~SV_PairReader()
+SV_PairReader::
+~SV_PairReader()
+{
+    //cerr << "~SV_PairReader()" << endl;
+    free(histo);
+    free(distro);
+}
+//}}}
+
 //{{{ string SV_PairReader:: check_params()
 string
 SV_PairReader::

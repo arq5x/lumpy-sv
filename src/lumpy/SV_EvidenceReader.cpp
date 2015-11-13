@@ -23,10 +23,11 @@ map<int,string> SV_EvidenceReader:: sample_names;
 map<int,string> SV_EvidenceReader:: ev_types;
 
 //{{{ SV_EvidenceReader:: ~SV_EvidenceReader()
-//SV_EvidenceReader::
-//~SV_EvidenceReader()
-//{
-//}
+SV_EvidenceReader::
+~SV_EvidenceReader()
+{
+    //cerr << "~SV_EvidenceReader()" << endl;
+}
 //}}}
 
 //{{{ string SV_EvidenceReader:: check_params()

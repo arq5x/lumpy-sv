@@ -26,12 +26,13 @@ void
 SV_Evidence::
 print_evidence()
 {
-    cerr << "***** :( *****";
+    cerr << "***** :( *****" << endl;
 }
 
 SV_Evidence::
 ~SV_Evidence()
 {
+    //cerr << "~SV_Evidence() ***** :( *****" << endl;
 }
 
 SV_BreakPoint*

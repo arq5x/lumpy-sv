@@ -26,6 +26,11 @@ vector<string> SV_VcfVariant::samples;
 vector<string> SV_VcfVariant::active_formats;
 
 SV_VcfVariant::
+~SV_VcfVariant()
+{
+}
+
+SV_VcfVariant::
 SV_VcfVariant()
 {
     is_multiline = false;

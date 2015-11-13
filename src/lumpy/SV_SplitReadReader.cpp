@@ -17,6 +17,14 @@
 #include <stdlib.h>
 #include <iostream>
 
+//{{{SV_SplitReadReader:: ~SV_SplitReadReader()
+SV_SplitReadReader::
+~SV_SplitReadReader()
+{
+    //cerr << "~SV_SplitReadReader()" << endl;
+}
+//}}}
+
 //{{{ SV_SplitReadReader:: SV_SplitReadReader()
 SV_SplitReadReader::
 SV_SplitReadReader()
