@@ -889,15 +889,16 @@ int main(int argc, char* argv[])
         free(e_it->second.first);
         free(e_it->second.second);
     }
+#if 0
     for ( i_er = evidence_readers.begin();
             i_er != evidence_readers.end();
             ++i_er) {
         SV_EvidenceReader *er = *i_er;
         delete(er);
     }
+#endif
     evidence_readers.clear();
     bam_evidence_readers.clear();
     //}}}
-
     return 0;
 }
