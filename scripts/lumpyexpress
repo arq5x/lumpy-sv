@@ -362,8 +362,8 @@ else
 	    LIB_READ_LENGTH_LIST+=(`$SAMT view ${FULL_BAM_LIST[$i]} | head -n 10000 | gawk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`)
 	    echo "Library read groups: ${LIB_RG_LIST[$j]}"
 	    echo "Library read length: ${LIB_READ_LENGTH_LIST[$j]}"
-	    $SAMT view -h ${FULL_BAM_LIST[$i]} \
-		| $PYTHON $BAMFILTERRG -S -n 10000000 --readgroup ${LIB_RG_LIST[$j]} \
+	    $SAMT view -f bam -l 0 -h ${FULL_BAM_LIST[$i]} \
+		| $PYTHON $BAMFILTERRG -n 10000000 --readgroup ${LIB_RG_LIST[$j]} \
 		| grep -v '^@' \
 		| tail -n 1000000 \
 		| $PYTHON $PAIREND_DISTRO -r ${LIB_READ_LENGTH_LIST[$j]} -X 4 -N 1000000 -o ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo \
