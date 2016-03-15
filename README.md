@@ -49,7 +49,7 @@ lumpyexpress \
 - LUMPY Express (optional)
     * Samtools (0.1.18+) ([http://www.htslib.org/](http://www.htslib.org/))
     * SAMBLASTER (0.1.19+) ([https://github.com/GregoryFaust/samblaster](https://github.com/GregoryFaust/samblaster))
-    * Python 2.7 ([https://www.python.org/](https://www.python.org/)) with pysam (0.8.0+) and NumPy (1.8.1+)
+    * Python 2.7 ([https://www.python.org/](https://www.python.org/)) with pysam (0.8.3+) and NumPy (1.8.1+)
 
 ##### Install
 ```
