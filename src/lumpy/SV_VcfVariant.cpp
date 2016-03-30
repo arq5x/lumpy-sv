@@ -680,6 +680,7 @@ print_header()
 	"##INFO=<ID=SU,Number=.,Type=Integer,Description=\"Number of pieces of evidence supporting the variant across all samples\">" << endl <<
 	"##INFO=<ID=PE,Number=.,Type=Integer,Description=\"Number of paired-end reads supporting the variant across all samples\">" << endl <<
 	"##INFO=<ID=SR,Number=.,Type=Integer,Description=\"Number of split reads supporting the variant across all samples\">" << endl <<
+	"##INFO=<ID=BD,Number=.,Type=Integer,Description=\"Amount of BED evidence supporting the variant across all samples\">" << endl <<
 	"##INFO=<ID=EV,Number=.,Type=String,Description=\"Type of LUMPY evidence contributing to the variant call\">" << endl <<
 	"##INFO=<ID=PRPOS,Number=.,Type=String,Description=\"LUMPY probability curve of the POS breakend\">" << endl <<
 	"##INFO=<ID=PREND,Number=.,Type=String,Description=\"LUMPY probability curve of the END breakend\">" << endl <<
