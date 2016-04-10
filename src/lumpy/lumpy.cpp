@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
     srand (time(NULL));
     string exclude_bed_file;
     bool has_exclude = false;
-    string genome_file; 
+    string genome_file;
     bool has_genome_file = false;
     int print_prob = 0;
     int bedpe_output = 0;
@@ -374,7 +374,7 @@ int main(int argc, char* argv[])
                 i++;
             }
         }
-	
+
         else if(PARAMETER_CHECK("-w", 2, parameterLength)) {
             if ((i+1) < argc) {
                 window_size = atoi(argv[i + 1]);
@@ -478,7 +478,7 @@ int main(int argc, char* argv[])
 	    ShowHelp();
     }
 
-    //}}} end parsing 
+    //}}} end parsing
 
     //{{{ Test if there lines to process in each input file
     for ( i_er = evidence_readers.begin();
@@ -507,7 +507,7 @@ int main(int argc, char* argv[])
 				     sample_names.begin()->second,
 				     "SU",
 				     "0");
-	
+
 	if (has_pe_bams)
 	    header_var->set_sample_field(SV_EvidenceReader::
 					 sample_names.begin()->second,
@@ -527,7 +527,7 @@ int main(int argc, char* argv[])
     	header_var->print_header();
         delete(header_var);
     }
-    
+
     //{{{ process the intra-chrom events that were saved to a file
     CHR_POS max_pos = 0;
     string last_min_chr = "";
@@ -598,7 +598,7 @@ int main(int argc, char* argv[])
                     if (bp->trim_intervals() > 0) {
 		        if (bedpe_output) {
 			    bp->print_bedpe(++call_id, print_prob);
-			    if (show_evidence)
+          if (show_evidence)
 			        bp->print_evidence("\t");
 			}
 			else {
@@ -606,6 +606,7 @@ int main(int argc, char* argv[])
 				new SV_VcfVariant(bp,
 						  ++call_id,
 						  print_prob);
+          if (show_evidence) bp->print_evidence("\tEvidence:\t");
 			    vcf_var->print_var();
                             delete(vcf_var);
 			}
@@ -668,6 +669,7 @@ int main(int argc, char* argv[])
 			new SV_VcfVariant(bp,
 					  ++call_id,
 					  print_prob);
+        if (show_evidence) bp->print_evidence("\tEvidence:\t");
 		    vcf_var->print_var();
 		}
             }
@@ -807,6 +809,7 @@ int main(int argc, char* argv[])
 				    new SV_VcfVariant(bp,
 						      ++call_id,
 						      print_prob);
+        if (show_evidence) bp->print_evidence("\tEvidence:\t");
 				vcf_var->print_var();
 			    }
                         }
@@ -854,6 +857,7 @@ int main(int argc, char* argv[])
 			    new SV_VcfVariant(bp,
 					      ++call_id,
 					      print_prob);
+      if (show_evidence) bp->print_evidence("\tEvidence:\t");
 			vcf_var->print_var();
 		    }
                 }

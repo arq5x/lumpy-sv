@@ -200,6 +200,10 @@ SV_SplitRead(const BamAlignment &bam_a,
     reader = _reader;
     ev_id = _ev_id;
 
+    // Add readId information to track read evidence. Note that both bam_a and
+    // bam_b refer to the same read, thus have the same readId
+    read_id = bam_a.Name;
+
     if ( bam_a.MapQuality < bam_b.MapQuality )
         min_mapping_quality = bam_a.MapQuality;
     else
@@ -581,6 +585,7 @@ void
 SV_SplitRead::
 print_evidence()
 {
+    cout << read_id << "\t";
     print_bedpe(0);
 }
 //}}}
