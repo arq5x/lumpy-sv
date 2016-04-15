@@ -31,7 +31,7 @@ using namespace BamTools;
 using namespace std;
 
 struct cigar_query {
-	int qs_pos, qe_pos, q_len;	
+	int qs_pos, qe_pos, q_len;
 };
 
 class SV_SplitRead: public SV_Evidence
@@ -79,8 +79,9 @@ class SV_SplitRead: public SV_Evidence
 		struct cigar_query query_l, query_r;
 		int min_mapping_quality;
 		SV_SplitReadReader *reader;
+		std::string read_id;
 
-		static log_space* 
+		static log_space*
 				get_bp_interval_probability(char strand,
 											unsigned int back_distance);
 

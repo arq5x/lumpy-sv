@@ -172,9 +172,11 @@ print_evidence(string pre)
     for (it = evidence.begin(); it < evidence.end(); ++it) {
         SV_Evidence *sv_e = *it;
         cout << pre;
-        SV_BreakPoint *tmp_bp = sv_e->get_bp();
-        tmp_bp->print_bedpe(-1,1);
-        delete(tmp_bp);
+        sv_e->print_evidence();
+        // cout << pre;
+        // SV_BreakPoint *tmp_bp = sv_e->get_bp();
+        // tmp_bp->print_bedpe(-1,1);
+        // delete(tmp_bp);
     }
 }
 //}}}
@@ -353,7 +355,7 @@ merge(SV_BreakPoint *p)
     r_merged_start = r_start_sum / evidence.size();
     r_merged_end = r_end_sum / evidence.size();
 
-    /* 
+    /*
     cerr << "l_merged_start:" << l_merged_start << " " <<
             "l_merged_end:" << l_merged_end << "\t" <<
             "r_merged_start:" << r_merged_start << " " <<
@@ -621,7 +623,7 @@ trim_intervals()
     int p_l_trim_start, p_l_trim_end;
     trim_interval(p_t, p_l_size, &p_l_trim_start, &p_l_trim_end);
 
-   
+
     interval_l.i.start = p_start_l + p_l_trim_start;
     interval_l.i.end = p_start_l + p_l_trim_end - 1;
 
@@ -633,7 +635,7 @@ trim_intervals()
     int p_r_trim_start, p_r_trim_end;
     trim_interval(p_t, p_r_size, &p_r_trim_start, &p_r_trim_end);
 
- 
+
     free(p_t);
 
     interval_r.i.start = p_start_r + p_r_trim_start;
@@ -674,10 +676,10 @@ SV_BreakPoint:: trim_interval(log_space *interval_v,
     for (i = 0; i < size; ++i)
         sum = sum + get_p(interval_v[i]);
 
-    
+
     log_space total = max;
     unsigned int l = max_i, r = max_i;
-    /* 
+    /*
      * starting at max_i, grow the [l,r] region to include the adjacnet
      * position with the largest value until the cummulative value is greater
      * than the given threshold
@@ -814,7 +816,7 @@ print_interval_probabilities()
 }
 //}}}
 
-//{{{ void SV_BreakPoint:: get_interval_probabilities(log_space *l, 
+//{{{ void SV_BreakPoint:: get_interval_probabilities(log_space *l,
 void
 SV_BreakPoint::
 get_interval_probabilities(CHR_POS *start_l,
@@ -906,7 +908,7 @@ print_bedpe(int id, int print_prob)
     // use the address of the current object as the id
     string sep = "\t";
 
-    CHR_POS open_l_start = 0, 
+    CHR_POS open_l_start = 0,
             open_r_start = 0;
 
     if (interval_l.i.start > 0)
@@ -975,7 +977,7 @@ print_bedpe(int id, int print_prob)
             cout << ";";
         cout << s_it->first << "," << s_it->second;
     }
-    
+
     cout << "\t";
 
     cout << "STRANDS:";
@@ -1006,7 +1008,7 @@ print_bedpe(int id, int print_prob)
     // l and r contain the full, untrimmed distribution.  All of the
     // calculations below must be shifted to the right by an offset so they are
     // considering the correction area of the pdf
-    
+
     CHR_POS l_trim_offset = interval_l.i.start - start_l;
     CHR_POS r_trim_offset = interval_r.i.start - start_r;
 
@@ -1042,12 +1044,12 @@ print_bedpe(int id, int print_prob)
 
     cout << "\t";
 
-    
+
     // Get the area that includes the max and 95% of the probabitliy
     log_space p_95 = get_ls(0.95);
 
     log_space total = l[l_max_i];
-    CHR_POS l_l_i = l_max_i, 
+    CHR_POS l_l_i = l_max_i,
             l_r_i = l_max_i,
             t_last = interval_l.i.end - interval_l.i.start;
 
@@ -1077,7 +1079,7 @@ print_bedpe(int id, int print_prob)
             abs_l_r_95 = start_l + l_r_i;
 
     total = r[r_max_i];
-    CHR_POS r_l_i = r_max_i, 
+    CHR_POS r_l_i = r_max_i,
             r_r_i = r_max_i;
     t_last = interval_r.i.end - interval_r.i.start;
 
@@ -1107,7 +1109,7 @@ print_bedpe(int id, int print_prob)
             abs_r_r_95 = start_r + r_r_i;
 
 
-    cout << "95:" << 
+    cout << "95:" <<
         interval_l.i.chr << ":" << abs_l_l_95 << "-"<< abs_l_r_95 <<";"<<
         interval_r.i.chr << ":" << abs_r_l_95 << "-"<< abs_r_r_95;
 
@@ -1625,7 +1627,7 @@ get_product(vector<SV_BreakPoint *> &bps,
                 m_end_r = 0;
 
         log_space *m_l, *m_r;
- 
+
         // get mixture with absolute possitions
         // [m_start_l,m_end_l] and [m_start_r, m_end_r]
         get_mixture(bps,
@@ -1661,7 +1663,7 @@ get_product(vector<SV_BreakPoint *> &bps,
 
         // l_max_i is the relative poss of the max element in l
         // the absolute position of l_max_i is m_start_l + l_max_i
-        
+
         // r_max_i is the relative poss of the max element in r
         // the absolute position of r_max_i is m_start_r + r_max_i
 
@@ -1671,7 +1673,7 @@ get_product(vector<SV_BreakPoint *> &bps,
         *start_r = 0;
 
         int was_set = 0;
-     
+
         // find the min common area
         //vector<SV_BreakPoint *>::iterator bp_it;
         for (bp_it = bps.begin(); bp_it < bps.end(); ++bp_it) {
@@ -1680,7 +1682,7 @@ get_product(vector<SV_BreakPoint *> &bps,
             // make sure the current breakpoint intervals intersection both the
             // left max (m_start_l + l_max_i) and the right max
             // (m_start_r + r_max_i)
-            if ( // left side intersect the abs pos of the max    
+            if ( // left side intersect the abs pos of the max
                 ((tmp_bp->interval_l.i.start <= abs_max_l) &&
                  (tmp_bp->interval_l.i.end >= abs_max_l)) &&
                 // right side intersects the abs pos of max
@@ -1702,7 +1704,7 @@ get_product(vector<SV_BreakPoint *> &bps,
                     *start_r = tmp_bp->interval_r.i.start;
                 if (tmp_bp->interval_r.i.end < *end_r)
                     *end_r = tmp_bp->interval_r.i.end;
-            } 
+            }
         }
 
         if (was_set == 0)
@@ -1722,7 +1724,7 @@ get_product(vector<SV_BreakPoint *> &bps,
             // make sure the current breakpoint intervals intersection both the
             // left max (m_start_l + l_max_i) and the right max
             // (m_start_r + r_max_i)
-            if ( // left side intersect the abs pos of the max    
+            if ( // left side intersect the abs pos of the max
                 ((tmp_bp->interval_l.i.start <= abs_max_l) &&
                  (tmp_bp->interval_l.i.end >= abs_max_l)) &&
                 // right side intersects the abs pos of max
@@ -2245,4 +2247,3 @@ interval_product(struct breakpoint_interval *a_intr,
 }
 //}}}
 #endif
-
