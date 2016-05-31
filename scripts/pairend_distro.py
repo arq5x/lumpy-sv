@@ -47,7 +47,6 @@ parser.add_option("-m",
     default=10,
     help="Outlier cutoff in # of median absolute deviations (unscaled, upper only)")
 
-
 def unscaled_upper_mad(xs):
     """Return a tuple consisting of the median of xs followed by the
     unscaled median absolute deviation of the values in xs that lie
@@ -94,40 +93,48 @@ for l in sys.stdin:
         c += 1
         L.append(isize)
 
-# Remove outliers
-L = np.array(L)
-L.sort()
-med, umad = unscaled_upper_mad(L)
-upper_cutoff = med + options.mads * umad
-L = L[L < upper_cutoff]
-new_len = len(L)
-removed = c - new_len
-sys.stderr.write("Removed %d outliers with isize >= %d\n" %
-    (removed, upper_cutoff))
-c = new_len
+# warn if very few elements in distribution
+min_elements = 1000
+if len(L) < min_elements:
+    sys.stderr.write("Warning: only %s elements in distribution (min: %s)\n" % (len(L), min_elements))
+    mean = "NA"
+    stdev = "NA"
 
-mean = np.mean(L)
-stdev = np.std(L)
+else:
+    # Remove outliers
+    L = np.array(L)
+    L.sort()
+    med, umad = unscaled_upper_mad(L)
+    upper_cutoff = med + options.mads * umad
+    L = L[L < upper_cutoff]
+    new_len = len(L)
+    removed = c - new_len
+    sys.stderr.write("Removed %d outliers with isize >= %d\n" %
+        (removed, upper_cutoff))
+    c = new_len
 
-start = options.read_length
-end = int(mean + options.X*stdev)
+    mean = np.mean(L)
+    stdev = np.std(L)
 
-H = [0] * (end - start + 1)
-s = 0
+    start = options.read_length
+    end = int(mean + options.X*stdev)
 
-for x in L:
-    if (x >= start) and (x <= end):
-        j = int(x - start)
-        H[j] = H[ int(x - start) ] + 1
-        s += 1
+    H = [0] * (end - start + 1)
+    s = 0
 
-f = open(options.output_file, 'w')
+    for x in L:
+        if (x >= start) and (x <= end):
+            j = int(x - start)
+            H[j] = H[ int(x - start) ] + 1
+            s += 1
 
-for i in range(end - start):
-    o = str(i) + "\t" + str(float(H[i])/float(s)) + "\n"
-    f.write(o)
+    f = open(options.output_file, 'w')
+
+    for i in range(end - start):
+        o = str(i) + "\t" + str(float(H[i])/float(s)) + "\n"
+        f.write(o)
 
 
-f.close()
+    f.close()
 
 print('mean:' + str(mean) + '\tstdev:' + str(stdev))

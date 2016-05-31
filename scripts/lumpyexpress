@@ -356,6 +356,12 @@ else
 	# These elements are comma delimited strings for the readgroups for each library.
 	LIB_RG_LIST=(`$PYTHON $BAMLIBS ${FULL_BAM_LIST[$i]}`)
 
+
+	if [[ ${#LIB_RG_LIST[@]} -eq 0 ]]
+	then
+	    echo "Warning: BAM file lacks read groups, paired-end analysis may fail"
+	fi
+
 	# generate the histo, stats, and config files
 	echo "Calculating insert distributions... "
 	for j in $( seq 0 $(( ${#LIB_RG_LIST[@]}-1 )) )
@@ -387,7 +393,10 @@ else
 	    STDEV=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^stdev" | sed 's/stdev\://g'`
 	    RG_STRING=`echo "${LIB_RG_LIST[$j]}" | sed 's/,/,read_group:/g' | sed 's/^/read_group:/g'`
 
-	    LUMPY_DISC_STRING="$LUMPY_DISC_STRING -pe bam_file:${DISC_BAM},histo_file:${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo,mean:${MEAN},stdev:${STDEV},read_length:${LIB_READ_LENGTH_LIST[$j]},min_non_overlap:${LIB_READ_LENGTH_LIST[$j]},discordant_z:5,back_distance:10,weight:1,id:${DISC_SAMPLE},min_mapping_threshold:20,${RG_STRING}"
+	    if [[ "$MEAN" != "NA" ]] && [[ "$STDEV" != "NA" ]]
+	    then
+		LUMPY_DISC_STRING="$LUMPY_DISC_STRING -pe bam_file:${DISC_BAM},histo_file:${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo,mean:${MEAN},stdev:${STDEV},read_length:${LIB_READ_LENGTH_LIST[$j]},min_non_overlap:${LIB_READ_LENGTH_LIST[$j]},discordant_z:5,back_distance:10,weight:1,id:${DISC_SAMPLE},min_mapping_threshold:20,${RG_STRING}"
+	    fi
 	done
     done
 fi
