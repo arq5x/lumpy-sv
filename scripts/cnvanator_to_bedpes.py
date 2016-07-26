@@ -89,7 +89,7 @@ for l in f:
         bedpe = interval_to_bedpe(options.breakpoint_size, call, ev, i)
     else:
         ev = A[0].upper()
-        bedpe = interval_to_bedpe(options.breakpoint_size, A[1], A[0], i)
+        bedpe = interval_to_bedpe(options.breakpoint_size, A[1], ev, i)
 
     assert ev in ("DUPLICATION", "DELETION"), ev
 

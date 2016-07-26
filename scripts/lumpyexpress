@@ -4,6 +4,8 @@
 #  Program: lumpyexpress
 #  Author: Colby Chiang (cc2qe@virginia.edu)
 ############################################################
+set -eo pipefail
+set -o nounset
 
 # source the paths to the binaries used in the script
 source_binaries() {
@@ -55,6 +57,8 @@ options:
      -B FILE  full BAM file(s) (comma separated) (required)
      -S FILE  split reads BAM file(s) (comma separated)
      -D FILE  discordant reads BAM files(s) (comma separated)
+     -d FILE  bedpe file of depths (comma separated and prefixed by $sample:)
+              e.g sample_x:/path/to/sample_x.bedpe,sample_y:/path/to/sample_y.bedpe
      -o FILE  output file [fullBam.bam.vcf]
      -x FILE  BED file to exclude
      -P       output probability curves for each variant
@@ -87,8 +91,10 @@ OUTPUT=""
 MAX_SPLIT_COUNT=2
 MIN_NON_OVERLAP=20
 PROB_CURVE=""
+SPL_BAM_STRING=""
+DISC_BAM_STRING=""
 
-while getopts ":hB:S:D:o:m:r:x:T:t:PAdgkvK:" OPTION
+while getopts ":hB:S:D:d:o:m:r:x:T:t:PAdgkvK:" OPTION
 do
     case "${OPTION}" in
 	h)
@@ -103,6 +109,9 @@ do
 	    ;;
 	D)
 	    DISC_BAM_STRING="$OPTARG"
+	    ;;
+	d)
+	    DEPTH_BED_STRING="$OPTARG"
 	    ;;
 	o)
 	    OUTPUT="$OPTARG"
@@ -148,9 +157,10 @@ do
 done
 
 # parse the BAM strings
-FULL_BAM_LIST=(`echo $FULL_BAM_STRING | tr "," " "`)
-SPL_BAM_LIST=(`echo $SPL_BAM_STRING | tr "," " "`)
-DISC_BAM_LIST=(`echo $DISC_BAM_STRING | tr "," " "`)
+FULL_BAM_LIST=($(echo $FULL_BAM_STRING | tr "," " "))
+SPL_BAM_LIST=($(echo $SPL_BAM_STRING | tr "," " "))
+DISC_BAM_LIST=($(echo $DISC_BAM_STRING | tr "," " "))
+DEPTH_BED_LIST=($(echo $DEPTH_BED_STRING | tr "," " "))
 
 OPTIND=0
 
@@ -204,15 +214,33 @@ then
     exit 1
 fi
 
+set +o nounset
 for TEST_BAM in ${FULL_BAM_LIST[@]} ${SPL_BAM_LIST[@]} ${DISC_BAM_LIST[@]}
 do
     if [[ ! -f $TEST_BAM ]]
     then
 	usage
-	echo -e "Error: BAM file $TEST_BAM not found.\n"
+	echo -e "Error: file $TEST_BAM not found.\n"
 	exit 1
     fi
 done
+
+for TEST_BED in ${DEPTH_BED_LIST[@]}
+do
+	if [[ -z $(echo "$TEST_BED" | grep ":") ]]
+	then
+		usage
+		echo -e "Error: must specify depths as sample_id:bedpe"
+		exit 1;
+	fi
+	bpath=$(echo "$TEST_BED" | perl -pe 's/^.+://')
+	if [[ ! -f "$bpath" ]]; then
+		usage
+		echo -e "Error: depth bed does not exist: $bpath"
+		exit 1
+	fi
+done
+set -o nounset
 
 # default OUTPUT if not provided
 if test -z "$OUTPUT"
@@ -234,8 +262,15 @@ else
     mkdir -p $TEMP_DIR
 fi
 
+
+cleanup () {
+	rm -rf $TEMP_DIR
+}
+trap cleanup EXIT
+
 # If splitter and discordant BAMs not provided, generate them
 # (LUMPY express)
+set +o nounset
 if [[ -z "${SPL_BAM_LIST}${DISC_BAM_LIST}" ]]
 then
     # initialize split and discordant bam lists
@@ -259,7 +294,9 @@ then
 	FULL_BAM=${FULL_BAM_LIST[$i]}
 
 	# calc readlength if not provided
+	set +o pipefail
 	READ_LENGTH=`$SAMT view $FULL_BAM | head -n 10000 | gawk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`
+	set -o pipefail
 
 	# parse the libraries in the BAM header to extract readgroups from the same library
 	LIB_RG_LIST=(`$PYTHON $BAMLIBS $FULL_BAM`)
@@ -367,7 +404,9 @@ else
 	for j in $( seq 0 $(( ${#LIB_RG_LIST[@]}-1 )) )
 	do
 	    # calculate read length if not provided
+	    set +o pipefail
 	    LIB_READ_LENGTH_LIST+=(`$SAMT view ${FULL_BAM_LIST[$i]} | head -n 10000 | gawk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`)
+	    set -o pipefail
 	    echo "Library read groups: ${LIB_RG_LIST[$j]}"
 	    echo "Library read length: ${LIB_READ_LENGTH_LIST[$j]}"
 	    $SAMT_STREAM ${FULL_BAM_LIST[$i]} \
@@ -401,6 +440,22 @@ else
     done
 fi
 
+LUMPY_DEPTH_STRING=""
+if [[ ! -z "$DEPTH_BED_LIST" ]]; then
+	# -bedpe bedpe_file:<bedpe file>,id:<sample name>,weight:<sample weight>
+	set -o nounset
+	for j in $( seq 0 $(( ${#DEPTH_BED_LIST[@]}-1 )) )
+	do
+		rec=${DEPTH_BED_LIST[$j]}
+		f=$(echo $rec | perl -pe 's/^.+://')
+		sample=$(echo $rec | perl -pe 's/:.+$//')
+		# give weight of 4 since these have been called before.
+		LUMPY_DEPTH_STRING="$LUMPY_DEPTH_STRING -bedpe bedpe_file:$f,id:$sample,weight:4"
+	done
+	set +o nounset
+
+fi
+
 echo "Running LUMPY... "
 if [[ "$VERBOSE" -eq 1 ]]
 then
@@ -409,6 +464,7 @@ $LUMPY ${PROB_CURVE} \\
     -t ${TEMP_DIR}/${OUTBASE} \\
     -msw $MIN_SAMPLE_WEIGHT \\
     -tt $TRIM_THRES \\
+    $LUMPY_DEPTH_STRING \\
     $EXCLUDE_BED_FMT \\
     $LUMPY_DISC_STRING \\
     $LUMPY_SPL_STRING \\
@@ -416,8 +472,10 @@ $LUMPY ${PROB_CURVE} \\
 fi
 # call lumpy
 $LUMPY $PROB_CURVE -t ${TEMP_DIR}/${OUTBASE} -msw $MIN_SAMPLE_WEIGHT -tt $TRIM_THRES \
+    $LUMPY_DEPTH_STRING \
     $EXCLUDE_BED_FMT \
     $LUMPY_DISC_STRING \
+    $EXCLUDE_BED_FMT \
     $LUMPY_SPL_STRING \
     > $OUTPUT
 
