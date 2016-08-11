@@ -57,7 +57,7 @@ options:
      -B FILE  full BAM file(s) (comma separated) (required)
      -S FILE  split reads BAM file(s) (comma separated)
      -D FILE  discordant reads BAM files(s) (comma separated)
-     -d FILE  bedpe file of depths (comma separated and prefixed by $sample:)
+     -d FILE  bedpe file of depths (comma separated and prefixed by sample:)
               e.g sample_x:/path/to/sample_x.bedpe,sample_y:/path/to/sample_y.bedpe
      -o FILE  output file [fullBam.bam.vcf]
      -x FILE  BED file to exclude
@@ -93,6 +93,7 @@ MIN_NON_OVERLAP=20
 PROB_CURVE=""
 SPL_BAM_STRING=""
 DISC_BAM_STRING=""
+DEPTH_BED_STRING=""
 
 while getopts ":hB:S:D:d:o:m:r:x:T:t:PAdgkvK:" OPTION
 do
