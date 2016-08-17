@@ -5,7 +5,6 @@
 #  Author: Colby Chiang (cc2qe@virginia.edu)
 ############################################################
 set -eo pipefail
-set -o nounset
 
 # source the paths to the binaries used in the script
 source_binaries() {
