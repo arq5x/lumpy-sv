@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import sys
-import numpy as np
 from optparse import OptionParser
 
 def interval_to_bedpe(size, call, sv_type, i):
@@ -86,7 +85,6 @@ for l in f:
         # require a log2 change > +/- 0.2
         FC = float(A[4])
         if abs(FC) < 0.2: continue
-        print(A)
 
         ev = 'DUPLICATION'
 
