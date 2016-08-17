@@ -81,9 +81,17 @@ for l in f:
     if cnvkit:
         # skip header.
         if i == 1 and A[1] == 'start': continue
+
+        # see: https://www.biostars.org/p/178685/#203630
+        # require a log2 change > +/- 0.2
+        FC = float(A[4])
+        if abs(FC) < 0.2: continue
+        print(A)
+
         ev = 'DUPLICATION'
+
         # check the log2 change.
-        if float(A[4]) < 0:
+        if FC < 0:
             ev = 'DELETION'
         call = "%s:%s-%s" % (A[0], A[1], A[2])
         bedpe = interval_to_bedpe(options.breakpoint_size, call, ev, i)
