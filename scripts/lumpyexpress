@@ -99,7 +99,7 @@ do
     case "${OPTION}" in
 	h)
 	    usage
-	    exit 1
+	    exit 0
 	    ;;
 	B)
 	    FULL_BAM_STRING="$OPTARG"
