@@ -2,6 +2,8 @@ For questions and discussion about LUMPY please visit the forum at:
 
 https://groups.google.com/forum/#!forum/lumpy-discuss
 
+[![Build Status](https://travis-ci.org/arq5x/lumpy-sv.svg?branch=master)](https://travis-ci.org/arq5x/lumpy-sv)
+
 LUMPY
 =====
 

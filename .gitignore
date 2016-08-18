@@ -1,3 +1,7 @@
 *.o
 bin/*
 obj/*
+ssshtest
+data/
+data.tar.gz
+src/utils/BamTools
