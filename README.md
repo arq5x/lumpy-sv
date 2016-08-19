@@ -47,17 +47,32 @@ lumpyexpress \
     * g++ compiler
     * CMake
 - LUMPY Express (optional)
-    * Samtools (0.1.18+) ([http://www.htslib.org/](http://www.htslib.org/))
-    * SAMBLASTER (0.1.19+) ([https://github.com/GregoryFaust/samblaster](https://github.com/GregoryFaust/samblaster))
-    * Python 2.7 ([https://www.python.org/](https://www.python.org/)) with pysam (0.8.3+) and NumPy (1.8.1+)
+    * Samtools (0.1.18+) ([htslib.org/](http://www.htslib.org/))
+    * SAMBLASTER (0.1.19+) ([github repo](https://github.com/GregoryFaust/samblaster))
+    * Python 2.7 ([python.org/](https://www.python.org/)) with pysam (0.8.3+) and NumPy (1.8.1+)
+    * sambamba ([gihub repo](https://github.com/lomereiter/sambamba)
 
 ##### Install
+
+Default method to install:
+
 ```
 git clone --recursive git@github.com:arq5x/lumpy-sv.git
 cd lumpy-sv
 make
 cp bin/* /usr/local/bin/.
 ```
+
+Installing with costom zlib (gzopen64 compile error):
+
+```
+git clone --recursive git@github.com:arq5x/lumpy-sv.git
+cd lumpy-sv
+export ZLIB_PATH="/usr/lib/x86_64-linux-gnu/"; #when /usr/lib/x86_64-linux-gnu/libz.so
+make
+cp bin/* /usr/local/bin/.
+```
+
 
 ## LUMPY Express usage
 Automated breakpoint detection for standard analyses.

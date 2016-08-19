@@ -17,7 +17,9 @@ export SRC_DIR	= src
 export UTIL_DIR	= src/utils
 export SCRIPTS_DIR = scripts
 export CXX		= g++
-export ZLIB_PATH=$(HOME)/src/zlib-1.2.8
+ifeq ($(ZLIB_PATH),)
+	export ZLIB_PATH=$(HOME)/src/zlib-1.2.8
+endif
 #export CXXFLAGS = -Wall -O0 -g -fno-inline -fkeep-inline-functions -D_FILE_OFFSET_BITS=64 -fPIC -DDEBUG -D_DEBUG -DTRACE
 #export CXXFLAGS = -Wall -O0 -g -fno-inline -fkeep-inline-functions -D_FILE_OFFSET_BITS=64 -fPIC 
 export CXXFLAGS = -Wall -O2 -D_FILE_OFFSET_BITS=64 -fPIC 
