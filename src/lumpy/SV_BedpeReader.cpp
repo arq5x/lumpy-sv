@@ -170,6 +170,7 @@ string
 SV_BedpeReader::
 get_curr_chr()
 {
+    // cerr << "bedpe get_curr_chr" << endl;
     return bedpeEntry.chrom1;
 }
 //}}}

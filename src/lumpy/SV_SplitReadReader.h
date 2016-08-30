@@ -21,13 +21,14 @@ using namespace std;
 
 #include "SV_BreakPoint.h"
 #include "SV_EvidenceReader.h"
-#include "api/BamReader.h"
-#include "api/BamWriter.h"
-#include "api/BamAux.h"
+#include "XamReader.h"
+//#include "api/BamReader.h"
+//#include "api/BamWriter.h"
+//#include "api/BamAux.h"
 
 #include "ucsc_bins.hpp"
 
-using namespace BamTools;
+//using namespace BamTools;
 
 //{{{ struct split_read_parameters {
 struct split_read_parameters {
@@ -55,9 +56,9 @@ class SV_SplitReadReader : public SV_EvidenceReader
         bool is_open,
         have_next_alignment;
 
-        BamAlignment bam;
-        BamReader reader;
-        map<string, BamAlignment> mapped_splits;
+        Xam bam;
+        XamReader reader;
+        map<string, Xam> mapped_splits;
         string header;
         RefVector refs;
         bool inited;
@@ -71,13 +72,13 @@ class SV_SplitReadReader : public SV_EvidenceReader
         void unset_statics();
         //void process_input( UCSCBins<SV_BreakPoint*> &r_bin);
 
-        void process_input( BamAlignment &_bam,
+        void process_input( Xam &_bam,
         RefVector &_ref,
         UCSCBins<SV_BreakPoint*> &r_bin);
 
-        void process_input(BamAlignment &_bam,
+        void process_input(Xam &_bam,
                            RefVector &_ref,
-                           BamWriter &inter_chrom_reads,
+                           XamWriter &inter_chrom_reads,
                            UCSCBins<SV_BreakPoint*> &r_bin);
 
         //void process_input_chr(string chr,

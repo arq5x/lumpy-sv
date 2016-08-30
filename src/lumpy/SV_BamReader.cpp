@@ -93,27 +93,25 @@ initialize()
 	    bam_files.push_back(it->first.first);
     }
 
-    if ( !bam_reader.Open(bam_files) ) {
-        cerr << "Could not open input BAM files: " <<
-             bam_reader.GetErrorString() << endl;
+    if ( !bam_reader.Open(bam_files) ) 
+    {
+        // cerr << "Could not open input BAM files: " <<
+        //      bam_reader.GetErrorString() << endl;
         exit(1);
     }
-    refs = bam_reader.GetReferenceData();
-    header = bam_reader.GetHeader().ToString();
-    bam_sort_order = bam_reader.GetHeader().SortOrder;
-    has_next_alignment = bam_reader.GetNextAlignment(bam);
-    bam.QueryBases.clear();
-    bam.AlignedBases.clear();
-    bam.Qualities.clear();
+    refs = bam_reader.GetRefData();
+    header = bam_reader.GetHeader(0);
+    has_next_alignment = bam_reader.Next(bam);
+    //bam.QueryBases.clear();
+    //bam.AlignedBases.clear();
+    //bam.Qualities.clear();
 
-    if (bam_sort_order != "coordinate") {
-	cerr << "Error: BAM files must be coordinate sorted" << endl;
-	exit(1);
+    if (! bam_reader.IsCoordinateSorted()) 
+    {
+	   cerr << "Error: BAM files must be coordinate sorted" << endl;
+	   exit(1);
     }
-    
-    if ( !inter_chrom_reads.Open(tmp_file_name,
-                                 header,
-                                 refs) ) {
+    if ( !inter_chrom_reads.Open(header, tmp_file_name, true) ) {
         cerr << "Could not open temp file" << tmp_file_name <<
              " for writing... Aborting." << endl;
         abort();
@@ -135,8 +133,8 @@ string
 SV_BamReader::
 get_curr_chr()
 {
-    //cerr << "Pair get_curr_chr" << endl;
-    return refs.at(bam.RefID).RefName;
+    // cerr << "Bam get_curr_chr" << endl;
+    return bam.Chrom();
 }
 //}}}
 
@@ -145,7 +143,7 @@ CHR_POS
 SV_BamReader::
 get_curr_pos()
 {
-    return bam.Position;
+    return bam.Start();
 }
 //}}}
 
@@ -204,12 +202,12 @@ process_input_chr_pos(string chr,
 {
     // Process this chr, or the next chr
     while ( has_next_alignment &&
-            ( chr.compare( refs.at(bam.RefID).RefName) == 0 ) &&
-            ( bam.Position < pos ) ) {
+            ( chr.compare( bam.Chrom()) == 0 ) &&
+            ( bam.Start() < pos ) ) {
         string curr_read_group = "";
 	pair<string,string> ev_pair;
-        bam.GetTag("RG",curr_read_group);
-	ev_pair = make_pair(bam.Filename,curr_read_group);
+    curr_read_group = bam.ReadGroup();
+	ev_pair = make_pair(bam.Filename(),curr_read_group);
 
 	// first search for matching bamfile,read_group SV_EvidenceReader
 	map<pair<string,string>, SV_EvidenceReader*>::iterator it;
@@ -217,16 +215,16 @@ process_input_chr_pos(string chr,
         if (it != (*bam_evidence_readers).end()) {
 	    curr_reader = it->second;
 	    //if ( bam.IsMapped() && !(bam.IsPaired() && !(bam.IsMateMapped())) ) {
-	    if ( bam.IsMapped() )
+	    if ( !bam.Unmapped() )
 	        curr_reader->process_input(bam,refs,inter_chrom_reads,r_bin);
 	}
 	else {
 	    // then search for matching bamfile SV_EvidenceReader
-	    it = (*bam_evidence_readers).find(pair<string,string> (bam.Filename,""));
+	    it = (*bam_evidence_readers).find(pair<string,string> (bam.Filename(),""));
 	    if (it != (*bam_evidence_readers).end()) {
 	        curr_reader = it->second;
 		//if ( bam.IsMapped() && !(bam.IsPaired() && !(bam.IsMateMapped())) )
-		if ( bam.IsMapped() )
+		if ( !bam.Unmapped() )
 		    curr_reader->process_input(bam,refs,inter_chrom_reads,r_bin);
 	    }
 	}
@@ -240,12 +238,12 @@ process_input_chr_pos(string chr,
 	 *
 	 */
 
-        has_next_alignment = bam_reader.GetNextAlignment(bam);
-        bam.QueryBases.clear();
-        bam.AlignedBases.clear();
-        bam.Qualities.clear();
+        has_next_alignment = bam_reader.Next(bam);
+        // bam.QueryBases.clear();
+        // bam.AlignedBases.clear();
+        // bam.Qualities.clear();
 
-        if ( bam.RefID < 0 )
+        if ( bam.ChromId() < 0 )
             has_next_alignment = false;
     }
 }
@@ -256,7 +254,7 @@ void
 SV_BamReader::
 terminate()
 {
-    bam_reader.Close();
+    //bam_reader.Close();
     inter_chrom_reads.Close();
 }
 //}}}

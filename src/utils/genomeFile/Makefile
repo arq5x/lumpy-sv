@@ -6,6 +6,8 @@ UTILITIES_DIR = ../
 # -------------------
 INCLUDES = -I$(UTILITIES_DIR)/lineFileUtilities/ \
            -I$(UTILITIES_DIR)/fileType/ \
+           -I$(UTILITIES_DIR)/xampp/src/ \
+           -I$(UTILITIES_DIR)/xampp/htslib/htslib/ \
            -I$(UTILITIES_DIR)/BamTools/include/	
 
 # ----------------------------------

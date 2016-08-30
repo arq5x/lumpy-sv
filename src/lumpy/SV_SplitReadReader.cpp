@@ -136,7 +136,8 @@ string
 SV_SplitReadReader::
 get_curr_chr()
 {
-	return refs.at(bam.RefID).RefName;
+	//cerr << "SR get_curr_chr" << endl;
+	return bam.Chrom();
 }
 //}}}
 
@@ -145,7 +146,7 @@ CHR_POS
 SV_SplitReadReader::
 get_curr_pos()
 {
-	return bam.Position;
+	return bam.Start();
 }
 //}}}
 
@@ -171,7 +172,7 @@ process_input( UCSCBins<SV_BreakPoint*> &r_bin)
 //{{{ void SV_SplitReadReader:: process_input( BamAlignment &_bam,
 void
 SV_SplitReadReader::
-process_input( BamAlignment &_bam,
+process_input( Xam &_bam,
 			   RefVector &_refs,
 			   UCSCBins<SV_BreakPoint*> &r_bin)
 {
@@ -188,9 +189,9 @@ process_input( BamAlignment &_bam,
 //{{{ void SV_SplitReadReader:: process_input( BamAlignment &_bam,
 void
 SV_SplitReadReader::
-process_input( BamAlignment &_bam,
+process_input( Xam &_bam,
 			   RefVector &_refs,
-			   BamWriter &inter_chrom_reads,
+			   XamWriter &inter_chrom_reads,
 			   UCSCBins<SV_BreakPoint*> &r_bin)
 {
 	SV_SplitRead::process_intra_chrom_split(_bam,
@@ -269,7 +270,7 @@ SV_SplitReadReader::
 terminate()
 {
 	//cerr << "SplitRead Done" << endl;
-	reader.Close();
+	//reader.Close();
 }
 //}}}
 

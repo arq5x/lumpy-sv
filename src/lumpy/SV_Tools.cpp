@@ -12,11 +12,11 @@
  * Licenced under the GNU General Public License 2.0 license.
  * ***************************************************************************/
 
-#include "api/SamConstants.h"
-#include "api/BamMultiReader.h"
-#include "api/BamReader.h"
-#include "api/BamWriter.h"
-using namespace BamTools;
+// #include "api/SamConstants.h"
+// #include "api/BamMultiReader.h"
+// #include "api/BamReader.h"
+// #include "api/BamWriter.h"
+// using namespace BamTools;
 
 const unsigned int SORT_DEFAULT_MAX_BUFFER_COUNT  = 500000; 
 const unsigned int SORT_DEFAULT_MAX_BUFFER_MEMORY = 1024; 
@@ -164,35 +164,35 @@ int read_distro_file(string file_name,
 //{{{struct inter_chrom_sort
 struct inter_chrom_sort
 {
-    bool operator()( const BamAlignment& l, const BamAlignment& r ) const {
+    bool operator()( const Xam& l, const Xam& r ) const {
 
 	// sort by the first mate position, that is if l or r are second mate, then
 	// switch the postions 
 	
-	int32_t l_primary_ref = l.RefID,
-			l_primary_pos = l.Position,
-			l_secondary_pos = l.MatePosition,
-			l_secondary_ref = l.MateRefID;
+	int32_t l_primary_ref = l.ChromId(),
+			l_primary_pos = l.Start(),
+			l_secondary_pos = l.MateStart(),
+			l_secondary_ref = l.MateChromId();
 	
-	int32_t r_primary_ref = r.RefID,
-			r_primary_pos = r.Position,
-			r_secondary_ref = r.MateRefID,
-			r_secondary_pos = r.MatePosition;
+	int32_t r_primary_ref = r.ChromId(),
+			r_primary_pos = r.Start(),
+			r_secondary_ref = r.MateStart(),
+			r_secondary_pos = r.MateChromId();
 
 	//if (l.IsSecondMate()) {
-	if (l.RefID > l.MateRefID) {
-		l_primary_ref = l.MateRefID;
-		l_primary_pos = l.MatePosition;
-		l_secondary_ref = l.RefID;
-		l_secondary_pos = l.Position;
+	if (l.ChromId() > l.MateChromId()) {
+		l_primary_ref = l.MateChromId();
+		l_primary_pos = l.MateStart();
+		l_secondary_ref = l.ChromId();
+		l_secondary_pos = l.Start();
 	}
 
 	//if (r.IsSecondMate()) {
-	if (r.RefID > r.MateRefID) {
-		r_primary_ref = r.MateRefID;
-		r_primary_pos = r.MatePosition;
-		r_secondary_ref = r.RefID;
-		r_secondary_pos = r.Position;
+	if (r.ChromId() > r.MateChromId()) {
+		r_primary_ref = r.MateChromId();
+		r_primary_pos = r.MateStart();
+		r_secondary_ref = r.ChromId();
+		r_secondary_pos = r.Start();
 	}
 
 
@@ -246,35 +246,35 @@ struct inter_chrom_sort
 //{{{struct inter_chrom_sort
 struct inter_chrom_rev_sort
 {
-    bool operator()( const BamAlignment& l, const BamAlignment& r ) const {
+    bool operator()( const Xam& l, const Xam& r ) const {
 
 	// sort by the first mate position, that is if l or r are second mate, then
 	// switch the postions 
+
+	int32_t l_primary_ref = l.ChromId(),
+			l_primary_pos = l.Start(),
+			l_secondary_pos = l.MateStart(),
+			l_secondary_ref = l.MateChromId();
 	
-	int32_t l_primary_ref = l.RefID,
-			l_primary_pos = l.Position,
-			l_secondary_pos = l.MatePosition,
-			l_secondary_ref = l.MateRefID;
-	
-	int32_t r_primary_ref = r.RefID,
-			r_primary_pos = r.Position,
-			r_secondary_ref = r.MateRefID,
-			r_secondary_pos = r.MatePosition;
+	int32_t r_primary_ref = r.ChromId(),
+			r_primary_pos = r.Start(),
+			r_secondary_ref = r.MateChromId(),
+			r_secondary_pos = r.MateStart();
 
 	//if (l.IsSecondMate()) {
-	if (l.RefID > l.MateRefID) {
-		l_primary_ref = l.MateRefID;
-		l_primary_pos = l.MatePosition;
-		l_secondary_ref = l.RefID;
-		l_secondary_pos = l.Position;
+	if (l.ChromId() > l.MateChromId()) {
+		l_primary_ref = l.MateChromId();
+		l_primary_pos = l.MateStart();
+		l_secondary_ref = l.ChromId();
+		l_secondary_pos = l.Start();
 	}
 
 	//if (r.IsSecondMate()) {
-	if (r.RefID > r.MateRefID) {
-		r_primary_ref = r.MateRefID;
-		r_primary_pos = r.MatePosition;
-		r_secondary_ref = r.RefID;
-		r_secondary_pos = r.Position;
+	if (r.ChromId() > r.MateChromId()) {
+		r_primary_ref = r.MateChromId();
+		r_primary_pos = r.MateStart();
+		r_secondary_ref = r.ChromId();
+		r_secondary_pos = r.Start();
 	}
 
 
@@ -330,30 +330,27 @@ bool sort_inter_chrom_bam(string in_file_name,
 						  string out_file_name)
 {
     // open input BAM file
-    BamReader reader;
+    XamReader reader;
     if ( !reader.Open(in_file_name) ) {
         cerr << "sort ERROR: could not open " << 
 			in_file_name << " for reading... Aborting." << endl;
         return false;
     }
+    XamHeader header = reader.GetHeader(0);
+    //if ( !header.HasVersion() )
+    //    header.Version = Constants::SAM_CURRENT_VERSION;
 
-    SamHeader header = reader.GetHeader();
-    if ( !header.HasVersion() )
-        header.Version = Constants::SAM_CURRENT_VERSION;
-
-    string header_text = header.ToString();
-    RefVector ref = reader.GetReferenceData();
-
+    //string header_text = header.HeaderText();
+    RefVector ref = reader.GetRefData();
     // set up alignments buffer
-    BamAlignment al;
-    vector<BamAlignment> buffer;
+    Xam al;
+    vector<Xam> buffer;
     buffer.reserve( (size_t)(SORT_DEFAULT_MAX_BUFFER_COUNT*1.1) );
     bool bufferFull = false;
-
 	
     int buff_count = 0;
     // iterate through file
-    while ( reader.GetNextAlignment(al)) {
+    while ( reader.Next(al)) {
 
         // check buffer's usage
         bufferFull = ( buffer.size() >= SORT_DEFAULT_MAX_BUFFER_COUNT );
@@ -368,9 +365,9 @@ bool sort_inter_chrom_bam(string in_file_name,
             create_sorted_temp_file(buffer,
                                     out_file_name,
                                     buff_count,
-                                    header_text,
+                                    header,
                                     ref);
-                                    ++buff_count;
+            ++buff_count;
             buffer.push_back(al);
         }
     }
@@ -380,15 +377,15 @@ bool sort_inter_chrom_bam(string in_file_name,
         create_sorted_temp_file(buffer,
                                 out_file_name,
                                 buff_count,
-                                header_text,
+                                header,
                                 ref);
 
         ++buff_count;
     }
+    
+    //reader.Close();
 
-    reader.Close();
-
-    return merge_sorted_files(out_file_name, buff_count, header_text, ref);
+    return merge_sorted_files(out_file_name, buff_count, header, ref);
 
 /*
 	for (int i = 0; i < buff_count; ++i) {
@@ -400,10 +397,10 @@ bool sort_inter_chrom_bam(string in_file_name,
 //}}}
 
 //{{{bool create_sorted_temp_file(vector<BamAlignment>& buffer,
-bool create_sorted_temp_file(vector<BamAlignment>& buffer,
+bool create_sorted_temp_file(vector<Xam>& buffer,
 							 string out_file_name,
 							 int num_runs,
-							 string header_text,
+							 XamHeader header,
     						 RefVector &ref)
 {
  
@@ -414,7 +411,7 @@ bool create_sorted_temp_file(vector<BamAlignment>& buffer,
     stringstream temp_name;
     temp_name << out_file_name << num_runs;
 
-    bool success = write_temp_file(buffer, temp_name.str(), header_text, ref );
+    bool success = write_temp_file(buffer, temp_name.str(), header, ref );
     
     // clear buffer contents & update run counter
     buffer.clear();
@@ -424,29 +421,29 @@ bool create_sorted_temp_file(vector<BamAlignment>& buffer,
 //}}}
 
 //{{{bool write_temp_file(vector<BamAlignment>& buffer,
-bool write_temp_file(vector<BamAlignment>& buffer,
+bool write_temp_file(vector<Xam>& buffer,
 					 string temp_file_name,
-					 string header_text,
+					 XamHeader header,
     				 RefVector &ref)
 {
     // open temp file for writing
-    BamWriter temp_writer;
-    if ( !temp_writer.Open(temp_file_name, header_text, ref) ) {
+    XamWriter temp_writer;
+    if ( !temp_writer.Open(header, temp_file_name, true) ) {
         cerr << "sort ERROR: could not open " << temp_file_name
              << " for writing." << endl;
         return false;
     }
 
     // write data
-    vector<BamAlignment>::const_iterator buffIter = buffer.begin();
-    vector<BamAlignment>::const_iterator buffEnd  = buffer.end();
+    vector<Xam>::const_iterator buffIter = buffer.begin();
+    vector<Xam>::const_iterator buffEnd  = buffer.end();
     for ( ; buffIter != buffEnd; ++buffIter )  {
-        const BamAlignment& al = (*buffIter);
-        temp_writer.SaveAlignment(al);
+        const Xam& al = (*buffIter);
+        temp_writer.AddRecord(al);
     }
 
     // close temp file & return success
-    temp_writer.Close();
+    //temp_writer.Close();
     return true;
 }
 //}}}
@@ -454,18 +451,18 @@ bool write_temp_file(vector<BamAlignment>& buffer,
 //{{{ bool merge_sorted_files(string out_file_name,
 bool merge_sorted_files(string out_file_name,
 						int buff_count,
-						string header_text,
+						XamHeader header,
 						RefVector &ref)
 {
 
-    map<string,BamReader*> bam_readers;
-    priority_queue< BamAlignment, vector<BamAlignment>, inter_chrom_rev_sort > q;
+    map<string, XamReader*> bam_readers;
+    priority_queue< Xam, vector<Xam>, inter_chrom_rev_sort > q;
 
     for (int i = 0; i < buff_count; ++i) {
         stringstream temp_name;
         temp_name << out_file_name << i;
 
-        BamReader *reader = new BamReader();
+        XamReader *reader = new XamReader();
 
         if ( !reader->Open(temp_name.str()) ) {
             cerr << "sort ERROR: could not open " << 
@@ -475,13 +472,13 @@ bool merge_sorted_files(string out_file_name,
 
         bam_readers[temp_name.str()] = reader;
         // place an item from each bam onto the q
-        BamAlignment al;
-        if (reader->GetNextAlignment(al))
+        Xam al;
+        if (reader->Next(al))
         q.push(al);
     }
 
-    BamWriter merged_writer;
-    if ( !merged_writer.Open(out_file_name, header_text, ref) ) {
+    XamWriter merged_writer;
+    if ( !merged_writer.Open(header, out_file_name, true) ) {
         cerr << "sort ERROR: could not open " << out_file_name
                 << " for writing." << endl;
         return false;
@@ -489,25 +486,25 @@ bool merge_sorted_files(string out_file_name,
 
 
     while (!q.empty()) {
-        BamAlignment al = q.top();
+        Xam al = q.top();
         q.pop();
-        merged_writer.SaveAlignment(al);
+        merged_writer.AddRecord(al);
 
-        BamReader *reader = bam_readers[al.Filename];
+        XamReader *reader = bam_readers[al.Filename()];
 
-        BamAlignment new_al;
+        Xam new_al;
 
-        if (reader->GetNextAlignment(new_al))
+        if (reader->Next(new_al))
             q.push(new_al);
     }
 
-    merged_writer.Close();
+    //merged_writer.Close();
 
     //close and remove temp files
-    map<string,BamReader*>::iterator it;
+    map<string, XamReader*>::iterator it;
     for (it = bam_readers.begin(); it != bam_readers.end(); ++it) {
-        BamReader *reader =	it->second;
-        reader->Close();
+        XamReader *reader =	it->second;
+        //reader->Close();
         delete reader;
         remove(it->first.c_str());
     }

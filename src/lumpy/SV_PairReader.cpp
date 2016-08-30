@@ -228,11 +228,11 @@ initialize()
 //{{{ void SV_PairReader:: process_input(
 void
 SV_PairReader::
-process_input( BamAlignment &_bam,
+process_input( Xam &_bam,
                RefVector &_refs,
                UCSCBins<SV_BreakPoint*> &r_bin)
 {
-    if (_bam.IsMapped() && _bam.IsMateMapped())
+    if (!_bam.Unmapped() && !_bam.MateUnmapped())
         SV_Pair::process_pair(_bam,
                               _refs,
                               mapped_pairs,
@@ -246,12 +246,12 @@ process_input( BamAlignment &_bam,
 //{{{ void SV_PairReader:: process_input(
 void
 SV_PairReader::
-process_input( BamAlignment &_bam,
+process_input( Xam &_bam,
                RefVector &_refs,
-               BamWriter &inter_chrom_reads,
+               XamWriter &inter_chrom_reads,
                UCSCBins<SV_BreakPoint*> &r_bin)
 {
-    if (_bam.IsMapped() && _bam.IsMateMapped())
+    if (!_bam.Unmapped() && !_bam.MateUnmapped())
         SV_Pair::process_intra_chrom_pair(_bam,
                                           _refs,
                                           inter_chrom_reads,
@@ -269,7 +269,7 @@ SV_PairReader::
 get_curr_chr()
 {
     //cerr << "Pair get_curr_chr" << endl;
-    return refs.at(bam.RefID).RefName;
+    return bam.Chrom();
 }
 //}}}
 
@@ -279,7 +279,7 @@ SV_PairReader::
 get_curr_pos()
 {
     //cerr << "Pair get_curr_chr" << endl;
-    return bam.Position;
+    return bam.Start();
 }
 //}}}
 
@@ -289,7 +289,7 @@ SV_PairReader::
 terminate()
 {
     //cerr << "SplitRead Done" << endl;
-    reader.Close();
+    //reader.Close();
 }
 //}}}
 

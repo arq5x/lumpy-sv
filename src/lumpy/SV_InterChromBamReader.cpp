@@ -83,12 +83,12 @@ initialize()
 		abort();
 	}
 
-	refs = bam_reader.GetReferenceData();
-	header = bam_reader.GetHeader().ToString();
-	has_next_alignment = bam_reader.GetNextAlignment(bam);
-        bam.QueryBases.clear();
-        bam.AlignedBases.clear();
-        bam.Qualities.clear();
+	refs = bam_reader.GetRefData();
+	header = bam_reader.GetHeader(0);
+	has_next_alignment = bam_reader.Next(bam);
+        // bam.QueryBases.clear();
+        // bam.AlignedBases.clear();
+        // bam.Qualities.clear();
 }
 //}}}
 
@@ -107,8 +107,8 @@ string
 SV_InterChromBamReader::
 get_curr_chr()
 {
-	//cerr << "Pair get_curr_chr" << endl;
-	return refs.at(bam.RefID).RefName;
+	cerr << "Inter Pair get_curr_chr" << endl;
+	return bam.Chrom();
 }
 //}}}
 #endif
@@ -119,10 +119,10 @@ SV_InterChromBamReader::
 get_curr_primary_refid()
 {
 	//if (bam.IsFirstMate())
-	if (bam.RefID < bam.MateRefID)
-		return bam.RefID;
+	if (bam.ChromId() < bam.MateChromId())
+		return bam.ChromId();
 	else
-		return bam.MateRefID;
+		return bam.MateChromId();
 }
 //}}}
 
@@ -131,10 +131,10 @@ int32_t
 SV_InterChromBamReader::
 get_curr_secondary_refid()
 {
-	if (bam.RefID < bam.MateRefID)
-		return bam.MateRefID;
+	if (bam.ChromId() < bam.MateChromId())
+		return bam.MateChromId();
 	else
-		return bam.RefID;
+		return bam.ChromId();
 }
 //}}}
 
@@ -144,10 +144,10 @@ SV_InterChromBamReader::
 get_curr_primary_chr()
 {
 	//if (bam.IsFirstMate())
-	if (bam.RefID < bam.MateRefID)
-		return refs.at(bam.RefID).RefName;
+	if (bam.ChromId() < bam.MateChromId())
+		return bam.Chrom();
 	else
-		return refs.at(bam.MateRefID).RefName;
+		return bam.MateChrom();
 }
 //}}}
 
@@ -157,10 +157,10 @@ SV_InterChromBamReader::
 get_curr_secondary_chr()
 {
 	//if (bam.IsFirstMate())
-	if (bam.RefID < bam.MateRefID)
-		return refs.at(bam.MateRefID).RefName;
+	if (bam.ChromId() < bam.MateChromId())
+		return bam.MateChrom();
 	else
-		return refs.at(bam.RefID).RefName;
+		return bam.Chrom();
 }
 //}}}
 
@@ -169,10 +169,10 @@ CHR_POS
 SV_InterChromBamReader::
 get_curr_primary_pos()
 {
-	if (bam.IsFirstMate())
-		return bam.Position;
+	if (bam.First())
+		return bam.Start();
 	else
-		return bam.MatePosition;
+		return bam.MateStart();
 
 }
 //}}}
@@ -182,10 +182,10 @@ CHR_POS
 SV_InterChromBamReader::
 get_curr_secondary_pos()
 {
-	if (bam.IsFirstMate())
-		return bam.MatePosition;
+	if (bam.First())
+		return bam.Start();
 	else
-		return bam.Position;
+		return bam.MateStart();
 
 }
 //}}}
@@ -251,12 +251,9 @@ process_input_chr_pos(string primary_chr,
 			( get_curr_primary_pos() < pos ) ) {
 
 		//get the name of the current reader from the LS tag
-		string file_name;
-		bam.GetTag("LS",file_name);
-
+		string file_name = bam.FileName();
 		// get the name of the current read_group from the RG tag
-		string curr_read_group = "";
-		bam.GetTag("RG",curr_read_group);
+		string curr_read_group = bam.ReadGroup();
 		pair<string,string> ev_pair (file_name,curr_read_group);
 
 		SV_EvidenceReader *curr_reader;
@@ -276,10 +273,10 @@ process_input_chr_pos(string primary_chr,
 		  }
 		}
 
-		has_next_alignment = bam_reader.GetNextAlignment(bam);
-                bam.QueryBases.clear();
-                bam.AlignedBases.clear();
-                bam.Qualities.clear();
+		has_next_alignment = bam_reader.Next(bam);
+                // bam.QueryBases.clear();
+                // bam.AlignedBases.clear();
+                // bam.Qualities.clear();
 #if 0
 		curr_reader = (*bam_evidence_readers)[bam.Filename];
 		last_file = bam.Filename;
@@ -300,7 +297,7 @@ void
 SV_InterChromBamReader::
 terminate()
 {
-	bam_reader.Close();
+	//bam_reader.Close();
 }
 //}}}
 

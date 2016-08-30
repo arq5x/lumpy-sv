@@ -11,8 +11,8 @@
  *
  * Licenced under the GNU General Public License 2.0 license.
  * ***************************************************************************/
-#include "BamAncillary.h"
-using namespace BamTools;
+//#include "BamAncillary.h"
+//using namespace BamTools;
 
 #include "SV_BedpeReader.h"
 #include "SV_BreakPoint.h"

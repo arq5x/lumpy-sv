@@ -12,9 +12,9 @@
  * Licenced under the GNU General Public License 2.0 license.
  * ***************************************************************************/
 
-#include "BamAncillary.h"
-#include "api/BamWriter.h"
-using namespace BamTools;
+//#include "BamAncillary.h"
+//#include "api/BamWriter.h"
+//using namespace BamTools;
 
 #include "SV_PairReader.h"
 #include "SV_BreakPoint.h"
@@ -38,8 +38,8 @@ double  SV_Pair:: insert_Z = 0;
 // if the reads are on different strands then read_l must be on the lexo
 // lesser chrom (using the string.compare() method)
 SV_Pair::
-SV_Pair(const BamAlignment &bam_a,
-        const BamAlignment &bam_b,
+SV_Pair(Xam &bam_a,
+        Xam &bam_b,
         const RefVector &refs,
         int _weight,
         int _ev_id,
@@ -47,36 +47,37 @@ SV_Pair(const BamAlignment &bam_a,
 {
     reader = _reader;
 
-    if ( bam_a.MapQuality < bam_b.MapQuality )
-        min_mapping_quality = bam_a.MapQuality;
+    if ( bam_a.MappingQuality() < bam_b.MappingQuality() )
+        min_mapping_quality = bam_a.MappingQuality();
     else
-        min_mapping_quality = bam_b.MapQuality;
+        min_mapping_quality = bam_b.MappingQuality();
 
     struct interval tmp_a, tmp_b;
-    tmp_a.start = bam_a.Position;
-    tmp_a.end = bam_a.GetEndPosition(false, false) - 1;
-    tmp_a.chr = refs.at(bam_a.RefID).RefName;
+    tmp_a.start = bam_a.Start();
+    //tmp_a.end = bam_a.End()(false, false) - 1;
+    tmp_a.end = bam_a.End();
+    tmp_a.chr = bam_a.Chrom();
 
-    if ( bam_a.IsReverseStrand() == true )
+    if ( bam_a.Reverse() == true )
         tmp_a.strand = '-';
     else
         tmp_a.strand = '+';
 
-    tmp_b.start = bam_b.Position;
-    tmp_b.end = bam_b.GetEndPosition(false, false) - 1;
-    tmp_b.chr = refs.at(bam_b.RefID).RefName;
+    tmp_b.start = bam_b.Start();
+    tmp_b.end = bam_b.End() - 1;
+    tmp_b.chr = bam_b.Chrom();
 
-    if ( bam_b.IsReverseStrand() == true )
+    if ( bam_b.Reverse() == true )
         tmp_b.strand = '-';
     else
         tmp_b.strand = '+';
 
     //if ( tmp_a.chr.compare(tmp_b.chr) > 0 ) {
-    if ( bam_a.RefID < bam_b.RefID ) {
+    if ( bam_a.ChromId() < bam_b.ChromId() ) {
         read_l = tmp_a;
         read_r = tmp_b;
         //} else if ( tmp_a.chr.compare(tmp_b.chr) < 0 ) {
-    } else if ( bam_a.RefID > bam_b.RefID) {
+    } else if ( bam_a.ChromId() > bam_b.ChromId()) {
         read_l = tmp_b;
         read_r = tmp_a;
     } else { // ==
@@ -441,18 +442,18 @@ set_distro_from_histo (int back_distance,
 //{{{ void process_pair(const BamAlignment &curr,
 void
 SV_Pair::
-process_pair(const BamAlignment &curr,
+process_pair(Xam &curr,
              const RefVector refs,
-             map<string, BamAlignment> &mapped_pairs,
+             map<string, Xam> &mapped_pairs,
              UCSCBins<SV_BreakPoint*> &r_bin,
              int weight,
              int ev_id,
              SV_PairReader *reader)
 {
-    if (mapped_pairs.find(curr.Name) == mapped_pairs.end())
-        mapped_pairs[curr.Name] = curr;
+    if (mapped_pairs.find(curr.Name()) == mapped_pairs.end())
+        mapped_pairs[curr.Name()] = curr;
     else {
-        SV_Pair *new_pair = new SV_Pair(mapped_pairs[curr.Name],
+        SV_Pair *new_pair = new SV_Pair(mapped_pairs[curr.Name()],
                                         curr,
                                         refs,
                                         weight,
@@ -463,18 +464,18 @@ process_pair(const BamAlignment &curr,
                 
         if ( new_pair->is_sane() &&  
              new_pair->is_aberrant() &&
-             (count_clipped(curr.CigarData) > 0) &&
-             (count_clipped(mapped_pairs[curr.Name].CigarData) > 0) ) {
+             (count_clipped(curr.CigarData()) > 0) &&
+             (count_clipped(mapped_pairs[curr.Name()].CigarData()) > 0) ) {
             SV_BreakPoint *new_bp = new_pair->get_bp();
 #ifdef TRACE
             cerr << "READ\t" << 
-                    refs.at(mapped_pairs[curr.Name].RefID).RefName << "," <<
-                    mapped_pairs[curr.Name].Position << "," <<
-                    (mapped_pairs[curr.Name].GetEndPosition(false, false) - 1)
+                    mapped_pairs[curr.Name()].Chrom() << "," <<
+                    mapped_pairs[curr.Name()].Start << "," <<
+                    (mapped_pairs[curr.Name()].End()(false, false) - 1)
                         << "\t" <<
-                    refs.at(curr.RefID).RefName << "," <<
-                    curr.Position << "," <<
-                    (curr.GetEndPosition(false, false) - 1)
+                    curr.ChromName() << "," <<
+                    curr.Start() << "," <<
+                    (curr.End()(false, false) - 1)
                         <<
                     endl;
 
@@ -484,7 +485,7 @@ process_pair(const BamAlignment &curr,
         } else {
             delete(new_pair);
         }
-        mapped_pairs.erase(curr.Name);
+        mapped_pairs.erase(curr.Name());
     }
 }
 //}}}
@@ -492,16 +493,16 @@ process_pair(const BamAlignment &curr,
 //{{{ void process_intra_chrom_pair(const BamAlignment &curr,
 void
 SV_Pair::
-process_intra_chrom_pair(const BamAlignment &curr,
+process_intra_chrom_pair(Xam &curr,
                          const RefVector refs,
-                         BamWriter &inter_chrom_reads,
-                         map<string, BamAlignment> &mapped_pairs,
+                         XamWriter &inter_chrom_reads,
+                         map<string, Xam> &mapped_pairs,
                          UCSCBins<SV_BreakPoint*> &r_bin,
                          int weight,
                          int ev_id,
                          SV_PairReader *reader)
 {
-    if (curr.RefID == curr.MateRefID) {
+    if (curr.ChromId() == curr.MateChromId()) {
 
         process_pair(curr,
                      refs,
@@ -511,14 +512,14 @@ process_intra_chrom_pair(const BamAlignment &curr,
                      ev_id,
                      reader);
 
-    } else if (curr.IsMapped() &&
-               curr.IsMateMapped() &&
-               (curr.RefID >= 0) &&
-               (curr.MateRefID >= 0) ) {
-        BamAlignment al = curr;
+    } else if (!curr.Unmapped() &&
+               !curr.MateUnmapped() &&
+               (curr.ChromId() >= 0) &&
+               (curr.MateChromId() >= 0) ) {
+        Xam al = curr;
         string x = reader->get_source_file_name();
-        al.AddTag("LS","Z",x);
-        inter_chrom_reads.SaveAlignment(al);
+        al.AddStringTag("LS",'Z',x);
+        inter_chrom_reads.AddRecord(al);
     }
 }
 //}}}

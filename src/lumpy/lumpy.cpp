@@ -14,10 +14,10 @@
 
 //{{{ includes
 #include "version.h"
-#include "api/BamReader.h"
-#include "api/BamMultiReader.h"
-#include "api/BamAux.h"
-#include "BamAncillary.h"
+//#include "api/BamReader.h"
+//#include "api/BamMultiReader.h"
+//#include "api/BamAux.h"
+//#include "BamAncillary.h"
 #include "bedFile.h"
 #include "bedFilePE.h"
 #include "sequenceUtils.h"
@@ -38,7 +38,7 @@
 #include "ucsc_bins.hpp"
 #include "log_space.h"
 
-using namespace BamTools;
+//using namespace BamTools;
 
 #include <exception>
 #include <vector>
@@ -538,7 +538,6 @@ int main(int argc, char* argv[])
                 i_er != evidence_readers.end();
                 ++i_er) {
             SV_EvidenceReader *er = *i_er;
-
             if ( er->has_next() ) {
                 string curr_chr = er->get_curr_chr();
                 if ( ( min_chr.compare("") == 0 ) ||
@@ -637,7 +636,6 @@ int main(int argc, char* argv[])
         //}}}
     }
     //}}}
-
     //{{{ terminate input files
     for ( i_er = evidence_readers.begin();
             i_er != evidence_readers.end();
@@ -646,7 +644,6 @@ int main(int argc, char* argv[])
         er->terminate();
     }
     //}}}
-
     //{{{ Call remaining intra breakpoints
     vector< UCSCElement<SV_BreakPoint*> > values = r_bin.values();
     vector< UCSCElement<SV_BreakPoint*> >::iterator it;
@@ -683,12 +680,12 @@ int main(int argc, char* argv[])
         delete bp;
     }
     //}}}
-
     //{{{ process the inter-chrom events that were saved to a file
     string intra_bam_file_name = inter_chrom_file_prefix + ".bam";
     ifstream intra_bam_file( intra_bam_file_name.c_str() );
     if (intra_bam_file.good()) {
         intra_bam_file.close();
+
 
         sort_inter_chrom_bam( inter_chrom_file_prefix + ".bam",
                               inter_chrom_file_prefix + ".sort.bam");
@@ -710,7 +707,6 @@ int main(int argc, char* argv[])
         // get new evidence readers for both bedpe and bam inter-chrom
         // readers
         has_next = true;
-
         int32_t last_min_primary_refid = -1;
         int32_t last_min_secondary_refid = -1;
         max_pos = 0;
@@ -743,7 +739,6 @@ int main(int argc, char* argv[])
                 }
             }
             //}}}
-
             // if the chrome pair switches, reset the max_pos
             if ( (last_min_primary_refid != min_primary_refid) ||
                     (last_min_secondary_refid != min_secondary_refid) ) {
@@ -814,7 +809,6 @@ int main(int argc, char* argv[])
 			    }
                         }
                     }
-
                     if (r_bin.remove(*it, false, false, true) != 0) {
                         cerr << "Error removing element" << endl;
                         abort();

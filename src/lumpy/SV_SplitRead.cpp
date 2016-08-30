@@ -12,8 +12,8 @@
  * Licenced under the GNU General Public License 2.0 license.
  * ***************************************************************************/
 
-#include "BamAncillary.h"
-using namespace BamTools;
+//#include "BamAncillary.h"
+//using namespace BamTools;
 
 #include <exception>
 #include "SV_SplitReadReader.h"
@@ -101,7 +101,7 @@ calc_query_pos_from_cigar(vector< CigarOp > cigar_data,
 
 //{{{ SV_SplitRead:: SV_SplitRead(vector< BamAlignment > &block,
 SV_SplitRead::
-SV_SplitRead(vector< BamAlignment > &block,
+SV_SplitRead(vector< Xam > &block,
              const RefVector &refs,
              int _weight,
              int _ev_id,
@@ -110,39 +110,39 @@ SV_SplitRead(vector< BamAlignment > &block,
     reader = _reader;
     ev_id = _ev_id;
 
-    if ( block.at(0).MapQuality < block.at(1).MapQuality )
-        min_mapping_quality = block.at(0).MapQuality;
+    if ( block.at(0).MappingQuality() < block.at(1).MappingQuality() )
+        min_mapping_quality = block.at(0).MappingQuality();
     else
-        min_mapping_quality = block.at(1).MapQuality;
+        min_mapping_quality = block.at(1).MappingQuality();
 
 
 
     struct cigar_query query_a =
-        calc_query_pos_from_cigar(block.at(0).CigarData,
-                                  block.at(0).IsReverseStrand() );
+        calc_query_pos_from_cigar(block.at(0).CigarData(),
+                                  block.at(0).Reverse() );
     struct cigar_query query_b =
-        calc_query_pos_from_cigar(block.at(1).CigarData,
-                                  block.at(1).IsReverseStrand() );
+        calc_query_pos_from_cigar(block.at(1).CigarData(),
+                                  block.at(1).Reverse() );
 
     struct interval tmp_a, tmp_b;
 
     tmp_a.strand = '+';
-    if (block.at(0).IsReverseStrand())
+    if (block.at(0).Reverse())
         tmp_a.strand = '-';
-    tmp_a.chr = refs.at(block.at(0).RefID).RefName;
-    tmp_a.start = block.at(0).Position;
-    tmp_a.end = block.at(0).GetEndPosition();
+    tmp_a.chr = block.at(0).Chrom();
+    tmp_a.start = block.at(0).Start();
+    tmp_a.end = block.at(0).End();
 
     tmp_b.strand = '+';
-    if (block.at(1).IsReverseStrand())
+    if (block.at(1).Reverse())
         tmp_b.strand = '-';
-    tmp_b.chr = refs.at(block.at(1).RefID).RefName;
-    tmp_b.start = block.at(1).Position;
-    tmp_b.end = block.at(1).GetEndPosition();
+    tmp_b.chr = block.at(1).Chrom();
+    tmp_b.start = block.at(1).Start();
+    tmp_b.end = block.at(1).End();
 
 
-    if ( (block.at(0).RefID > block.at(1).RefID) ||
-            ( (block.at(0).RefID == block.at(1).RefID) &&
+    if ( (block.at(0).ChromId() > block.at(1).ChromId()) ||
+            ( (block.at(0).ChromId() == block.at(1).ChromId()) &&
               (tmp_a.start > tmp_b.start ) ) ) {
         side_r = tmp_a;
         side_l = tmp_b;
@@ -190,8 +190,8 @@ SV_SplitRead(vector< BamAlignment > &block,
 
 //{{{ SV_SplitRead:: SV_SplitRead(vector< BamAlignment > &block,
 SV_SplitRead::
-SV_SplitRead(const BamAlignment &bam_a,
-             const BamAlignment &bam_b,
+SV_SplitRead(Xam &bam_a,
+             Xam &bam_b,
              const RefVector &refs,
              int _weight,
              int _ev_id,
@@ -202,43 +202,43 @@ SV_SplitRead(const BamAlignment &bam_a,
 
     // Add readId information to track read evidence. Note that both bam_a and
     // bam_b refer to the same read, thus have the same readId
-    read_id = bam_a.Name;
+    read_id = bam_a.Name();
 
-    if ( bam_a.MapQuality < bam_b.MapQuality )
-        min_mapping_quality = bam_a.MapQuality;
+    if ( bam_a.MappingQuality() < bam_b.MappingQuality() )
+        min_mapping_quality = bam_a.MappingQuality();
     else
-        min_mapping_quality = bam_b.MapQuality;
+        min_mapping_quality = bam_b.MappingQuality();
 
     struct cigar_query query_a =
-        calc_query_pos_from_cigar(bam_a.CigarData,
-                                  bam_a.IsReverseStrand() );
+        calc_query_pos_from_cigar(bam_a.CigarData(),
+                                  bam_a.Reverse() );
     struct cigar_query query_b =
-        calc_query_pos_from_cigar(bam_b.CigarData,
-                                  bam_b.IsReverseStrand() );
+        calc_query_pos_from_cigar(bam_b.CigarData(),
+                                  bam_b.Reverse() );
 
     struct interval tmp_a, tmp_b;
 
     tmp_a.strand = '+';
-    if (bam_a.IsReverseStrand())
+    if (bam_a.Reverse())
         tmp_a.strand = '-';
-    tmp_a.chr = refs.at(bam_a.RefID).RefName;
-    tmp_a.start = bam_a.Position;
-    tmp_a.end = bam_a.GetEndPosition();
+    tmp_a.chr = bam_a.Chrom();
+    tmp_a.start = bam_a.Start();
+    tmp_a.end = bam_a.End();
 
     tmp_b.strand = '+';
-    if (bam_b.IsReverseStrand())
+    if (bam_b.Reverse())
         tmp_b.strand = '-';
-    tmp_b.chr = refs.at(bam_b.RefID).RefName;
-    tmp_b.start = bam_b.Position;
-    tmp_b.end = bam_b.GetEndPosition();
+    tmp_b.chr = bam_b.Chrom();
+    tmp_b.start = bam_b.Start();
+    tmp_b.end = bam_b.End();
 
 
     //if ( ( tmp_a.chr.compare(tmp_b.chr) > 0 ) ||
     //( ( tmp_a.chr.compare(tmp_b.chr) == 0 ) &&
     //( tmp_a.start > tmp_b.start ) ) ) {
 
-    if ( (bam_a.RefID > bam_b.RefID) ||
-            ( (bam_a.RefID == bam_b.RefID) &&
+    if ( (bam_a.ChromId() > bam_b.ChromId()) ||
+            ( (bam_a.ChromId() == bam_b.ChromId()) &&
               (tmp_a.start > tmp_b.start ) ) ) {
         side_r = tmp_a;
         side_l = tmp_b;
@@ -617,23 +617,23 @@ print_bedpe(int score)
 //{{{ void process_split(const BamAlignment &curr,
 void
 SV_SplitRead::
-process_split(const BamAlignment &curr,
+process_split(Xam &curr,
               const RefVector refs,
-              map<string, BamAlignment> &mapped_splits,
+              map<string, Xam> &mapped_splits,
               UCSCBins<SV_BreakPoint*> &r_bin,
               int weight,
               int ev_id,
               SV_SplitReadReader *_reader)
 {
 
-    if (mapped_splits.find(curr.Name) == mapped_splits.end()) {
-        uint32_t clipped = count_clipped(curr.CigarData);
+    if (mapped_splits.find(curr.Name()) == mapped_splits.end()) {
+        uint32_t clipped = count_clipped(curr.CigarData());
         if (clipped >= _reader->min_clip)
-            mapped_splits[curr.Name] = curr;
+            mapped_splits[curr.Name()] = curr;
     } else {
         try {
             SV_SplitRead *new_split_read =
-                new SV_SplitRead(mapped_splits[curr.Name],
+                new SV_SplitRead(mapped_splits[curr.Name()],
                                  curr,
                                  refs,
                                  weight,
@@ -642,14 +642,14 @@ process_split(const BamAlignment &curr,
 
             SV_BreakPoint *new_bp = NULL;
             if (new_split_read->is_sane() &&
-                (count_clipped(curr.CigarData) > 0) &&
-                (count_clipped(mapped_splits[curr.Name].CigarData) > 0) ) {
+                (count_clipped(curr.CigarData()) > 0) &&
+                (count_clipped(mapped_splits[curr.Name()].CigarData()) > 0) ) {
                 new_bp = new_split_read->get_bp();
 
                 if (new_bp != NULL) {
                     new_bp->cluster(r_bin);
                 } else {
-                    cerr << "Alignment name:" << curr.Name << endl;
+                    cerr << "Alignment name:" << curr.Name() << endl;
                     free(new_split_read);
                 }
             } else {
@@ -661,7 +661,7 @@ process_split(const BamAlignment &curr,
             cerr << "Error creating split read: " << endl;
         }
 
-        mapped_splits.erase(curr.Name);
+        mapped_splits.erase(curr.Name());
     }
 }
 //}}}
@@ -669,31 +669,30 @@ process_split(const BamAlignment &curr,
 //{{{ void process_intra_chrom_split(const BamAlignment &curr,
 void
 SV_SplitRead::
-process_intra_chrom_split(const BamAlignment &curr,
+process_intra_chrom_split(Xam &curr,
                           const RefVector refs,
-                          BamWriter &inter_chrom_reads,
-                          map<string, BamAlignment> &mapped_splits,
+                          XamWriter &inter_chrom_reads,
+                          map<string, Xam> &mapped_splits,
                           UCSCBins<SV_BreakPoint*> &r_bin,
                           int weight,
                           int ev_id,
                           SV_SplitReadReader *_reader)
 {
 
-    if (mapped_splits.find(curr.Name) == mapped_splits.end()) {
-        uint32_t clipped = count_clipped(curr.CigarData);
+    if (mapped_splits.find(curr.Name()) == mapped_splits.end()) {
+        uint32_t clipped = count_clipped(curr.CigarData());
         if ( curr.HasTag("YP") == true) {
-            uint32_t t;
-            curr.GetTag("YP", t);
+            uint32_t t = curr.GetIntegerTag("YP").value();
             if (t == 2)
-                mapped_splits[curr.Name] = curr;
+                mapped_splits[curr.Name()] = curr;
         }
         else if (clipped >= _reader->min_clip)
-            mapped_splits[curr.Name] = curr;
+            mapped_splits[curr.Name()] = curr;
     } else {
-        if ( mapped_splits[curr.Name].RefID == curr.RefID ) {
+        if ( mapped_splits[curr.Name()].ChromId() == curr.ChromId() ) {
             try {
                 SV_SplitRead *new_split_read =
-                    new SV_SplitRead(mapped_splits[curr.Name],
+                    new SV_SplitRead(mapped_splits[curr.Name()],
                                      curr,
                                      refs,
                                      weight,
@@ -707,7 +706,7 @@ process_intra_chrom_split(const BamAlignment &curr,
                     if (new_bp != NULL) {
                         new_bp->cluster(r_bin);
                     } else {
-                        cerr << "Alignment name:" << curr.Name << endl;
+                        cerr << "Alignment name:" << curr.Name() << endl;
                         delete(new_split_read);
                     }
                 } else {
@@ -718,24 +717,24 @@ process_intra_chrom_split(const BamAlignment &curr,
             }
 
         } else {
-            BamAlignment al1 = curr;
-            BamAlignment al2 = mapped_splits[curr.Name];
+            Xam al1 = curr;
+            Xam al2 = mapped_splits[curr.Name()];
 
-            al1.MateRefID = al2.RefID;
-            al2.MateRefID = al1.RefID;
+            al1.SetMateChromId(al2.ChromId());
+            al2.SetMateChromId(al1.ChromId());
 
-            al1.MatePosition = al2.Position;
-            al2.MatePosition = al1.Position;
+            al1.SetMateStart(al2.Start());
+            al2.SetMateStart(al1.Start());
 
             string x = _reader->get_source_file_name();
 
-            al1.AddTag("LS","Z",x);
-            al2.AddTag("LS","Z",x);
+            al1.AddStringTag("LS",'Z',x);
+            al2.AddStringTag("LS",'Z',x);
 
-            inter_chrom_reads.SaveAlignment(al1);
-            inter_chrom_reads.SaveAlignment(al2);
+            inter_chrom_reads.AddRecord(al1);
+            inter_chrom_reads.AddRecord(al2);
         }
-        mapped_splits.erase(curr.Name);
+        mapped_splits.erase(curr.Name());
     }
 }
 //}}}

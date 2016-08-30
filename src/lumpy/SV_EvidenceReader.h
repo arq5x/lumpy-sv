@@ -19,9 +19,11 @@
 #include <map>
 #include "ucsc_bins.hpp"
 #include "SV_BreakPoint.h"
-#include "api/BamReader.h"
-#include "api/BamWriter.h"
-using namespace BamTools;
+#include "XamReader.h"
+#include "XamWriter.h"
+//#include "api/BamReader.h"
+//#include "api/BamWriter.h"
+//using namespace BamTools;
 
 using namespace std;
 
@@ -50,11 +52,11 @@ public:
                                        string secondary_chr,
                                        CHR_POS pos,
                                        UCSCBins<SV_BreakPoint*> &r_bin);
-    virtual void process_input( BamAlignment &_bam,
+    virtual void process_input( Xam &_bam,
                                 RefVector &_refs,
-                                BamWriter &inter_chrom_reads,
+                                XamWriter &inter_chrom_reads,
                                 UCSCBins<SV_BreakPoint*> &r_bin);
-    virtual void process_input( BamAlignment &_bam,
+    virtual void process_input( Xam &_bam,
                                 RefVector &_refs,
                                 UCSCBins<SV_BreakPoint*> &r_bin);
 

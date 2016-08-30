@@ -16,8 +16,8 @@
 #define __SV_SPLIT_READ_H__
 
 //#include "BamAncillary.h"
-#include "api/BamWriter.h"
-using namespace BamTools;
+//#include "api/BamWriter.h"
+//using namespace BamTools;
 
 #include "SV_SplitReadReader.h"
 #include "SV_Evidence.h"
@@ -54,14 +54,14 @@ class SV_SplitRead: public SV_Evidence
 									   struct cigar_query *q);
 
 	public:
-		SV_SplitRead(vector< BamAlignment > &block,
+		SV_SplitRead(vector< Xam > &block,
 					 const RefVector &refs,
 					 int weight,
 					 int ev_id,
 					 SV_SplitReadReader *reader);
 
-		SV_SplitRead(const BamAlignment &bam_a,
-					 const BamAlignment &bam_b,
+		SV_SplitRead(Xam &bam_a,
+					 Xam &bam_b,
 					 const RefVector &refs,
 					 int _weight,
 					 int _ev_id,
@@ -93,19 +93,19 @@ class SV_SplitRead: public SV_Evidence
 		bool is_sane();
 		bool is_interchromosomal();
 
-		static void process_split(const BamAlignment &curr,
+		static void process_split(Xam &curr,
 								  const RefVector refs,
-								  map<string, BamAlignment> &mapped_splits,
+								  map<string, Xam> &mapped_splits,
 								  UCSCBins<SV_BreakPoint*> &r_bin,
 								  int weight,
 								  int ev_id,
 								  SV_SplitReadReader *reader);
 
 		static void process_intra_chrom_split(
-									const BamAlignment &curr,
+									Xam &curr,
 									const RefVector refs,
-									BamWriter &inter_chrom_reads,
-									map<string, BamAlignment> &mapped_splits,
+									XamWriter &inter_chrom_reads,
+									map<string, Xam> &mapped_splits,
 									UCSCBins<SV_BreakPoint*> &r_bin,
 									int weight,
 									int ev_id,

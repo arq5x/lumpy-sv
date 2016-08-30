@@ -34,6 +34,7 @@ UTIL_SUBDIRS =	$(SRC_DIR)/utils/bedFile \
 				$(SRC_DIR)/utils/bedFilePE \
 				$(SRC_DIR)/utils/genomeFile \
 				$(SRC_DIR)/utils/BamTools \
+				$(SRC_DIR)/utils/xampp/ \
 				$(SRC_DIR)/utils/BamTools-Ancillary \
 				$(SRC_DIR)/utils/sequenceUtilities \
 				$(SRC_DIR)/utils/sqlite3

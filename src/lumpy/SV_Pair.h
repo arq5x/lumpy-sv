@@ -16,12 +16,14 @@
 #define __SV_PAIR_H__
 
 //#include "BamAncillary.h"
-using namespace BamTools;
+//using namespace BamTools;
 
 #include "SV_Evidence.h"
 #include "SV_PairReader.h"
 #include "SV_BreakPoint.h"
 #include "SV_PairReader.h"
+#include "XamReader.h"
+#include "Xam.h"
 #include "ucsc_bins.hpp"
 #include "log_space.h"
 
@@ -63,26 +65,26 @@ class SV_Pair: public SV_Evidence
 		SV_PairReader *reader;
 
 
-		SV_Pair(const BamAlignment &bam_a,
-				const BamAlignment &bam_b,
+		SV_Pair(Xam &bam_a,
+				Xam &bam_b,
 				const RefVector &refs,
 				int weight,
 				int ev_id,
 				SV_PairReader *reader);
 
-		static void process_pair(const BamAlignment &curr,
+		static void process_pair(Xam &curr,
 								const RefVector refs,
-								map<string, BamAlignment> &mapped_pairs,
+								map<string, Xam> &mapped_pairs,
 								UCSCBins<SV_BreakPoint*> &r_bin,
 								int weight,
 								int ev_id,
 								SV_PairReader *reader);
 
 		static void process_intra_chrom_pair(
-								 const BamAlignment &curr,
+								 Xam &curr,
 								 const RefVector refs,
-								 BamWriter &inter_chrom_reads,
-								 map<string, BamAlignment> &mapped_pairs,
+								 XamWriter &inter_chrom_reads,
+								 map<string, Xam> &mapped_pairs,
 								 UCSCBins<SV_BreakPoint*> &r_bin,
 								 int weight,
 								 int ev_id,

@@ -13,8 +13,8 @@
  * ***************************************************************************/
 
 #include "SV_EvidenceReader.h"
-#include "api/BamReader.h"
-using namespace BamTools;
+//#include "api/BamReader.h"
+//using namespace BamTools;
 
 using namespace std;
 
@@ -117,9 +117,9 @@ process_input_chr_pos(string chr,
 //{{{void SV_EvidenceReader:: process_input( BamAlignment &_bam,
 void
 SV_EvidenceReader::
-process_input( BamAlignment &_bam,
+process_input( Xam &_bam,
 			   RefVector &_refs,
-			   BamWriter &inter_chrom_reads,
+			   XamWriter &inter_chrom_reads,
 			   UCSCBins<SV_BreakPoint*> &r_bin)
 {
 	abort();
@@ -129,7 +129,7 @@ process_input( BamAlignment &_bam,
 //{{{void SV_EvidenceReader:: process_input( BamAlignment &_bam,
 void
 SV_EvidenceReader::
-process_input( BamAlignment &_bam,
+process_input( Xam &_bam,
 			   RefVector &_refs,
 			   UCSCBins<SV_BreakPoint*> &r_bin)
 {
@@ -151,6 +151,7 @@ string
 SV_EvidenceReader::
 get_curr_chr()
 {
+	// cerr << "Base get_curr_chr" << endl;
 	return "";
 }
 //}}}

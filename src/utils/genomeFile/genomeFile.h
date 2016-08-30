@@ -20,9 +20,10 @@
 #include <cstring>
 #include <cstdio>
 #include <algorithm> // for bsearch lower_bound()
-#include "api/BamReader.h"
-#include "api/BamAux.h"
-using namespace BamTools;
+#include "XamReader.h"
+//#include "api/BamReader.h"
+//#include "api/BamAux.h"
+//using namespace BamTools;
 
 using namespace std;
 

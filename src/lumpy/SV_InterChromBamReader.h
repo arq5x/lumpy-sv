@@ -21,24 +21,24 @@ using namespace std;
 
 #include "SV_BreakPoint.h"
 #include "SV_EvidenceReader.h"
-#include "api/BamWriter.h"
-#include "api/BamReader.h"
-#include "api/BamMultiReader.h"
-#include "api/BamAux.h"
+// #include "api/BamWriter.h"
+// #include "api/BamReader.h"
+// #include "api/BamMultiReader.h"
+// #include "api/BamAux.h"
 
 #include "ucsc_bins.hpp"
 
-using namespace BamTools;
+//using namespace BamTools;
 
 class SV_InterChromBamReader : public SV_EvidenceReader
 {
 	private:
 		bool is_open, has_next_alignment;
 		map<pair<string,string>, SV_EvidenceReader*> *bam_evidence_readers;
-		BamReader bam_reader;
+		XamReader bam_reader;
 		RefVector refs;
-		BamAlignment bam;
-		string header;
+		Xam bam;
+		XamHeader header;
 		string inter_chrom_bam_file;
 
 	public:
