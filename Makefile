@@ -1,7 +1,7 @@
 
 # ==========================
-# BEDTools Makefile
-# (c) 2009 Aaron Quinlan
+# Lumpy Makefile
+# (c) 2016 Jim Havrilla
 # ==========================
 
 SHELL := /bin/bash -e
@@ -59,6 +59,13 @@ all:	lumpyexpress
 		$(MAKE) --no-print-directory -C $$dir; \
 		echo ""; \
 	done
+
+lumpy_filter: htslib
+	$(MAKE) --no-print-directory -C src/filter/
+	cp src/filter/lumpy_filter $(BIN_DIR)
+
+htslib:
+	$(MAKE) --no-print-directory -C lib/htslib
 
 lumpyexpress:
 	[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
