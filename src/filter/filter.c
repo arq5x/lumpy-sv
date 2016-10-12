@@ -26,7 +26,7 @@ struct line {
 };
 
 // This will parse a base 10 int, and change ptr to one char beyond the end of the number.
-inline int parseNextInt(char **ptr)
+int parseNextInt(char **ptr)
 {
     int num = 0;
     char curChar;
@@ -40,13 +40,13 @@ inline int parseNextInt(char **ptr)
 }
 
 // This will the current char, and move the ptr ahead by one.
-inline char parseNextOpCode(char **ptr)
+char parseNextOpCode(char **ptr)
 {
     return ((*ptr)++)[0];
 }
 
 // This just test for end of string.
-inline bool moreCigarOps(char *ptr)
+bool moreCigarOps(char *ptr)
 {
     return (ptr[0] != 0);
 }
