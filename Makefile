@@ -39,7 +39,9 @@ UTIL_SUBDIRS =	$(SRC_DIR)/utils/bedFile \
 				$(SRC_DIR)/utils/sqlite3
 
 
-all:	lumpyexpress
+all:	lumpyexpress lumpy lumpy_filter
+
+lumpy:	
 	[ -d $(OBJ_DIR) ] || mkdir -p $(OBJ_DIR)
 	[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
 

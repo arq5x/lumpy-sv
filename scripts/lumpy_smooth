@@ -8,7 +8,10 @@ export ID_LIST=""
 
 export SAMTOOLS=`which samtools`
 export GARGS=`which gargs`
-export LUMPY_HOME=""
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+export LUMPY_HOME=`dirname $DIR`
 
 usage()
 {
@@ -32,10 +35,10 @@ EOF
 }
 
 # Show usage when there are no arguments.
-if test -z "$1"; then
-    usage
-    exit
-fi
+#if test -z "$1"; then
+    #usage
+    #exit
+#fi
 
 while getopts "h L:x:o:b:t:S:" OPTION; do
 case $OPTION in
@@ -44,7 +47,8 @@ case $OPTION in
         exit 1
         ;;
     x)
-        EXCLUDE=$OPTARG
+        EXCLUDE="-x "
+        EXCLUDE+=$OPTARG
         ;;
     o)
         OUTDIR=$OPTARG
@@ -89,19 +93,44 @@ if [ -z "$GARGS" ]; then
     exit 1
 fi
 
+
+EXECS="$LUMPY_HOME/bin/lumpy_filter
+$SAMTOOLS
+$LUMPY_HOME/scripts/pairend_distro.py
+$LUMPY_HOME/scripts/cnvanator_to_bedpes.py
+$LUMPY_HOME/bin/lumpy"
+
+BREAK=0
+
+for EXEC in $EXECS; do
+    command -v $EXEC \
+    >/dev/null 2>&1 \
+    || { echo >&2 "ERROR: $EXEC not found"; BREAK=1; }
+done
+
+if [ "$BREAK" -eq "1" ]; then
+    exit 1;
+fi
+
+
 BAM_PREP()
 {
     set -e
     BAM=$1
 
-    RG_NUM=`$SAMTOOLS view -H $BAM | grep -c "^@RG"`
+    ID=""
+    if [ "$(uname)" == "Darwin" ]; then
+        ID=`$SAMTOOLS view -H $BAM | grep "^@RG" | grep -o "SM:\w*" | cut -d":" -f2 | sort -u`
+    else
+        ID=`$SAMTOOLS view -H $BAM | grep "^@RG" | grep -oP "SM:[^\s]*" | cut -d":" -f2 | sort -u`
+    fi
 
+    RG_NUM=`echo -e $ID | wc -l`
     if [ "$RG_NUM" -ne "1" ]; then
       echo "Does not support more than 1 readgroup. $RG_NUM found."
       exit 1
     fi
 
-    ID=`$SAMTOOLS view -H $BAM | grep "^@RG" | grep -oP "SM:[^\s]*" | cut -d":" -f2`
 
     $LUMPY_HOME/bin/lumpy_filter $BAM $OUTDIR/$ID.split.bam $OUTDIR/$ID.disc.bam
 
@@ -112,6 +141,8 @@ BAM_PREP()
         { LEN=length($10); 
         if (LEN>MAX_LEN) MAX_LEN=LEN } 
         END { print MAX_LEN }'`
+
+    echo $READ_LENGTH
 
     $SAMTOOLS view $BAM \
         | tail -n+100000 \
@@ -124,7 +155,7 @@ BAM_PREP()
 }
 
 GET_BAM_PARAMS () {
-    set -e
+    set -e 
 
     BAM=$1
     CNV_FILE=""
@@ -138,14 +169,18 @@ GET_BAM_PARAMS () {
         LOCAL_BREAK_SIZE=$3
     fi
 
-    RG_NUM=`$SAMTOOLS view -H $BAM | grep -c "^@RG"`
+    ID=""
+    if [ "$(uname)" == "Darwin" ]; then
+        ID=`$SAMTOOLS view -H $BAM | grep "^@RG" | grep -o "SM:\w*" | cut -d":" -f2 | sort -u`
+    else
+        ID=`$SAMTOOLS view -H $BAM | grep "^@RG" | grep -oP "SM:[^\s]*" | cut -d":" -f2 | sort -u`
+    fi
 
+    RG_NUM=`echo -e $ID | wc -l`
     if [ "$RG_NUM" -ne "1" ]; then
       echo "Does not support more than 1 readgroup. $RG_NUM found."
       exit 1
     fi
-
-    ID=`$SAMTOOLS view -H $BAM | grep "^@RG" | grep -oP "SM:[^\s]*" | cut -d":" -f2`
 
     ID_LIST+="$ID."
 
@@ -214,9 +249,9 @@ if [ -z "$BAMS" ];then
 fi
 
 export -f BAM_PREP
-echo -en $BAMS  | $GARGS --procs $THREADS --sep " " "BAM_PREP {}" 
+echo -en $BAMS  | $GARGS --procs $THREADS  "BAM_PREP {}" 
 
-export GLOBAL_LUMPY="$LUMPY_HOME/bin/lumpy -mw 4 -tt 0 -P -x $EXCLUDE "
+export GLOBAL_LUMPY="$LUMPY_HOME/bin/lumpy -mw 4 -tt 0 -P $EXCLUDE "
 
 for SAMPLE_CSV in ${OPTS[@]:$((OPTIND - 1))}; do
     SAMPLE_ARRAY=(${SAMPLE_CSV//,/ })
