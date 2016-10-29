@@ -1,4 +1,4 @@
 
 all:
-	$(CC) -I../../lib/htslib/ -lz -lpthread -o lumpy_filter ../../lib/htslib/libhts.a filter.c 
+	$(CC) -I../../lib/htslib/ -o lumpy_filter filter.c ../../lib/htslib/libhts.a -lpthread -lz
 
