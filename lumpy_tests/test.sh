@@ -4,11 +4,18 @@ test -e ssshtest || wget -q https://raw.githubusercontent.com/ryanlayer/ssshtest
 set -o nounset
 
 
-export LUMPY_HOME=$HOME/lumpy-sv/
-export LUMPY=$LUMPY_HOME/bin/lumpy
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
+export LUMPY_HOME=$DIR/../lumpy-sv/
+export LUMPY=$DIR/../bin/lumpy
 
-cd orig
+cd $DIR/orig
 
 wget -nc https://s3.amazonaws.com/lumpy/pe.pos_sorted.bam
 wget -nc https://s3.amazonaws.com/lumpy/sr.pos_sorted.bam

@@ -7,7 +7,6 @@ export THREADS=1
 export ID_LIST=""
 
 export SAMTOOLS=`which samtools`
-export GARGS=`which gargs`
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -30,7 +29,6 @@ usage()
     Path options:
     -L      LUMPY source directory ($LUMPY_HOME)
     -S      SAMTOOLS path ($SAMTOOLS)
-    -G      gargs path ($GARGS)
 EOF
 }
 
@@ -65,9 +63,6 @@ case $OPTION in
     S)
         SAMTOOLS=$OPTARG
         ;;
-    G)
-        GARGS=$OPTARG
-        ;;
     ?)
         usage
         exit
@@ -86,13 +81,6 @@ if [ -z "$SAMTOOLS" ]; then
     usage
     exit 1
 fi
-
-if [ -z "$GARGS" ]; then
-    echo "ERROR: gargs not found. Set with -G"
-    usage
-    exit 1
-fi
-
 
 EXECS="$LUMPY_HOME/bin/lumpy_filter
 $SAMTOOLS
@@ -249,7 +237,7 @@ if [ -z "$BAMS" ];then
 fi
 
 export -f BAM_PREP
-echo -en $BAMS  | $GARGS --procs $THREADS  "BAM_PREP {}" 
+echo -en $BAMS  | xargs -I{} -P $THREADS  bash -c "BAM_PREP {}"
 
 export GLOBAL_LUMPY="$LUMPY_HOME/bin/lumpy -mw 4 -tt 0 -P $EXCLUDE "
 
