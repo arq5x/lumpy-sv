@@ -177,11 +177,11 @@ GET_BAM_PARAMS () {
     DUP_BEDPE=""
     if [ ! -z $CNV_FILE ]; then
         IS_CNVKIT=""
-        if [ "${CNV_FILE:-4}" == ".cns" ]; then
+        if [ "${CNV_FILE: -4}" == ".cns" ]; then
           IS_CNVKIT="--cnvkit "
         fi
 
-        if [ "${CNV_FILE:-4}" == ".cnr" ]; then
+        if [ "${CNV_FILE: -4}" == ".cnr" ]; then
           IS_CNVKIT="--cnvkit "
         fi
 
