@@ -121,6 +121,7 @@ BAM_PREP()
     fi
 
 
+	# NOTE: todo removed.
     $LUMPY_HOME/bin/lumpy_filter $BAM $OUTDIR/$ID.split.bam $OUTDIR/$ID.disc.bam
 
     READ_LENGTH=`$SAMTOOLS view $BAM \
@@ -256,110 +257,14 @@ for SAMPLE_CSV in ${OPTS[@]:$((OPTIND - 1))}; do
 done
 
 ID_LIST+="vcf"
+# NOTE TODO removed:
 eval $GLOBAL_LUMPY > $OUTDIR/$ID_LIST
 
 type svtyper >/dev/null 2>&1 || { echo >&2 "svtyper not found. not genotyping"; exit 0; }
 echo >&2 "genotyping with svtyper ..."
 bams=$(echo "$BAMS" | sed -e 's/\\n/,/g')
 
-mkdir -p $OUTDIR/svt-samples/
-rm -f $OUTDIR/svt-samples/*.vcf
+set -x
+vcf=$OUTDIR/$ID_LIST
 
-sample_svt() {
-    bam=$1
-    name=$(basename $bam .bam)
-    svtyper -B $bam -i $OUTDIR/$ID_LIST -o $OUTDIR/svt-samples/$name.svtyped.vcf
-}
-export -f sample_svt
-
-# if gargs is present we can do better parallelization.
-type gargs >/dev/null 2>&1 || {
-    # NO GARGS use xargs instead
-	# first we genotype each sample individually.
-	echo -e $BAMS | xargs -I{} -P $THREADS bash -c "sample_svt {}"
-
-	# then we collect info for all samples at sites that are non-ref in at least 1 sample.
-	python $LUMPY_HOME/scripts/extract-sites.py $OUTDIR/svt-samples/*.vcf > $OUTDIR/tmp.vcf
-	svvcf=$OUTDIR/$(basename $ID_LIST .vcf).svtyped.vcf
-	svtyper -B $bams -i $OUTDIR/tmp.vcf -o $svvcf
-	rm $OUTDIR/tmp.vcf
-	exit 0;
-}
-
-# GARGS
-export mypid=$$
-
-sample_svt_par() {
-	set -euo pipefail
-    bam=$1
-	lib=$TMPDIR/tmp.$mypid.$(echo $bam | md5sum | awk '{ print $1 }').lib
-	vcf=$2
-    svtyper -B $bam -i $vcf -l $lib
-	# vcf is a temporary file so clean it up.
-	# but for the first time, it's and fd from the header so the rm will fail.
-	set +e
-	rm -f $vcf >/dev/null 2>&1
-}
-
-export -f sample_svt_par
-
-if [[ -z ${TMPDIR+x} ]]; then
-	export TMPDIR=/tmp/
-fi
-
-VCF=$OUTDIR/$ID_LIST
-export header="$(head -2000 $VCF | grep ^#)"
-
-cleanup() {
-	return
-	rm -f $TMPDIR/tmp.$mypid.*.vcf
-	rm -f $TMPDIR/tmp.$mypid.*.lib
-}
-
-trap cleanup EXIT
-
-# parallelize over every 100 variants.
-per_sample() {
-	set -euo pipefail
-	bam=$1
-	lvcf=$2 # vcf to read from to get sites to genotype.
-    nth=0
-	lines="$header"
-	k=0
-	# run this once to force the calculation of the bam stats.
-	# this avoids a race condition.
-	sample_svt_par $bam <(echo -e "$header")
-	while read -r line || [[ -n "$line" ]]; do
-		k=$((k + 1))
-		lines="$lines\n$line"
-		if [[ "$k" -eq "100" ]]; then
-			echo -e "$lines" > $TMPDIR/tmp.$$.$nth.vcf
-			# echo the bam and the vcf so they can be sent to svtyper.
-			echo $bam $TMPDIR/tmp.$$.$nth.vcf
-			nth=$((nth + 1))
-			lines="$header"
-			k=0;
-		fi
-	done < "$lvcf"
-	echo -e "$lines" > $TMPDIR/tmp.$$.$nth.vcf
-	echo $bam $TMPDIR/tmp.$$.$nth.vcf
-}
-
-vcfsort() {
-	 awk 'BEGIN{x=0;} $0 ~/^#/{ if(x==0) {print;} if($1 == "#CHROM"){x=1}; next;} {x=1; print $0 | "LC_ALL=C sort --buffer-size 2G -k1,1 -k2,2n"}'
-}
-export -f vcfsort
-
-IFS='\\n' read -a arr <<<$BAMS
-# we parallelize within each sample over every 100 variants.
-set -eo pipefail
-for bam in $arr; do
-	name=$(basename $bam .bam)
-	per_sample $bam $VCF | gargs --retry 2 -o -p $THREADS "sample_svt_par {0} {1}" | vcfsort > $OUTDIR/svt-samples/$name.svtyped.vcf
-done
-
-python $LUMPY_HOME/scripts/extract-sites.py $OUTDIR/svt-samples/*.vcf > $OUTDIR/tmp.vcf
-svvcf=$OUTDIR/$(basename $ID_LIST .vcf).svtyped.vcf
-# We call per-sample, but it still parallelizes per 100 lines.
-per_sample $bams $OUTDIR/tmp.vcf | gargs --retry 2 -o -p $THREADS "sample_svt_par {0} {1}" | vcfsort > $svvcf
-rm $OUTDIR/tmp.vcf
+bash $LUMPY_HOME/scripts/par-svtyper.sh $vcf $bams | bgzip -@ 5 -c > $OUTDIR/$(basename $vcf .vcf).svtyped.vcf.gz
