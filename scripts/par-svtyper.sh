@@ -63,6 +63,18 @@ cleanup() {
 
 trap cleanup EXIT
 
+# add gargs to path
+export PATH=$PATH:.
+
+# get gargs if it doesn't exist
+type gargs >/dev/null 2>&1 || {
+    if [ "$(uname)" == "Darwin" ]; then
+        wget -O gargs https://github.com/brentp/gargs/releases/download/v0.3.5/gargs_darwin
+    else
+        wget -O gargs https://github.com/brentp/gargs/releases/download/v0.3.5/gargs_linux
+    fi
+    chmod +x ./gargs
+}
 
 psvtyper() {
     set -euo pipefail
