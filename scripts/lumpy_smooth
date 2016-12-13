@@ -121,6 +121,7 @@ BAM_PREP()
     fi
 
 
+	# NOTE: todo removed.
     $LUMPY_HOME/bin/lumpy_filter $BAM $OUTDIR/$ID.split.bam $OUTDIR/$ID.disc.bam
 
     READ_LENGTH=`$SAMTOOLS view $BAM \
@@ -256,27 +257,14 @@ for SAMPLE_CSV in ${OPTS[@]:$((OPTIND - 1))}; do
 done
 
 ID_LIST+="vcf"
+# NOTE TODO removed:
 eval $GLOBAL_LUMPY > $OUTDIR/$ID_LIST
 
 type svtyper >/dev/null 2>&1 || { echo >&2 "svtyper not found. not genotyping"; exit 0; }
 echo >&2 "genotyping with svtyper ..."
 bams=$(echo "$BAMS" | sed -e 's/\\n/,/g')
 
-mkdir -p $OUTDIR/svt-samples/
-rm -f $OUTDIR/svt-samples/*.vcf
+set -x
+vcf=$OUTDIR/$ID_LIST
 
-sample_svt() {
-    bam=$1
-    name=$(basename $bam .bam)
-    svtyper -B $bam -i $OUTDIR/$ID_LIST -o $OUTDIR/svt-samples/$name.svtyped.vcf
-}
-export -f sample_svt
-
-# first we genotype each sample individually.
-echo -e $BAMS | xargs -I{} -P $THREADS bash -c "sample_svt {}"
-
-# then we collect info for all samples at sites that are non-ref in at least 1 sample.
-python $LUMPY_HOME/scripts/extract-sites.py $OUTDIR/svt-samples/*.vcf > $OUTDIR/tmp.vcf
-svvcf=$OUTDIR/$(basename $ID_LIST .vcf).svtyped.vcf
-svtyper -B $bams -i $OUTDIR/tmp.vcf -o $svvcf
-rm $OUTDIR/tmp.vcf
+bash $LUMPY_HOME/scripts/par-svtyper.sh $vcf $bams | bgzip -@ 5 -c > $OUTDIR/$(basename $vcf .vcf).svtyped.vcf.gz
