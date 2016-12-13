@@ -14,7 +14,6 @@ svtpar() {
     # but for the first time, it's and fd from the header so the rm will fail.
     set +e
     tail -1 $subvcf 2>/dev/null | awk '{ print "svtyped through:" $1":"$2 }' > /dev/stderr
-    # NOTE: TODO put this back
     rm -f $subvcf >/dev/null 2>&1
 }
 export -f svtpar
@@ -41,7 +40,7 @@ genvcfs() {
             k=0;
         fi 
     done < "$vcf"
-    echo $tmpvcf
+    echo "$tmpvcf"
 }
 
 vcfsort() {
@@ -57,7 +56,7 @@ fi
 export mypid=$$
 
 cleanup() {
-   #rm -f $TMPDIR/tmp.$mypid.*.vcf
+   rm -f $TMPDIR/tmp.$mypid.*.vcf
    rm -f $TMPDIR/tmp.$mypid.*.lib
 }
 
