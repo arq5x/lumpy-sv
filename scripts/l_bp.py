@@ -1,5 +1,4 @@
 import sys
-from sets import Set
 import re
 
 def find_all(a_str, sub):
@@ -34,7 +33,7 @@ def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
                     A[7] += ';' + 'SNAME=' + ','.join(samples)
                     l = '\t'.join(A)
 
-                
+
                 if 'SVTYPE=BND' in A[7]:
                     m = re.search(r"(\[|\])(.*)(\[|\])",A[4])
                     o_chr,o_pos = m.group(2).split(':')
@@ -44,13 +43,13 @@ def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
                         pos_s = A[7].find('++:')
 
                         if neg_s > 0:
-                            neg_e = neg_s + A[7][neg_s:].find(';') 
+                            neg_e = neg_s + A[7][neg_s:].find(';')
                             pre=A[7][:neg_s]
                             mid=A[7][neg_s:neg_e]
                             post=A[7][neg_e:]
                             A[7] = pre + '++:0,' + mid + post
                         else:
-                            pos_e = pos_s + A[7][pos_s:].find(';') 
+                            pos_e = pos_s + A[7][pos_s:].find(';')
                             pre=A[7][:pos_s]
                             mid=A[7][pos_s:pos_e]
                             post=A[7][pos_e:]
@@ -91,7 +90,7 @@ def split_v(l):
 
     start_r = pos_r + int(m['CIEND'].split(',')[0])
     end_r = pos_r + int(m['CIEND'].split(',')[1])
-        
+
     strands = m['STRANDS']
 
     return [m['SVTYPE'],chr_l,chr_r,strands,start_l,end_l,start_r,end_r,m]
@@ -131,7 +130,7 @@ def header_line_cmp(l1, l2):
         return -1
 
     if l2[:12] == '##fileformat':
-        return 1 
+        return 1
 
     # make sure #CHROM ... is last
     if l1[1] != '#':
@@ -140,14 +139,14 @@ def header_line_cmp(l1, l2):
         return -1
 
     if l1.find('=') == -1:
-        return -1 
+        return -1
     if l2.find('=') == -1:
         return 1
 
     h1 = l1[:l1.find('=')]
     h2 = l2[:l2.find('=')]
     if h1 not in order:
-        return -1 
+        return -1
     if h2 not in order:
         return 1
     return cmp(order.index(h1),order.index(h2))
@@ -166,10 +165,10 @@ class breakpoint:
     sv_type = ''
 
     strands = ''
-    
+
     l = ''
 
-    def __init__(self, 
+    def __init__(self,
                  l,
                  percent_slop=0,
                  fixed_slop=0):
@@ -182,7 +181,7 @@ class breakpoint:
         self.start_l,\
         self.end_l,\
         self.start_r, \
-        self.end_r, 
+        self.end_r,
         m] = split_v(l)
 
         self.p_l = [float(x) for x in m['PRPOS'].split(',')]
@@ -218,7 +217,7 @@ class breakpoint:
             self.p_r = [float(x)/sum_p_r for x in new_p_r]
 
             # old_l = float(self.end_l - self.start_l + 1)
-            
+
             # self.start_l = max(0,self.start_l-l_slop)
             # self.end_l = self.end_l+l_slop
 
@@ -253,7 +252,7 @@ class breakpoint:
                                            self.end_l,\
                                            self.chr_r,\
                                            self.start_r, \
-                                           self.end_r, 
+                                           self.end_r,
                                            self.sv_type,\
                                            self.strands,\
                                            self.p_l,
@@ -304,7 +303,7 @@ def trim(A):
         if A[i] == 0:
             clip_end += 1
         else:
-            break               
+            break
     return [clip_start, clip_end]
 
 
@@ -338,11 +337,11 @@ def align_intervals(I):
             new_i = [0]*n + new_i
 
         if i[END] < end:
-            n = end - i[END] 
+            n = end - i[END]
             new_i = new_i + [0]*n
-        
+
         new_I.append(new_i)
-        
+
     return [start, end, new_I]
 
 
@@ -386,12 +385,12 @@ def bron_kerbosch(G, R, P, X):
     if (len(P) == 0) and (len(X) == 0):
         yield R
     for v in P:
-        V = Set([v])
-        N = Set([g[0] for g in G[v].edges])
-    
+        V = set([v])
+        N = set([g[0] for g in G[v].edges])
+
         for r in bron_kerbosch(G, \
                                R.union(V), \
-                               P.intersection(N), 
+                               P.intersection(N),
                                X.intersection(N)):
             yield r
 

@@ -48,8 +48,8 @@ parser.add_option("-m",
 
 def median(L):
     if len(L) % 2 == 1:
-        return L[len(L)/2]
-    mid = len(L) / 2 - 1
+        return L[int(len(L)/2)]  # cast to int since divisions always return floats in python3
+    mid = int(len(L) / 2) - 1
     return (L[mid] + L[mid+1]) / 2.0
 
 def unscaled_upper_mad(xs):
@@ -149,4 +149,4 @@ else:
 
     f.close()
 
-print('mean:' + str(mean) + '\tstdev:' + str(stdev))
+print(('mean:' + str(mean) + '\tstdev:' + str(stdev)))

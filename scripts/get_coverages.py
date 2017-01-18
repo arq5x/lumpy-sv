@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 if len(sys.argv) < 2:
-    print 'usage:' + sys.argv[0] + ' <in bam 1> <in bam 2> <..>'
+    print('usage:' + sys.argv[0] + ' <in bam 1> <in bam 2> <..>')
     exit(1)
 
 for i in range(1,len(sys.argv)):
@@ -54,14 +54,14 @@ for i in range(1,len(sys.argv)):
     for l in f:
         a = l.rstrip().split('\t')
         if float(a[3]) > 0:
-            C.append(float(a[3])) 
+            C.append(float(a[3]))
             W.append((float(a[2])-float(a[1]))/total_len)
     min_c = min(C)
     max_c = max(C)
     mean_c = np.average(C,weights=W)
     stdev_c = np.std(C)
-    print coverage_file + \
+    print(coverage_file + \
             '\tmin:' + str(min_c) + \
             '\tmax:' + str(max_c) + \
-            '\tmean(non-zero):' + str(mean_c) 
+            '\tmean(non-zero):' + str(mean_c))
     f.close()

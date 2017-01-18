@@ -4,7 +4,6 @@ import numpy as np
 import glob
 from optparse import OptionParser
 import l_bp
-from sets import Set
 
 def main():
     usage ="""%prog <VCF file 1> <VCF file 2> ... <VCF file N>
@@ -16,7 +15,7 @@ Version: 0.01
 """
 
     if len(sys.argv) < 2:
-        exit(1)
+        exit(usage)
 
     vcf_file_names = sys.argv[1:]
 
@@ -41,7 +40,7 @@ Version: 0.01
     vcf_headers = list(vcf_headers)
     vcf_headers.sort(cmp=l_bp.header_line_cmp)
     for h in vcf_headers:
-        print h,
+        print(h, end=' ')
 
     vcf_lines.sort(cmp=l_bp.vcf_line_cmp)
     for v in vcf_lines:
@@ -64,7 +63,7 @@ Version: 0.01
 #                A[7] = pre + mid + ',--:0' + post
 #            print '\t'.join(A)
 #        else:
-            print v,
+            print(v, end=' ')
 
 if __name__ == "__main__":
     sys.exit(main())

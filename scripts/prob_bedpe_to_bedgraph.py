@@ -25,7 +25,7 @@ if not options.bedpe:
 
 f = open(options.bedpe,'r')
 
-print 'track type=bedGraph name="' + options.name + '"' 
+print('track type=bedGraph name="' + options.name + '"')
 
 for line in f:
     if line[0] == '#':
@@ -38,8 +38,8 @@ for line in f:
         if len(s_v) == 2:
             info[s_v[0]] = s_v[1]
 
-    L=[float(x) for x in info['PRPOS'].split(',')] 
-    R=[float(x) for x in info['PREND'].split(',')] 
+    L=[float(x) for x in info['PRPOS'].split(',')]
+    R=[float(x) for x in info['PREND'].split(',')]
 
     l_chr = v[0]
     l_start = int(v[1])
@@ -49,19 +49,19 @@ for line in f:
 
     c = 0
     for p in L:
-        print '\t'.join( [l_chr,
+        print('\t'.join( [l_chr,
                           str(l_start + c),
                           str(l_start + c + 1),
-                          str(p)])
+                          str(p)]))
         c+=1
 
     c = 0
     for p in R:
-        print '\t'.join( [r_chr,
+        print('\t'.join( [r_chr,
                           str(r_start + c),
                           str(r_start + c + 1),
-                          str(p)])
+                          str(p)]))
         c+=1
-    
+
 
 f.close()

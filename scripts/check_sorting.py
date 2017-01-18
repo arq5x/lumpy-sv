@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 if len(sys.argv) < 2:
-    print 'usage:' + sys.argv[0] + ' <bam 1> <bam 2> <..>'
+    print('usage:' + sys.argv[0] + ' <bam 1> <bam 2> <..>')
     exit(1)
 
 order = []
@@ -13,7 +13,7 @@ order = []
 
 for i in range(1,len(sys.argv)):
     bam_file = sys.argv[i]
-    print bam_file
+    print(bam_file)
 
     p = subprocess.Popen(\
             ['samtools', 'view', '-H', bam_file], \
@@ -48,19 +48,19 @@ for i in range(1,len(sys.argv)):
                 curr_chrom_index = order.index(chrom)
                 curr_pos = -1
             elif order.index(chrom) < curr_chrom_index:
-                print 'out of order:\t' + l + '\toccurred after\t' + \
-                        order[curr_chrom_index] + '\t' + str(curr_pos)
+                print('out of order:\t' + l + '\toccurred after\t' + \
+                        order[curr_chrom_index] + '\t' + str(curr_pos))
                 broke = True
                 break
 
             if pos > curr_pos:
                 curr_pos = pos
             elif pos < curr_pos:
-                print 'out of order:\t' + l + '\toccurred after\t' + \
-                        order[curr_chrom_index] + '\t' + str(curr_pos)
+                print('out of order:\t' + l + '\toccurred after\t' + \
+                        order[curr_chrom_index] + '\t' + str(curr_pos))
                 broke = True
                 break
     if not broke:
-        print "in order"
+        print("in order")
 
 

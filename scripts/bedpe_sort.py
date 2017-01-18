@@ -54,4 +54,4 @@ else:
 for c in order:
     if c in B:
         for l in sorted(B[c], key=itemgetter(0)):
-            print l[1]
+            print(l[1])

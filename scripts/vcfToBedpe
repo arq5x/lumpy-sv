@@ -152,12 +152,12 @@ class Variant(object):
         self.active_formats = list()
         self.gts = dict()
         # make a genotype for each sample at variant
-        for i in xrange(len(self.sample_list)):
+        for i in range(len(self.sample_list)):
             s_gt = var_list[9+i].split(':')[0]
             s = self.sample_list[i]
             self.gts[s] = Genotype(self, s, s_gt)
         # import the existing fmt fields
-        for i in xrange(len(self.sample_list)):
+        for i in range(len(self.sample_list)):
             s = self.sample_list[i]
             for j in zip(var_list[8].split(':'), var_list[9+i].split(':')):
                 self.gts[s].set_format(j[0], j[1])
@@ -182,7 +182,7 @@ class Variant(object):
     def get_info_string(self):
         i_list = list()
         for info_field in self.info_list:
-            if info_field.id in self.info.keys():
+            if info_field.id in self.info:
                 if info_field.type == 'Flag':
                     i_list.append(info_field.id)
                 else:
@@ -203,7 +203,7 @@ class Variant(object):
             sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')
 
     def get_var_string(self):
-        s = '\t'.join(map(str,[
+        s =[
             self.chrom,
             self.pos,
             self.var_id,
@@ -214,8 +214,8 @@ class Variant(object):
             self.get_info_string(),
             self.get_format_string(),
             '\t'.join(self.genotype(s).get_gt_string() for s in self.sample_list)
-        ]))
-        return s
+        ]
+        return '\t'.join(str(v) for v in s)
 
 class Genotype(object):
     def __init__(self, variant, sample_name, gt):
@@ -247,7 +247,7 @@ class Genotype(object):
                     g_list.append(self.format[f])
             else:
                 g_list.append('.')
-        return ':'.join(map(str,g_list))
+        return ':'.join([str(s) for s in g_list])
 
 # primary function
 def vcfToBedpe(vcf_file, bedpe_out):
@@ -256,7 +256,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
     header = []
     # dict of BND variant lines that have not yet been matched.
     # variant id is the key
-    unmatched = dict()    
+    unmatched = dict()
 
     for line in vcf_file:
         if in_header:
@@ -299,11 +299,11 @@ def vcfToBedpe(vcf_file, bedpe_out):
             o1 = strands[0]
             o2 = strands[1]
 
-            span = map(int, var.info['CIPOS'].split(','))
+            span = [int(i) for i in var.info['CIPOS'].split(',')]
             s1 = b1 + span[0] - 1
             e1 = b1 + span[1]
 
-            span = map(int, var.info['CIEND'].split(','))
+            span = [int(i) for i in var.info['CIEND'].split(',')]
             s2 = b2 + span[0] - 1
             e2 = b2 + span[1]
 
@@ -315,7 +315,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
                 if int(var.info[ev]) > 0:
                     ev_list.append(ev)
             evtype = ','.join(ev_list)
-                    
+
             format_list = v[8].split(':')
             sample_gt = dict()
             var_sample_list = []
@@ -330,26 +330,24 @@ def vcfToBedpe(vcf_file, bedpe_out):
                     var_sample_list.append(sample_list[i])
                 sample_gt[s] = format_dict
 
-            gt_string = '\t'.join(map(str,[sample_gt[s]['SU'] for s in sample_list]))
+            gt_string = '\t'.join([str(sample_gt[s]['SU']) for s in sample_list])
             support = sum([sample_gt[s]['SU'] for s in sample_list])
 
-            bedpe_out.write('\t'.join(map(str,
-                                          [var.chrom,
-                                           s1,
-                                           e1,
-                                           var.chrom,
-                                           s2,
-                                           e2,
-                                           name,
-                                           var.qual,
-                                           o1,
-                                           o2,
-                                           var.info['SVTYPE'],
-                                           var.filter,
-                                           var.get_info_string(),
-                                           var.get_format_string()])
-                                           + [var.gts[sample].get_gt_string() for sample in var.sample_list]
-                                      ) + '\n')
+            bed_l =[var.chrom,
+                    s1,
+                    e1,
+                    var.chrom,
+                    s2,
+                    e2,
+                    name,
+                    var.qual,
+                    o1,
+                    o2,
+                    var.info['SVTYPE'],
+                    var.filter,
+                    var.get_info_string(),
+                    var.get_format_string()]
+            bedpe_out.write('\t'.join(str(s) for s in bed_l + [var.gts[sample].get_gt_string() for sample in var.sample_list]) + '\n')
 
         else:
             mate_id = var.info['MATEID']
@@ -365,11 +363,11 @@ def vcfToBedpe(vcf_file, bedpe_out):
                 o1 = strands[0]
                 o2 = strands[1]
 
-                span = map(int, prim.info['CIPOS'].split(','))
+                span = [int(i) for i in prim.info['CIPOS'].split(',')]
                 s1 = b1 + span[0] - 1
                 e1 = b1 + span[1]
 
-                span = map(int, sec.info['CIPOS'].split(','))
+                span = [int(i) for i in sec.info['CIPOS'].split(',')]
                 s2 = b2 + span[0] - 1
                 e2 = b2 + span[1]
 
@@ -381,7 +379,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
                     if int(var.info[ev]) > 0:
                         ev_list.append(ev)
                 evtype = ','.join(ev_list)
-                            
+
                 format_list = v[8].split(':')
                 sample_gt = dict()
                 var_sample_list = []
@@ -396,26 +394,25 @@ def vcfToBedpe(vcf_file, bedpe_out):
                         var_sample_list.append(sample_list[i])
                     sample_gt[s] = format_dict
 
-                gt_string = '\t'.join(map(str,[sample_gt[s]['SU'] for s in sample_list]))
+                gt_string = '\t'.join([str(sample_gt[s]['SU']) for s in sample_list])
                 support = sum([sample_gt[s]['SU'] for s in sample_list])
 
-                bedpe_out.write('\t'.join(map(str,
-                                              [prim.chrom,
-                                               s1,
-                                               e1,
-                                               sec.chrom,
-                                               s2,
-                                               e2,
-                                               prim.info['EVENT'],
-                                               prim.qual,
-                                               o1,
-                                               o2,
-                                               prim.info['SVTYPE'],
-                                               prim.filter,
-                                               prim.get_info_string(),
-                                               prim.get_format_string(),
-                                               '\t'.join([prim.gts[sample].get_gt_string() for sample in prim.sample_list])
-                                           ])) + '\n')
+                bed_l = [prim.chrom,
+                         s1,
+                         e1,
+                         sec.chrom,
+                         s2,
+                         e2,
+                         prim.info['EVENT'],
+                         prim.qual,
+                         o1,
+                         o2,
+                         prim.info['SVTYPE'],
+                         prim.filter,
+                         prim.get_info_string(),
+                         prim.get_format_string(),
+                         '\t'.join([prim.gts[sample].get_gt_string() for sample in prim.sample_list])]
+                bedpe_out.write('\t'.join([str(s) for s in bed_l]) + '\n')
 
                 # delete the mate from the dictionary
                 del unmatched[mate_id]
@@ -446,6 +443,6 @@ def main():
 if __name__ == '__main__':
     try:
         sys.exit(main())
-    except IOError, e:
+    except IOError as e:
         if e.errno != 32:  # ignore SIGPIPE
-            raise 
+            raise
