@@ -52,7 +52,8 @@ lumpyexpress \
     * Samtools (0.1.18+) ([htslib.org/](http://www.htslib.org/))
     * SAMBLASTER (0.1.19+) ([github repo](https://github.com/GregoryFaust/samblaster))
     * Python 2.7 ([python.org/](https://www.python.org/)) with pysam (0.8.3+) and NumPy (1.8.1+)
-    * sambamba ([gihub repo](https://github.com/lomereiter/sambamba)
+    * sambamba ([gihub repo](https://github.com/lomereiter/sambamba))
+    * gawk ([GNU project](https://www.gnu.org/software/gawk/))
 
 ##### Install
 
