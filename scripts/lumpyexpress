@@ -11,7 +11,7 @@
 function is_cram () {
     local file_path=$1
 
-    header=$(hexdump -n 4 -e '"%c"' ${file_path})
+    header=$($HEXDUMP -n 4 -e '"%c"' ${file_path})
     if [ ${header} == 'CRAM' ]; then
         result=0
     else
@@ -25,9 +25,9 @@ function is_bam () {
     local file_path=$1
     local result=1
 
-    is_gzipped=$(hexdump -n 2 -e '"%x"' ${file_path})
+    is_gzipped=$($HEXDUMP -n 2 -e '"%x"' ${file_path})
     if [ ${is_gzipped} = '8b1f' ]; then
-        is_bam=$(zcat ${file_path} | hexdump -n 3 -e '"%c"')
+        is_bam=$(zcat ${file_path} | $HEXDUMP -n 3 -e '"%c"')
         if [ ${is_bam} = 'BAM' ]; then
             result=0
         fi
@@ -69,6 +69,9 @@ source_binaries() {
 	SAMTOOLS=`which samtools || true`
 	# python 2.7 or newer, must have pysam, numpy installed
 	PYTHON=`which python || true`
+
+    # For testing if the full BAM is actually a CRAM!
+    HEXDUMP=`which hexdump || true`
 
         # python scripts
 	PAIREND_DISTRO=$LUMPY_HOME/scripts/pairend_distro.py
