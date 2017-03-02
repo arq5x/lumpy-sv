@@ -1,3 +1,5 @@
+*NOTE: This is LUMPY 0.2.13 with additional changes to allow lumpyexpress to function when the main file is a CRAM, not a BAM. The splitters and discordants must still be BAM files as LUMPY itself doesn't yet support CRAM as an input.*
+
 For questions and discussion about LUMPY please visit the forum at: 
 
 https://groups.google.com/forum/#!forum/lumpy-discuss
