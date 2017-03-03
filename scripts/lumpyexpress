@@ -79,6 +79,10 @@ source_binaries() {
 	BAMFILTERRG=$LUMPY_HOME/scripts/bamkit/bamfilterrg.py
 	BAMLIBS=$LUMPY_HOME/scripts/bamkit/bamlibs.py
     fi
+
+    # sambamba has a bug where it can't parse CRAM (at least on our system)
+    # see https://github.com/lomereiter/sambamba/issues/280
+    unset SAMBAMBA
 }
 
 # ensure that the require python modules are installed before
