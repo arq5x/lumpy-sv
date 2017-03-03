@@ -1,4 +1,4 @@
-*NOTE: This is LUMPY 0.2.13 with additional changes to allow lumpyexpress to function when the main file is a CRAM, not a BAM. The splitters and discordants must still be BAM files as LUMPY itself doesn't yet support CRAM as an input.*
+*NOTE: This is LUMPY 0.2.13 with additional changes to allow lumpyexpress to function when the main file is a CRAM, not a BAM. The splitters and discordants must still be BAM files as LUMPY itself doesn't yet support CRAM as an input. This requires the hexdump command be available.*
 
 For questions and discussion about LUMPY please visit the forum at: 
 
