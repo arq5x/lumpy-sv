@@ -30,6 +30,9 @@ usage()
     Path options:
     -L      LUMPY source directory ($LUMPY_HOME)
     -S      SAMTOOLS path ($SAMTOOLS)
+
+Note that if \$(dirname \$bam)/\$(basename \$bam .bam).{disc,split}.bam exist (e.g. because of samblaster output)
+then lumpy_smooth can avoid iterating over the entire bam to extract them.
 EOF
 }
 
@@ -120,9 +123,30 @@ BAM_PREP()
       exit 1
     fi
 
+    # if they have .split and .disc then ln them to the expected location.
+    if [[ -f $(dirname $BAM)/$(basename $BAM .bam).split.bam ]]; then
+        if [[ $(realpath $(dirname $BAM)/$(basename $BAM .bam).split.bam) != $(realpath $OUTDIR/$ID.split.bam) ]]; then
+            ln -sf $(dirname $BAM)/$(basename $BAM .bam).split.bam $OUTDIR/$ID.split.bam
+        fi
+    fi
 
-	# NOTE: todo removed.
-    $LUMPY_HOME/bin/lumpy_filter $BAM $OUTDIR/$ID.split.bam $OUTDIR/$ID.disc.bam
+    if [[ -f $(dirname $BAM)/$(basename $BAM .bam).disc.bam ]]; then
+        if [[ $(realpath $(dirname $BAM)/$(basename $BAM .bam).disc.bam) != $(realpath $OUTDIR/$ID.disc.bam) ]]; then
+            ln -sf $(dirname $BAM)/$(basename $BAM .bam).disc.bam $OUTDIR/$ID.disc.bam
+        fi
+    fi
+    has_splitters=OK
+    for f in "$OUTDIR/$ID.split.bam" "$OUTDIR/$ID.disc.bam"; do
+        [ -e "$f" ] || has_splitters=NO
+    done
+    if [[ "$has_splitters" == "OK" ]]; then
+        >&2 echo "using existing splitters:  $(dirname $BAM)/$(basename $BAM .bam).{disc,split}.bam"
+    else
+        #>&2 echo "running lumpy_filter for: $BAM"
+        set -x
+        $LUMPY_HOME/bin/lumpy_filter $BAM $OUTDIR/$ID.split.bam $OUTDIR/$ID.disc.bam
+        set +x
+    fi
 
     READ_LENGTH=`$SAMTOOLS view $BAM \
     | head -n 10000 \

@@ -10,7 +10,7 @@ script:
 
 install:
     - sudo apt-get update
-    - sudo apt-get install libssl-dev gettext gettext-base libtool autoconf
+    - sudo apt-get install libssl-dev gettext gettext-base libtool autoconf gawk
     - unset PYTHONPATH
     - unset PYTHONHOME
     - unset PYTHONUSER
