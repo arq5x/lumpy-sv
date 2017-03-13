@@ -1,3 +1,6 @@
 [submodule "scripts/bamkit"]
 	path = scripts/bamkit
 	url = https://github.com/cc2qe/bamkit.git
+[submodule "lib/htslib"]
+	path = lib/htslib
+	url = https://github.com/samtools/htslib.git

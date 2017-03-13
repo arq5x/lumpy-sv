@@ -41,7 +41,7 @@ UTIL_SUBDIRS =	$(SRC_DIR)/utils/bedFile \
 				$(SRC_DIR)/utils/sqlite3
 
 
-all:	lumpyexpress lumpy lumpy_filter
+all:	lumpy_filter lumpyexpress lumpy
 
 lumpy:	
 	[ -d $(OBJ_DIR) ] || mkdir -p $(OBJ_DIR)
@@ -65,11 +65,16 @@ lumpy:
 	done
 
 lumpy_filter: htslib
+	[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
 	$(MAKE) --no-print-directory -C src/filter/
 	cp src/filter/lumpy_filter $(BIN_DIR)
 
+
 htslib:
-	$(MAKE) --no-print-directory -C lib/htslib
+	$(shell cd lib/htslib && autoreconf)
+	cd lib/htslib && \
+	./configure --disable-bz2 --disable-lzma --enable-libcurl
+	CFLAGS="$(CFLAGS) -DBGZF" $(MAKE) -C lib/htslib --no-print-directory CFLAGS="-DBGZF_MT"
 
 lumpyexpress:
 	[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
