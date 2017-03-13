@@ -6,6 +6,7 @@ export OUTDIR="./"
 export GLOBAL_BREAK_SIZE=250
 export THREADS=1
 export ID_LIST=""
+export NAME=""
 
 export SAMTOOLS=`which samtools`
 
@@ -22,6 +23,7 @@ usage()
     -h      Show this message
     -x      Exclude file
     -o      Output directory ($OUTDIR)
+    -n      Optional basepath for VCF. Will be used as \${OUTDIR}/\${NAME}.vcf
     -t      Threads ($THREADS)
 
     CNV options:
@@ -42,7 +44,7 @@ EOF
     #exit
 #fi
 
-while getopts "h L:x:o:b:t:S:" OPTION; do
+while getopts "h L:x:o:b:n:t:S:" OPTION; do
 case $OPTION in
     h)
         usage
@@ -51,6 +53,9 @@ case $OPTION in
     x)
         EXCLUDE="-x "
         EXCLUDE+=$OPTARG
+        ;;
+    n)
+        NAME=$OPTARG
         ;;
     o)
         OUTDIR=$OPTARG
@@ -140,12 +145,11 @@ BAM_PREP()
         [ -e "$f" ] || has_splitters=NO
     done
     if [[ "$has_splitters" == "OK" ]]; then
-        >&2 echo "using existing splitters:  $(dirname $BAM)/$(basename $BAM .bam).{disc,split}.bam"
+        ( echo "using existing splitters: $(dirname $BAM)/$(basename $BAM .bam).{disc,split}.bam" ; )
     else
         #>&2 echo "running lumpy_filter for: $BAM"
-        set -x
+        set -e
         $LUMPY_HOME/bin/lumpy_filter $BAM $OUTDIR/$ID.split.bam $OUTDIR/$ID.disc.bam
-        set +x
     fi
 
     READ_LENGTH=`$SAMTOOLS view $BAM \
@@ -280,15 +284,19 @@ for SAMPLE_CSV in ${OPTS[@]:$((OPTIND - 1))}; do
     fi
 done
 
-ID_LIST+="vcf"
-# NOTE TODO removed:
-eval $GLOBAL_LUMPY > $OUTDIR/$ID_LIST
+if [[ "$NAME" == "" ]]; then
+    vcf=$OUTDIR/$ID_LIST
+    vcf+="vcf"
+else
+    vcf=$OUTDIR/${NAME}.vcf
+fi
+
+eval $GLOBAL_LUMPY > $vcf
 
 type svtyper >/dev/null 2>&1 || { echo >&2 "svtyper not found. not genotyping"; exit 0; }
 echo >&2 "genotyping with svtyper ..."
 bams=$(echo "$BAMS" | sed -e 's/\\n/,/g')
 
 set -x
-vcf=$OUTDIR/$ID_LIST
 
 bash $LUMPY_HOME/scripts/par-svtyper.sh $vcf $bams | bgzip -@ 5 -c > $OUTDIR/$(basename $vcf .vcf).svtyped.vcf.gz
