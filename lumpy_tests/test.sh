@@ -131,13 +131,22 @@ wget -nc https://s3.amazonaws.com/lumpy/NA12891.bam.bai
 wget -nc https://s3.amazonaws.com/lumpy/NA12892.bam
 wget -nc https://s3.amazonaws.com/lumpy/NA12892.bam.bai
 
+rm -f ./*.{disc,split}.bam
 run lumpy_smooth ../../scripts/lumpy_smooth NA12878.bam NA12891.bam NA12892.bam
+assert_exit_code 0 \
 assert_equal \
     5 \
     $( grep -v "^#" NA12878.NA12891.NA12892.vcf | cut -f 10- | wc -l )
 
+
 assert_equal \
     0 \
     $(diff <(grep -v "^#" NA12878.NA12891.NA12892.vcf.o | cut -f 10- ) <(grep -v "^#" NA12878.NA12891.NA12892.vcf | cut -f 10- ) | wc -l)
+
+run lumpy_smooth ../../scripts/lumpy_smooth NA12878.bam NA12891.bam NA12892.bam
+assert_exit_code 0
+assert_in_stderr "using existing splitters:  ./NA12878"
+assert_in_stderr "using existing splitters:  ./NA12891"
+assert_in_stderr "using existing splitters:  ./NA12892"
 
 cd ..
