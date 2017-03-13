@@ -193,7 +193,7 @@ Otherwise, data may be aligned with BWA-MEM.
 
 ```
 # Align the data
-bwa mem human_g1k_v37.fasta sample.1.fq sample.2.fq \
+bwa mem -R "@RG\tID:id\tSM:sample\tLB:lib" human_g1k_v37.fasta sample.1.fq sample.2.fq \
     | samtools view -S -b - \
     > sample.bam
 
