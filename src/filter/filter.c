@@ -11,6 +11,7 @@
 #include <stdbool.h>
 
 #include "htslib/sam.h"
+#include "htslib/bgzf.h"
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
@@ -186,14 +187,18 @@ int count_tags(char *sa_tag)
 
 int main(int argc, char **argv)
 {
-    if (argc != 4)
+    if (argc < 4)
         errx(1,
-             "usage\t:%s <bam> <split out> <discord out>",
+             "usage\t:%s <bam> <split out> <discord out> (optional #threads)",
              argv[0]);
 
     char *bam_file_name = argv[1];
     char *split_file_name = argv[2];
     char *disc_file_name = argv[3];
+    int threads = 2;
+    if (argc == 5) {
+        threads = atoi(argv[4]);
+    }
 
     samFile *disc = sam_open(disc_file_name, "wb");
 
@@ -202,6 +207,11 @@ int main(int argc, char **argv)
     samFile *in = sam_open(bam_file_name, "rb");
     if(in == NULL)
         errx(1, "Unable to open BAM/SAM file.");
+
+    // TODO: handle cram.
+    if (threads > 1) {
+        bgzf_mt(in->fp.bgzf, threads, 256);
+    }
 
     hts_idx_t *idx = sam_index_load(in, bam_file_name);
     if(idx == NULL)

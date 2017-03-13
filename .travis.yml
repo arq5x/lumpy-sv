@@ -6,9 +6,11 @@ script:
     - ./scripts/lumpyexpress -h
     - python scripts/cnvanator_to_bedpes.py --cnvkit  -b 100 --del_o delo2 --dup_o dupo2 -c data/example.cns
     - bash test/functional-test.sh
+    - cd lumpy_tests && bash test.sh
 
 install:
     - sudo apt-get update
+    - sudo apt-get install libssl-dev gettext gettext-base libtool autoconf
     - unset PYTHONPATH
     - unset PYTHONHOME
     - unset PYTHONUSER
@@ -25,4 +27,5 @@ install:
     - conda config --add channels bioconda
     - conda create -q -n travis python=$TRAVIS_PYTHON_VERSION pysam samtools htslib bedtools
     - source activate travis
+    - autoconf --version
     - make
