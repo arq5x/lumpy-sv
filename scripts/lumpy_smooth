@@ -270,7 +270,7 @@ fi
 export -f BAM_PREP
 echo -en $BAMS  | xargs -I{} -P $THREADS  bash -c "BAM_PREP {}"
 
-export GLOBAL_LUMPY="$LUMPY_HOME/bin/lumpy -mw 4 -tt 0 -P $EXCLUDE "
+export GLOBAL_LUMPY="$LUMPY_HOME/bin/lumpy -mw 4 -t $(mktemp) -tt 0 -P $EXCLUDE "
 
 for SAMPLE_CSV in ${OPTS[@]:$((OPTIND - 1))}; do
     SAMPLE_ARRAY=(${SAMPLE_CSV//,/ })
@@ -291,6 +291,7 @@ else
     vcf=$OUTDIR/${NAME}.vcf
 fi
 
+set -x
 eval $GLOBAL_LUMPY > $vcf
 
 type svtyper >/dev/null 2>&1 || { echo >&2 "svtyper not found. not genotyping"; exit 0; }
