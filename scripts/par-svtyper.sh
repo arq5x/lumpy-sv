@@ -81,6 +81,7 @@ psvtyper() {
     genvcfs $bams | gargs -p $THREADS "svtpar {}" | vcfsort
 }
 
+mkdir -p $TMPDIR
 
 export -f psvtyper
 psvtyper
