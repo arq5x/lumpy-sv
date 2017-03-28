@@ -5,6 +5,48 @@
 #  Author: Colby Chiang (cc2qe@virginia.edu)
 ############################################################
 
+# helper functions to differentiate bam from cram input files. Courtesy idas (https://github.com/indraniel)
+
+# Check if a file is a cram or bam based on the binary header
+function is_cram () {
+    local file_path=$1
+
+    header=$($HEXDUMP -n 4 -e '"%c"' ${file_path})
+    if [ ${header} == 'CRAM' ]; then
+        result=0
+    else
+        result=1
+    fi
+
+    return ${result}
+}
+
+function is_bam () {
+    local file_path=$1
+    local result=1
+
+    is_gzipped=$($HEXDUMP -n 2 -e '"%x"' ${file_path})
+    if [ ${is_gzipped} = '8b1f' ]; then
+        is_bam=$(zcat ${file_path} | $HEXDUMP -n 3 -e '"%c"')
+        if [ ${is_bam} = 'BAM' ]; then
+            result=0
+        fi
+    fi
+
+    return ${result}
+}
+
+# ensure that we have a valid CRAM or BAM file
+function check_valid_cram_or_bam () {
+    local input_path=$1
+    if is_cram ${input_path} || is_bam ${input_path} ; then
+        echo -e "${input_path} is a valid CRAM/BAM file"
+    else
+        echo -e "${input_path}: is NOT a valid CRAM/BAM file!"
+        exit 1
+    fi
+}
+
 # source the paths to the binaries used in the script
 source_binaries() {
     if [[ -e $1 ]]
@@ -28,12 +70,19 @@ source_binaries() {
 	# python 2.7 or newer, must have pysam, numpy installed
 	PYTHON=`which python || true`
 
+    # For testing if the full BAM is actually a CRAM!
+    HEXDUMP=`which hexdump || true`
+
         # python scripts
 	PAIREND_DISTRO=$LUMPY_HOME/scripts/pairend_distro.py
 	BAMGROUPREADS=$LUMPY_HOME/scripts/bamkit/bamgroupreads.py
 	BAMFILTERRG=$LUMPY_HOME/scripts/bamkit/bamfilterrg.py
 	BAMLIBS=$LUMPY_HOME/scripts/bamkit/bamlibs.py
     fi
+
+    # sambamba has a bug where it can't parse CRAM (at least on our system)
+    # see https://github.com/lomereiter/sambamba/issues/280
+    unset SAMBAMBA
 }
 
 # ensure that the require python modules are installed before
@@ -178,12 +227,14 @@ fi
 if [[ ! -z "$SAMBAMBA" ]]
 then
     SAMT="$SAMBAMBA"
+    CRAM_SAMT_ARG="-C"
     SAMT_STREAM="$SAMBAMBA view -f bam -l 0"
     SAMTOBAM="$SAMBAMBA view -S -f bam -l 0"
     SAMSORT="$SAMBAMBA sort -m 1G --tmpdir "
 elif [[ ! -z "$SAMTOOLS" ]]
 then
     SAMT="$SAMTOOLS"
+    CRAM_SAMT_ARG=""
     SAMT_STREAM="$SAMTOOLS view -u"
     SAMTOBAM="$SAMTOOLS view -S -u"
     SAMSORT="$SAMTOOLS sort -m 1G -T "
@@ -257,9 +308,13 @@ then
     for i in $( seq 0 $(( ${#FULL_BAM_LIST[@]}-1 )) )
     do
 	FULL_BAM=${FULL_BAM_LIST[$i]}
+    EXT_OPT=""
+    if is_cram $FULL_BAM; then
+        EXT_OPT=$CRAM_SAMT_ARG
+    fi
 
 	# calc readlength if not provided
-	READ_LENGTH=`$SAMT view $FULL_BAM | head -n 10000 | gawk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`
+	READ_LENGTH=`$SAMT view $EXT_OPT $FULL_BAM | head -n 10000 | gawk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`
 
 	# parse the libraries in the BAM header to extract readgroups from the same library
 	LIB_RG_LIST=(`$PYTHON $BAMLIBS $FULL_BAM`)
@@ -300,7 +355,7 @@ then
 
 	    # generate discordant pair string for LUMPY
 	    DISC_BAM=$TEMP_DIR/$OUTBASE.sample$(($i+1)).discordants.bam
-	    DISC_SAMPLE=`$SAMT view -H $FULL_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	    DISC_SAMPLE=`$SAMT view $EXT_OPT -H $FULL_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	    RG_STRING=`echo "${LIB_RG_LIST[$j]}" | sed 's/,/,read_group:/g' | sed 's/^/read_group:/g'`
 	    MEAN=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^mean" | sed 's/mean\://g'`
 	    STDEV=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^stdev" | sed 's/stdev\://g'`
@@ -308,7 +363,7 @@ then
 
 	    # generate split-read string for LUMPY
 	    SPL_BAM=$TEMP_DIR/$OUTBASE.sample$(($i+1)).splitters.bam
-	    SPL_SAMPLE=`$SAMT view -H $FULL_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	    SPL_SAMPLE=`$SAMT view $EXT_OPT -H $FULL_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	    LUMPY_SPL_STRING="$LUMPY_SPL_STRING -sr bam_file:${SPL_BAM},back_distance:10,min_mapping_threshold:20,weight:1,id:${SPL_SAMPLE},min_clip:20,${RG_STRING}"
 	done
 
@@ -349,6 +404,10 @@ else
     for i in $( seq 0 $(( ${#FULL_BAM_LIST[@]}-1 )) )
     do
 	FULL_BAM=${FULL_BAM_LIST[$i]}
+    EXT_OPT=""
+    if is_cram $FULL_BAM; then
+        EXT_OPT=$CRAM_SAMT_ARG
+    fi
 	DISC_BAM=${DISC_BAM_LIST[$i]}
 	SPL_BAM=${SPL_BAM_LIST[$i]}
 
@@ -367,10 +426,10 @@ else
 	for j in $( seq 0 $(( ${#LIB_RG_LIST[@]}-1 )) )
 	do
 	    # calculate read length if not provided
-	    LIB_READ_LENGTH_LIST+=(`$SAMT view ${FULL_BAM_LIST[$i]} | head -n 10000 | gawk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`)
+	    LIB_READ_LENGTH_LIST+=(`$SAMT view $EXT_OPT ${FULL_BAM_LIST[$i]} | head -n 10000 | gawk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`)
 	    echo "Library read groups: ${LIB_RG_LIST[$j]}"
 	    echo "Library read length: ${LIB_READ_LENGTH_LIST[$j]}"
-	    $SAMT_STREAM ${FULL_BAM_LIST[$i]} \
+	    $SAMT_STREAM $EXT_OPT ${FULL_BAM_LIST[$i]} \
 		| $PYTHON $BAMFILTERRG -n 10000000 --readgroup ${LIB_RG_LIST[$j]} \
 		| grep -v '^@' \
 		| tail -n 1000000 \
