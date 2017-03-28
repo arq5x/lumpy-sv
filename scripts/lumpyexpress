@@ -101,9 +101,10 @@ usage() {
 usage:   lumpyexpress [options]
 
 options:
-     -B FILE  full BAM file(s) (comma separated) (required)
+     -B FILE  full BAM or CRAM file(s) (comma separated) (required)
      -S FILE  split reads BAM file(s) (comma separated)
      -D FILE  discordant reads BAM files(s) (comma separated)
+     -R FILE  indexed reference genome fasta file (recommended for CRAMs)
      -o FILE  output file [fullBam.bam.vcf]
      -x FILE  BED file to exclude
      -P       output probability curves for each variant
@@ -136,8 +137,10 @@ OUTPUT=""
 MAX_SPLIT_COUNT=2
 MIN_NON_OVERLAP=20
 PROB_CURVE=""
+REF=""
+REF_ARG=""
 
-while getopts ":hB:S:D:o:m:r:x:T:t:PAdgkvK:" OPTION
+while getopts ":hB:S:D:R:o:m:r:x:T:t:PAdgkvK:" OPTION
 do
     case "${OPTION}" in
 	h)
@@ -152,6 +155,10 @@ do
 	    ;;
 	D)
 	    DISC_BAM_STRING="$OPTARG"
+	    ;;
+	R)
+	    REF="$OPTARG"
+	    REF_ARG="-T $OPTARG"
 	    ;;
 	o)
 	    OUTPUT="$OPTARG"
@@ -308,10 +315,10 @@ then
     for i in $( seq 0 $(( ${#FULL_BAM_LIST[@]}-1 )) )
     do
 	FULL_BAM=${FULL_BAM_LIST[$i]}
-    EXT_OPT=""
-    if is_cram $FULL_BAM; then
-        EXT_OPT=$CRAM_SAMT_ARG
-    fi
+	EXT_OPT=""
+	if is_cram $FULL_BAM; then
+            EXT_OPT="$CRAM_SAMT_ARG $REF_ARG"
+	fi
 
 	# calc readlength if not provided
 	READ_LENGTH=`$SAMT view $EXT_OPT $FULL_BAM | head -n 10000 | gawk 'BEGIN { MAX_LEN=0 } { LEN=length($10); if (LEN>MAX_LEN) MAX_LEN=LEN } END { print MAX_LEN }'`
@@ -404,10 +411,10 @@ else
     for i in $( seq 0 $(( ${#FULL_BAM_LIST[@]}-1 )) )
     do
 	FULL_BAM=${FULL_BAM_LIST[$i]}
-    EXT_OPT=""
-    if is_cram $FULL_BAM; then
-        EXT_OPT=$CRAM_SAMT_ARG
-    fi
+	EXT_OPT=""
+	if is_cram $FULL_BAM; then
+            EXT_OPT="$CRAM_SAMT_ARG $REF_ARG"
+	fi
 	DISC_BAM=${DISC_BAM_LIST[$i]}
 	SPL_BAM=${SPL_BAM_LIST[$i]}
 
