@@ -9,7 +9,6 @@
 #  rl6sf@virginia.edu
 
 import sys
-import numpy as np
 from operator import itemgetter
 from optparse import OptionParser
 
@@ -47,13 +46,21 @@ parser.add_option("-m",
     default=10,
     help="Outlier cutoff in # of median absolute deviations (unscaled, upper only)")
 
+def median(L):
+    if len(L) % 2 == 1:
+        return L[len(L)/2]
+    mid = len(L) / 2 - 1
+    return (L[mid] + L[mid+1]) / 2.0
+
 def unscaled_upper_mad(xs):
     """Return a tuple consisting of the median of xs followed by the
     unscaled median absolute deviation of the values in xs that lie
     above the median.
     """
-    med = np.median(xs)
-    return med, np.median(xs[xs > med] - med)
+    xs.sort()
+    med = median(xs)
+    umad = median([x - med for x in xs if x > med])
+    return med, umad
 
 
 (options, args) = parser.parse_args()
@@ -70,6 +77,14 @@ if not options.N:
 if not options.output_file:
     parser.error('Output file not given')
 
+def mean_std(L):
+    s = sum(L)
+    mean = s / float(len(L))
+    sq_sum = 0.0
+    for v in L:
+        sq_sum += (v - mean)**2.0
+    var = sq_sum / float(len(L))
+    return mean, var**0.5
 
 required = 97
 restricted = 3484
@@ -102,19 +117,16 @@ if len(L) < min_elements:
 
 else:
     # Remove outliers
-    L = np.array(L)
-    L.sort()
     med, umad = unscaled_upper_mad(L)
     upper_cutoff = med + options.mads * umad
-    L = L[L < upper_cutoff]
+    L = [v for v in L if v < upper_cutoff]
     new_len = len(L)
     removed = c - new_len
     sys.stderr.write("Removed %d outliers with isize >= %d\n" %
         (removed, upper_cutoff))
     c = new_len
 
-    mean = np.mean(L)
-    stdev = np.std(L)
+    mean, stdev = mean_std(L)
 
     start = options.read_length
     end = int(mean + options.X*stdev)

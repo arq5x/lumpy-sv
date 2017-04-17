@@ -1,0 +1,33 @@
+language: python
+python:
+  - "2.7"
+script: 
+    - source activate travis
+    - ./scripts/lumpyexpress -h
+    - python scripts/cnvanator_to_bedpes.py --cnvkit  -b 100 --del_o delo2 --dup_o dupo2 -c data/example.cns
+    - bash test/functional-test.sh
+    - cd lumpy_tests && bash test.sh
+
+install:
+    - sudo apt-get update
+    - sudo apt-get install libssl-dev gettext gettext-base libtool autoconf gawk
+    - unset PYTHONPATH
+    - unset PYTHONHOME
+    - unset PYTHONUSER
+    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+        wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+      else
+        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+      fi
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH="$HOME/miniconda/bin:$PATH"
+    - hash -r
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    - conda config --add channels bioconda
+    - conda create -q -n travis python=$TRAVIS_PYTHON_VERSION pysam samtools htslib bedtools
+    - source activate travis
+    - git clone https://github.com/hall-lab/svtyper.git
+    - sudo cp svtyper/svtyper /usr/local/bin/
+    - autoconf --version
+    - make

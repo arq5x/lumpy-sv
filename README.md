@@ -4,6 +4,8 @@ For questions and discussion about LUMPY please visit the forum at:
 
 https://groups.google.com/forum/#!forum/lumpy-discuss
 
+[![Build Status](https://travis-ci.org/arq5x/lumpy-sv.svg?branch=master)](https://travis-ci.org/arq5x/lumpy-sv)
+
 LUMPY
 =====
 
@@ -49,17 +51,33 @@ lumpyexpress \
     * g++ compiler
     * CMake
 - LUMPY Express (optional)
-    * Samtools (0.1.18+) ([http://www.htslib.org/](http://www.htslib.org/))
-    * SAMBLASTER (0.1.19+) ([https://github.com/GregoryFaust/samblaster](https://github.com/GregoryFaust/samblaster))
-    * Python 2.7 ([https://www.python.org/](https://www.python.org/)) with pysam (0.8.3+) and NumPy (1.8.1+)
+    * Samtools (0.1.18+) ([htslib.org/](http://www.htslib.org/))
+    * SAMBLASTER (0.1.19+) ([github repo](https://github.com/GregoryFaust/samblaster))
+    * Python 2.7 ([python.org/](https://www.python.org/)) with pysam (0.8.3+) and NumPy (1.8.1+)
+    * sambamba ([gihub repo](https://github.com/lomereiter/sambamba))
+    * gawk ([GNU project](https://www.gnu.org/software/gawk/))
 
 ##### Install
+
+Default method to install:
+
 ```
 git clone --recursive git@github.com:arq5x/lumpy-sv.git
 cd lumpy-sv
 make
 cp bin/* /usr/local/bin/.
 ```
+
+Installing with costom zlib (gzopen64 compile error):
+
+```
+git clone --recursive git@github.com:arq5x/lumpy-sv.git
+cd lumpy-sv
+export ZLIB_PATH="/usr/lib/x86_64-linux-gnu/"; #when /usr/lib/x86_64-linux-gnu/libz.so
+make
+cp bin/* /usr/local/bin/.
+```
+
 
 ## LUMPY Express usage
 Automated breakpoint detection for standard analyses.
@@ -177,7 +195,7 @@ Otherwise, data may be aligned with BWA-MEM.
 
 ```
 # Align the data
-bwa mem human_g1k_v37.fasta sample.1.fq sample.2.fq \
+bwa mem -R "@RG\tID:id\tSM:sample\tLB:lib" human_g1k_v37.fasta sample.1.fq sample.2.fq \
     | samtools view -S -b - \
     > sample.bam
 

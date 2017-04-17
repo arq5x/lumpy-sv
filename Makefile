@@ -1,7 +1,7 @@
 
 # ==========================
-# BEDTools Makefile
-# (c) 2009 Aaron Quinlan
+# Lumpy Makefile
+# (c) 2016 Jim Havrilla
 # ==========================
 
 SHELL := /bin/bash -e
@@ -17,7 +17,9 @@ export SRC_DIR	= src
 export UTIL_DIR	= src/utils
 export SCRIPTS_DIR = scripts
 export CXX		= g++
-export ZLIB_PATH=$(HOME)/src/zlib-1.2.8
+ifeq ($(ZLIB_PATH),)
+	export ZLIB_PATH=$(HOME)/src/zlib-1.2.8
+endif
 #export CXXFLAGS = -Wall -O0 -g -fno-inline -fkeep-inline-functions -D_FILE_OFFSET_BITS=64 -fPIC -DDEBUG -D_DEBUG -DTRACE
 #export CXXFLAGS = -Wall -O0 -g -fno-inline -fkeep-inline-functions -D_FILE_OFFSET_BITS=64 -fPIC 
 export CXXFLAGS = -Wall -O2 -D_FILE_OFFSET_BITS=64 -fPIC 
@@ -39,7 +41,9 @@ UTIL_SUBDIRS =	$(SRC_DIR)/utils/bedFile \
 				$(SRC_DIR)/utils/sqlite3
 
 
-all:	lumpyexpress
+all:	lumpy_filter lumpyexpress lumpy
+
+lumpy:	
 	[ -d $(OBJ_DIR) ] || mkdir -p $(OBJ_DIR)
 	[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
 
@@ -59,6 +63,18 @@ all:	lumpyexpress
 		$(MAKE) --no-print-directory -C $$dir; \
 		echo ""; \
 	done
+
+lumpy_filter: htslib
+	[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
+	$(MAKE) --no-print-directory -C src/filter/
+	cp src/filter/lumpy_filter $(BIN_DIR)
+
+
+htslib:
+	$(shell cd lib/htslib && autoreconf)
+	cd lib/htslib && \
+	./configure --disable-bz2 --disable-lzma --enable-libcurl
+	CFLAGS="$(CFLAGS) -DBGZF" $(MAKE) -C lib/htslib --no-print-directory CFLAGS="-DBGZF_MT"
 
 lumpyexpress:
 	[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)

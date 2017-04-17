@@ -1,3 +1,15 @@
 *.o
 bin/*
 obj/*
+ssshtest
+data/
+data.tar.gz
+src/utils/BamTools
+lumpy_tests/*/*.bam
+lumpy_tests/*/*.bai
+lumpy_tests/*/*.histo
+lumpy_tests/*/*.stats
+lumpy_tests/*/*.vcf
+lumpy_tests/*/*.bedpe
+src/filter/lumpy_filter
+data/*

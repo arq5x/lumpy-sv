@@ -1,0 +1,303 @@
+#!/bin/bash
+
+set -e
+export EXCLUDE=""
+export OUTDIR="./"
+export GLOBAL_BREAK_SIZE=250
+export THREADS=1
+export ID_LIST=""
+export NAME=""
+
+export SAMTOOLS=`which samtools`
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+export LUMPY_HOME=`dirname $DIR`
+
+usage()
+{
+    cat << EOF
+    usage: `basename $0` OPTIONS bam,cnv(opt.) bam,cnv(opt.) ...
+
+    General options:
+    -h      Show this message
+    -x      Exclude file
+    -o      Output directory ($OUTDIR)
+    -n      Optional basepath for VCF. Will be used as \${OUTDIR}/\${NAME}.vcf
+    -t      Threads ($THREADS)
+
+    CNV options:
+    -b      Breakpoint window size ($GLOBAL_BREAK_SIZE)
+
+    Path options:
+    -L      LUMPY source directory ($LUMPY_HOME)
+    -S      SAMTOOLS path ($SAMTOOLS)
+
+Note that if \$(dirname \$bam)/\$(basename \$bam .bam).{disc,split}.bam exist (e.g. because of samblaster output)
+then lumpy_smooth can avoid iterating over the entire bam to extract them.
+EOF
+}
+
+# Show usage when there are no arguments.
+#if test -z "$1"; then
+    #usage
+    #exit
+#fi
+
+while getopts "h L:x:o:b:n:t:S:" OPTION; do
+case $OPTION in
+    h)
+        usage
+        exit 1
+        ;;
+    x)
+        EXCLUDE="-x "
+        EXCLUDE+=$OPTARG
+        ;;
+    n)
+        NAME=$OPTARG
+        ;;
+    o)
+        OUTDIR=$OPTARG
+        ;;
+    b)
+        GLOBAL_BREAK_SIZE=$OPTARG
+        ;;
+    t)
+        THREADS=$OPTARG
+        ;;
+    L)
+        LUMPY_HOME=$OPTARG
+        ;;
+    S)
+        SAMTOOLS=$OPTARG
+        ;;
+    ?)
+        usage
+        exit
+        ;;
+    esac
+done
+
+if [ -z "$LUMPY_HOME" ]; then
+    echo "ERROR: LUMPY source directory (-L) must be set"
+    usage
+    exit 1
+fi
+
+if [ -z "$SAMTOOLS" ]; then
+    echo "ERROR: samtools not found. Set with -S"
+    usage
+    exit 1
+fi
+
+EXECS="$LUMPY_HOME/bin/lumpy_filter
+$SAMTOOLS
+$LUMPY_HOME/scripts/pairend_distro.py
+$LUMPY_HOME/scripts/cnvanator_to_bedpes.py
+$LUMPY_HOME/bin/lumpy"
+
+BREAK=0
+
+for EXEC in $EXECS; do
+    command -v $EXEC \
+    >/dev/null 2>&1 \
+    || { echo >&2 "ERROR: $EXEC not found"; BREAK=1; }
+done
+
+if [ "$BREAK" -eq "1" ]; then
+    exit 1;
+fi
+
+
+BAM_PREP()
+{
+    set -e
+    BAM=$1
+
+    ID=""
+    if [ "$(uname)" == "Darwin" ]; then
+        ID=`$SAMTOOLS view -H $BAM | grep "^@RG" | grep -o "SM:\w*" | cut -d":" -f2 | sort -u`
+    else
+        ID=`$SAMTOOLS view -H $BAM | grep "^@RG" | grep -oP "SM:[^\s]*" | cut -d":" -f2 | sort -u`
+    fi
+
+    RG_NUM=`echo -e $ID | wc -l`
+    if [ "$RG_NUM" -ne "1" ]; then
+      echo "Does not support more than 1 readgroup. $RG_NUM found."
+      exit 1
+    fi
+
+    # if they have .split and .disc then ln them to the expected location.
+    if [[ -f $(dirname $BAM)/$(basename $BAM .bam).split.bam ]]; then
+        if [[ $(realpath $(dirname $BAM)/$(basename $BAM .bam).split.bam) != $(realpath $OUTDIR/$ID.split.bam) ]]; then
+            ln -sf $(dirname $BAM)/$(basename $BAM .bam).split.bam $OUTDIR/$ID.split.bam
+        fi
+    fi
+
+    if [[ -f $(dirname $BAM)/$(basename $BAM .bam).disc.bam ]]; then
+        if [[ $(realpath $(dirname $BAM)/$(basename $BAM .bam).disc.bam) != $(realpath $OUTDIR/$ID.disc.bam) ]]; then
+            ln -sf $(dirname $BAM)/$(basename $BAM .bam).disc.bam $OUTDIR/$ID.disc.bam
+        fi
+    fi
+    has_splitters=OK
+    for f in "$OUTDIR/$ID.split.bam" "$OUTDIR/$ID.disc.bam"; do
+        [ -e "$f" ] || has_splitters=NO
+    done
+    if [[ "$has_splitters" == "OK" ]]; then
+        ( echo "using existing splitters: $(dirname $BAM)/$(basename $BAM .bam).{disc,split}.bam" ; )
+    else
+        #>&2 echo "running lumpy_filter for: $BAM"
+        set -e
+        $LUMPY_HOME/bin/lumpy_filter $BAM $OUTDIR/$ID.split.bam $OUTDIR/$ID.disc.bam
+    fi
+
+    READ_LENGTH=`$SAMTOOLS view $BAM \
+    | head -n 10000 \
+    | gawk '
+        BEGIN { MAX_LEN=0 } 
+        { LEN=length($10); 
+        if (LEN>MAX_LEN) MAX_LEN=LEN } 
+        END { print MAX_LEN }'`
+
+    echo $READ_LENGTH
+
+    $SAMTOOLS view $BAM \
+        | tail -n+100000 \
+        | $LUMPY_HOME/scripts/pairend_distro.py \
+        -r $READ_LENGTH \
+        -X 4 \
+        -N 10000 \
+        -o $OUTDIR/$ID.histo \
+     > $OUTDIR/$ID.stats
+}
+
+GET_BAM_PARAMS () {
+    set -e 
+
+    BAM=$1
+    CNV_FILE=""
+
+    if [ "$#" -gt 1 ]; then
+        CNV_FILE=$2
+    fi
+
+    LOCAL_BREAK_SIZE=$GLOBAL_BREAK_SIZE
+    if [ "$#" -gt 2 ]; then
+        LOCAL_BREAK_SIZE=$3
+    fi
+
+    ID=""
+    if [ "$(uname)" == "Darwin" ]; then
+        ID=`$SAMTOOLS view -H $BAM | grep "^@RG" | grep -o "SM:\w*" | cut -d":" -f2 | sort -u`
+    else
+        ID=`$SAMTOOLS view -H $BAM | grep "^@RG" | grep -oP "SM:[^\s]*" | cut -d":" -f2 | sort -u`
+    fi
+
+    RG_NUM=`echo -e $ID | wc -l`
+    if [ "$RG_NUM" -ne "1" ]; then
+      echo "Does not support more than 1 readgroup. $RG_NUM found."
+      exit 1
+    fi
+
+    ID_LIST+="$ID."
+
+    DEL_BEDPE=""
+    DUP_BEDPE=""
+    if [ ! -z $CNV_FILE ]; then
+        IS_CNVKIT=""
+        if [ "${CNV_FILE: -4}" == ".cns" ]; then
+          IS_CNVKIT="--cnvkit "
+        fi
+
+        if [ "${CNV_FILE: -4}" == ".cnr" ]; then
+          IS_CNVKIT="--cnvkit "
+        fi
+
+        $LUMPY_HOME/scripts/cnvanator_to_bedpes.py \
+          $IS_CNVKIT \
+          -c $CNV_FILE \
+          --del_o $OUTDIR/$ID.del.bedpe \
+          --dup_o $OUTDIR/$ID.dup.bedpe \
+          -b $LOCAL_BREAK_SIZE
+
+        DEL_BEDPE=$OUTDIR/$ID.del.bedpe
+        DUP_BEDPE=$OUTDIR/$ID.dup.bedpe
+    fi
+
+    READ_LENGTH=`$SAMTOOLS view $BAM \
+    | head -n 10000 \
+    | gawk '
+        BEGIN { MAX_LEN=0 } 
+        { LEN=length($10); 
+        if (LEN>MAX_LEN) MAX_LEN=LEN } 
+        END { print MAX_LEN }'`
+    
+    MEAN=`cat $OUTDIR/$ID.stats | tail -n 1| cut -f1 | cut -d":" -f2`
+    STD=`cat $OUTDIR/$ID.stats | tail -n 1| cut -f2 | cut -d":" -f2`
+    PE_PARAM="-pe id:$ID,bam_file:$OUTDIR/$ID.disc.bam,histo_file:$OUTDIR/$ID.histo,mean:$MEAN,stdev:$STD,read_length:$READ_LENGTH,min_non_overlap:$READ_LENGTH,discordant_z:4,back_distance:20,weight:1,min_mapping_threshold:20 "
+
+    GLOBAL_LUMPY+=$PE_PARAM
+
+    SR_PARAM="-sr id:$ID,bam_file:$OUTDIR/$ID.split.bam,back_distance:10,weight:1,min_mapping_threshold:20 "
+
+    GLOBAL_LUMPY+=$SR_PARAM
+
+    if [ ! -z $CNV_FILE ]; then
+        CNV_DEL_PARAM="-bedpe bedpe_file:$DEL_BEDPE,id:$ID,weight:2 "
+        GLOBAL_LUMPY+=$CNV_DEL_PARAM
+
+        CNV_DUP_PARAM="-bedpe bedpe_file:$DUP_BEDPE,id:$ID,weight:2 "
+        GLOBAL_LUMPY+=$CNV_DUP_PARAM
+    fi
+}
+
+
+BAMS=""
+TMP=$@
+OPTS=(${TMP// / })
+for SAMPLE_CSV in ${OPTS[@]:$((OPTIND - 1))}; do
+    SAMPLE_ARRAY=(${SAMPLE_CSV//,/ })
+    BAMS+="${SAMPLE_ARRAY[0]}\n"
+done
+BAMS=$(echo $BAMS | sed 's/\\n$//')
+
+if [ -z "$BAMS" ];then
+    echo "No bams given"
+    exit
+fi
+
+export -f BAM_PREP
+echo -en $BAMS  | xargs -I{} -P $THREADS  bash -c "BAM_PREP {}"
+
+export GLOBAL_LUMPY="$LUMPY_HOME/bin/lumpy -mw 4 -t $(mktemp) -tt 0 -P $EXCLUDE "
+
+for SAMPLE_CSV in ${OPTS[@]:$((OPTIND - 1))}; do
+    SAMPLE_ARRAY=(${SAMPLE_CSV//,/ })
+    LEN=${#SAMPLE_ARRAY[@]}
+    if [ "$LEN" -eq "1" ]; then
+        GET_BAM_PARAMS ${SAMPLE_ARRAY[0]}
+    elif [ "$LEN" -eq "2" ]; then
+        GET_BAM_PARAMS ${SAMPLE_ARRAY[0]} ${SAMPLE_ARRAY[1]}
+    else
+        GET_BAM_PARAMS ${SAMPLE_ARRAY[0]} ${SAMPLE_ARRAY[1]} ${SAMPLE_ARRAY[2]}
+    fi
+done
+
+if [[ "$NAME" == "" ]]; then
+    vcf=$OUTDIR/$ID_LIST
+    vcf+="vcf"
+else
+    vcf=$OUTDIR/${NAME}.vcf
+fi
+
+set -x
+eval $GLOBAL_LUMPY > $vcf
+
+type svtyper >/dev/null 2>&1 || { echo >&2 "svtyper not found. not genotyping"; exit 0; }
+echo >&2 "genotyping with svtyper ..."
+bams=$(echo "$BAMS" | sed -e 's/\\n/,/g')
+
+set -x
+
+bash $LUMPY_HOME/scripts/par-svtyper.sh $vcf $bams | bgzip -@ 5 -c > $OUTDIR/$(basename $vcf .vcf).svtyped.vcf.gz
