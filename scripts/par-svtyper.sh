@@ -9,7 +9,7 @@ svtpar() {
     set -euo pipefail
     subvcf=$1
     lib=$TMPDIR/tmp.$mypid.$(echo $bams | md5sum | awk '{ print $1 }').lib
-    svtyper -B $bams -i $subvcf -l $lib
+    svtyper --max_depth 600 -B $bams -i $subvcf -l $lib
     # vcf is a temporary file so clean it up.
     # but for the first time, it's and fd from the header so the rm will fail.
     set +e
