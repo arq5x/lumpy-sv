@@ -132,6 +132,7 @@ wget -nc https://s3.amazonaws.com/lumpy/NA12892.bam
 wget -nc https://s3.amazonaws.com/lumpy/NA12892.bam.bai
 
 rm -f ./*.{disc,split}.bam
+rm -f ./trio*vcf*
 run lumpy_smooth ../../scripts/lumpy_smooth NA12878.bam NA12891.bam NA12892.bam
 assert_exit_code 0 \
 assert_equal \
@@ -148,6 +149,7 @@ assert_exit_code 0
 assert_equal $(grep -c "using existing splitters:" $STDOUT_FILE) 3
 
 assert_equal 5 $(zgrep -cv ^# trio.vcf)
+cat $STDERR_FILE
 assert_equal 5 $(zgrep -cv ^# trio.svtyped.vcf.gz)
 
 cd ..

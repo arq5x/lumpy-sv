@@ -20,27 +20,29 @@ export -f svtpar
 
 genvcfs() {
     set -euo pipefail
-    bams=$1
-    nth=0
-    tmpvcf=$TMPDIR/tmp.$$.$nth.vcf
-    echo -e "$header" > $tmpvcf
-    k=0
+    lines=$1
+    vcf=$2
+    set +e
+    header="$(less $vcf | head -2000 | grep ^#)"
+    set -e
     # run this once to force the calculation of the bam stats.
     # this avoids a race condition.
-    svtpar <(echo -e "$header")
-    while read -r line || [[ -n "$line" ]]; do
-        k=$((k + 1))
-        echo -e "$line" >> $tmpvcf
-        if [[ "$k" -eq "$LINES" ]]; then
-            # echo the bam and the vcf so they can be sent to svtyper.
-            echo "$tmpvcf"
-            nth=$((nth + 1))
-            tmpvcf=$TMPDIR/tmp.$$.$nth.vcf
-            echo -e "$header" > $tmpvcf
-            k=0;
-        fi 
-    done < "$vcf"
-    echo "$tmpvcf"
+
+    zless "$vcf" | awk -vtmp=$TMPDIR -vtmpvcf="$TMPDIR/0.tmp.$$.vcf" -vpid=$$ -v header="$header"  -vLINES=$lines 'BEGIN{nth=1;} !((NR - 1) % LINES) {
+        # we print the tmpvcf and move onto the next.
+        if(NR > 1) {
+            print tmpvcf;
+        }
+        tmpvcf=tmp"/"nth".tmp."pid".vcf.gz"
+        print header > tmpvcf;
+        nth+=1;
+    }
+    {
+        print $0 > tmpvcf;
+    }
+    END {
+        print tmpvcf;
+    }' 
 }
 
 vcfsort() {
@@ -56,7 +58,7 @@ fi
 export mypid=$$
 
 cleanup() {
-   rm -f $TMPDIR/tmp.$mypid.*.vcf
+   rm -f $TMPDIR/*.$mypid.vcf*
    rm -f $TMPDIR/tmp.$mypid.*.lib
 }
 
@@ -78,7 +80,8 @@ type gargs >/dev/null 2>&1 || {
 psvtyper() {
     set -euo pipefail
     export header=$(head -2000 $vcf | grep ^#)
-    genvcfs $bams | gargs -p $THREADS "svtpar {}" | vcfsort
+    svtpar <(echo -e "$header")
+    genvcfs $LINES $vcf | gargs -p $THREADS "svtpar {}" | vcfsort
 }
 
 mkdir -p $TMPDIR

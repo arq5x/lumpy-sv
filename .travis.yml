@@ -25,7 +25,7 @@ install:
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
     - conda config --add channels bioconda
-    - conda create -q -n travis python=$TRAVIS_PYTHON_VERSION pysam samtools htslib bedtools
+    - conda create -q -n travis python=$TRAVIS_PYTHON_VERSION samtools htslib bedtools pysam
     - source activate travis
     - git clone https://github.com/hall-lab/svtyper.git
     - sudo cp svtyper/svtyper /usr/local/bin/

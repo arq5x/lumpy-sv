@@ -270,7 +270,7 @@ fi
 export -f BAM_PREP
 echo -en $BAMS  | xargs -I{} -P $THREADS  bash -c "BAM_PREP {}"
 
-export GLOBAL_LUMPY="$LUMPY_HOME/bin/lumpy -mw 4 -t $(mktemp) -tt 0 -P $EXCLUDE "
+export GLOBAL_LUMPY="$LUMPY_HOME/bin/lumpy -mw 4 -t $(mktemp) -tt 0 $EXCLUDE "
 
 for SAMPLE_CSV in ${OPTS[@]:$((OPTIND - 1))}; do
     SAMPLE_ARRAY=(${SAMPLE_CSV//,/ })
