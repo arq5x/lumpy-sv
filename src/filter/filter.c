@@ -223,8 +223,9 @@ int main(int argc, char **argv)
     r = sam_hdr_write(split, hdr);
 
     bam1_t *aln = bam_init1();
+    int ret;
 
-    while(sam_read1(in, hdr, aln) >= 0) {
+    while(ret = sam_read1(in, hdr, aln) >= 0) {
         if (((aln->core.flag) & 1294) == 0)
             r = sam_write1(disc, hdr, aln);
 
@@ -315,4 +316,7 @@ int main(int argc, char **argv)
     sam_close(in);
     sam_close(disc);
     sam_close(split);
+    if(ret < -1) {
+        errx(1, "lumpy_filter: error reading bam: %s\n", bam_file_name);
+    }
 }
