@@ -84,6 +84,7 @@ lumpyexpress:
 	@echo "LUMPY_HOME=$(MKFILE_DIR)" >> $(BIN_DIR)/lumpyexpress.config
 	@echo "" >> $(BIN_DIR)/lumpyexpress.config
 	@echo "LUMPY=$(MKFILE_DIR)/$(BIN_DIR)/lumpy" >> $(BIN_DIR)/lumpyexpress.config
+	@echo "HEXDUMP=`which hexdump`" >> $(BIN_DIR)/lumpyexpress.config
 	@echo "SAMBLASTER=`which samblaster`" >> $(BIN_DIR)/lumpyexpress.config
 	@echo "SAMBAMBA=`which sambamba`" >> $(BIN_DIR)/lumpyexpress.config
 	@echo "SAMTOOLS=`which samtools`" >> $(BIN_DIR)/lumpyexpress.config
