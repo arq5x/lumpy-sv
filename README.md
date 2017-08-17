@@ -196,6 +196,7 @@ Otherwise, data may be aligned with BWA-MEM.
 ```
 # Align the data
 bwa mem -R "@RG\tID:id\tSM:sample\tLB:lib" human_g1k_v37.fasta sample.1.fq sample.2.fq \
+    | samblaster --excludeDups --addMateTags --maxSplitCount 2 --minNonOverlap 20 \
     | samtools view -S -b - \
     > sample.bam
 
