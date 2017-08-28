@@ -294,6 +294,21 @@ For these examples we will assume the mean is 500 and the stdev is 50.
         > multi_sample.vcf
     ```
 
+- Run LUMPY with low complexity regions excluded.  
+    Heng Li provides a set of low complexity regions in the supplementary information of his paper, "Toward better
+    understanding of artifacts in variant calling from high-coverage samples" at
+    https://doi.org/10.1093/bioinformatics/btu356. 
+    ```
+    unzip btu356_Supplementary_Data.zip
+    unzip btu356-suppl_data.zip
+    lumpy \
+        -mw 4 \
+        -tt 0.0 \
+        -x btu356_LCR-hs37d5.bed/btu356_LCR-hs37d5.bed \
+        -pe bam_file:sample.discordants.bam,histo_file:sample.pe.histo,mean:500,stdev:50,read_length:101,min_non_overlap:101,discordant_z:5,back_distance:10,weight:1,id:sample,min_mapping_threshold:1 \
+        -sr bam_file:sample.sr.sort.bam,back_distance:10,weight:1,id:sample,min_mapping_threshold:1 \
+        > sample.exclude.vcf
+    ```
 - Run LUMPY with regions of very high coverage excluded.  
     We can direct lumpy to ignore certain regions by using the
     exclude region option. In this example we find and then
