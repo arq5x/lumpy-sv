@@ -401,7 +401,7 @@ then
 
 	    # generate discordant pair string for LUMPY
 	    DISC_BAM=$TEMP_DIR/$OUTBASE.sample$(($i+1)).discordants.bam
-	    DISC_SAMPLE=`$SAMT view $EXT_OPT -H $FULL_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	    DISC_SAMPLE=`$SAMT view $EXT_OPT -H $FULL_BAM | grep -m 1 "^@RG" | gawk -F "\t" -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	    RG_STRING=`echo "${LIB_RG_LIST[$j]}" | sed 's/,/,read_group:/g' | sed 's/^/read_group:/g'`
 	    MEAN=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^mean" | sed 's/mean\://g'`
 	    STDEV=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^stdev" | sed 's/stdev\://g'`
@@ -409,7 +409,7 @@ then
 
 	    # generate split-read string for LUMPY
 	    SPL_BAM=$TEMP_DIR/$OUTBASE.sample$(($i+1)).splitters.bam
-	    SPL_SAMPLE=`$SAMT view $EXT_OPT -H $FULL_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	    SPL_SAMPLE=`$SAMT view $EXT_OPT -H $FULL_BAM | grep -m 1 "^@RG" | gawk -F "\t" -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	    LUMPY_SPL_STRING="$LUMPY_SPL_STRING -sr bam_file:${SPL_BAM},back_distance:10,min_mapping_threshold:20,weight:1,id:${SPL_SAMPLE},min_clip:20,${RG_STRING}"
 	done
 
@@ -487,7 +487,7 @@ else
 	echo "done"
 
 	# construct LUMPY_SPL_STRING
-	SPL_SAMPLE=`$SAMT view -H $SPL_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	SPL_SAMPLE=`$SAMT view -H $SPL_BAM | grep -m 1 "^@RG" | gawk -F "\t" -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	LUMPY_SPL_STRING="$LUMPY_SPL_STRING -sr bam_file:${SPL_BAM},back_distance:10,min_mapping_threshold:20,weight:1,id:${SPL_SAMPLE},min_clip:20"
 
 	# construct LUMPY_DISC_STRING
@@ -495,7 +495,7 @@ else
 	do
 	    echo $(( ${#FULL_BAM_LIST[@]}-1 ))
 	    DISC_BAM=${DISC_BAM_LIST[$i]}
-	    DISC_SAMPLE=`$SAMT view -H $DISC_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	    DISC_SAMPLE=`$SAMT view -H $DISC_BAM | grep -m 1 "^@RG" | gawk -F "\t" -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	    MEAN=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^mean" | sed 's/mean\://g'`
 	    STDEV=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^stdev" | sed 's/stdev\://g'`
 	    RG_STRING=`echo "${LIB_RG_LIST[$j]}" | sed 's/,/,read_group:/g' | sed 's/^/read_group:/g'`
