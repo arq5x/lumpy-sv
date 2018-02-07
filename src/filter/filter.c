@@ -189,15 +189,22 @@ int main(int argc, char **argv)
 {
     if (argc < 4)
         errx(1,
-             "usage\t:%s <bam> <split out> <discord out> (optional #threads)",
+             "usage\t:%s -f <optional-reference> <bam> <split out> <discord out> (optional #threads)",
              argv[0]);
 
-    char *bam_file_name = argv[1];
-    char *split_file_name = argv[2];
-    char *disc_file_name = argv[3];
+
+    int c;
+    char *fasta = NULL;
+    while (( c = getopt(argc, argv, "f:")) != -1) {
+        fasta = optarg;
+    }
+
+    char *bam_file_name = argv[optind];
+    char *split_file_name = argv[1+optind];
+    char *disc_file_name = argv[2+optind];
     int threads = 2;
-    if (argc == 5) {
-        threads = atoi(argv[4]);
+    if (argc == 4+optind) {
+        threads = atoi(argv[3+optind]);
     }
 
     samFile *disc = sam_open(disc_file_name, "wb");
@@ -205,8 +212,14 @@ int main(int argc, char **argv)
     samFile *split = sam_open(split_file_name, "wb");
 
     samFile *in = sam_open(bam_file_name, "rb");
-    if(in == NULL)
+
+
+    if(in == NULL) {
         errx(1, "Unable to open BAM/SAM file.");
+    }
+    if (fasta != NULL) {
+        hts_set_fai_filename(in, fasta);
+    }
 
     // TODO: handle cram.
     if (threads > 1) {
