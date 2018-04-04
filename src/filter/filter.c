@@ -239,6 +239,9 @@ int main(int argc, char **argv)
     int ret;
 
     while(ret = sam_read1(in, hdr, aln) >= 0) {
+        if (((aln->core.flag) & 1796) != 0)
+            continue;
+
         if (((aln->core.flag) & 1294) == 0)
             r = sam_write1(disc, hdr, aln);
 
