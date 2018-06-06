@@ -349,7 +349,7 @@ For these examples we will assume the mean is 500 and the stdev is 50.
     ```
 
 #### Post-processing
-[SVTyper](https://github.com/cc2qe/svtyper) can call genotypes on LUMPY output VCF files
+[SVTyper](https://github.com/hall-lab/svtyper) can call genotypes on LUMPY output VCF files
 using a Bayesian maximum likelihood algorithm.
 ```
 svtyper \      
