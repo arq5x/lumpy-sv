@@ -6,7 +6,6 @@ import numpy as np
 import glob
 from operator import add
 from optparse import OptionParser
-from sets import Set
 import l_bp
 
 def get_p(ls):
@@ -46,7 +45,7 @@ def print_var_line(l):
                 l_bp.split_v(l)
 
         STRAND_DICT = dict(x.split(':') for x in m['STRANDS'].split(','))
-        for o in STRAND_DICT.keys():
+        for o in STRAND_DICT:
             if STRAND_DICT[o] == '0':
                 del(STRAND_DICT[o])
         STRANDS = ','.join(['%s:%s' % (o,STRAND_DICT[o]) for o in STRAND_DICT])
@@ -152,11 +151,11 @@ def print_var_line(l):
 
         A[7] += ';MATEID=' + A[2] + '_2'
         A[2] += '_1'
-        print '\t'.join(A[:8])
-        print '\t'.join([str(o) for o in O])
+        print('\t'.join(A[:8]))
+        print('\t'.join([str(o) for o in O]))
 
     else:
-        print '\t'.join(A[:8])
+        print('\t'.join(A[:8]))
 
 def merge(BP, sample_order, v_id, use_product):
     #sys.stderr.write(str(len(BP)) + '\n')
@@ -217,9 +216,9 @@ def merge(BP, sample_order, v_id, use_product):
     #C = []
     #_G = G.copy()
     #while len(_G) != 0:
-    #    R = Set()
-    #    X = Set()
-    #    P = Set(_G.keys())
+    #    R = set()
+    #    X = set()
+    #    P = set(_G.keys())
     #    clique = [x for x in l_bp.bron_kerbosch(_G, R, P, X)]
     #    max_clique = sorted(clique, key=len)[0]
     #    sys.stderr.write(str(max_clique) +'\n')
@@ -236,7 +235,7 @@ def merge(BP, sample_order, v_id, use_product):
 
     BP.sort(key=lambda x: x.start_l)
 
-    BP_i = range(len(BP))
+    BP_i = list(range(len(BP)))
     C = []
 
     #print BP_i
@@ -598,7 +597,7 @@ def l_cluster(file_name, percent_slop=0, fixed_slop=0, use_product=False):
     #exit(1)
 
     for h in vcf_headers:
-        print h,
+        print(h, end=' ')
 
     BP_l = []
     BP_sv_type = ''
@@ -686,7 +685,7 @@ Version: ira_7
     #if opts.inFile is None or opts.configFile is None:
     if opts.inFile is None:
         parser.print_help()
-        print
+        print()
     else:
         try:
             l_cluster(opts.inFile,

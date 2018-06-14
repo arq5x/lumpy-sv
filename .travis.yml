@@ -1,7 +1,8 @@
 language: python
 python:
   - "2.7"
-script: 
+  - "3.5"
+script:
     - source activate travis
     - ./scripts/lumpyexpress -h
     - python scripts/cnvanator_to_bedpes.py --cnvkit  -b 100 --del_o delo2 --dup_o dupo2 -c data/example.cns
