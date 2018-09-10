@@ -226,11 +226,11 @@ int main(int argc, char **argv)
         bgzf_mt(in->fp.bgzf, threads, 256);
     }
 
-    hts_idx_t *idx = sam_index_load(in, bam_file_name);
-    if(idx == NULL)
-        errx(1,"Unable to open BAM/SAM index.");
-
     bam_hdr_t *hdr = sam_hdr_read(in);
+    // 0x1 | 0x2 | 0x4 | 0x8 | 0x10 | 0x20 | 0x40 | 0x80 | 0x100 | 0x800
+    // decode everything but base-seq and base-qual
+    hts_set_opt(in, CRAM_OPT_REQUIRED_FIELDS, 2559);
+    hts_set_opt(in, CRAM_OPT_DECODE_MD, 0);
 
     int r = sam_hdr_write(disc, hdr);
     r = sam_hdr_write(split, hdr);
@@ -327,7 +327,6 @@ int main(int argc, char **argv)
     }
 
     bam_destroy1(aln);
-    hts_idx_destroy(idx);
     bam_hdr_destroy(hdr);
     sam_close(in);
     sam_close(disc);
