@@ -26,6 +26,35 @@ struct line {
     char *chrm;
 };
 
+
+// from Dave Larson's extract_sv_reads
+inline size_t _pre_seq_bytes(bam1_t const* b) {
+	return (b->core.n_cigar<<2) + b->core.l_qname;
+}
+inline size_t _seq_qual_bytes(bam1_t const* b) {
+	// sequence bytes + quality bytes
+	return (((b->core.l_qseq + 1)>>1) + b->core.l_qseq);
+}
+inline size_t _post_qual_bytes(bam1_t const* b) {
+	// Total - pre-sequence bytes - sequence bytes - quality bytes
+	return (b->l_data - _pre_seq_bytes(b) - _seq_qual_bytes(b));
+}
+bam1_t *drop_seq_qual(bam1_t *_aln) {
+	bam1_t *b = bam_dup1(_aln);
+	uint8_t* data = _aln->data;
+	int m_data = _aln->m_data;
+	// NOTE Copying everything BUT sequence and quality
+	memcpy(data, b->data, _pre_seq_bytes(b));
+	memcpy(data + _pre_seq_bytes(b), bam_get_aux(b), _post_qual_bytes(b));
+	*_aln = *b;
+	_aln->l_data = b->l_data - _seq_qual_bytes(b);
+	_aln->core.l_qseq = 0;
+	_aln->m_data = m_data;
+	_aln->data = data;
+	bam_destroy1(b);
+	return _aln;
+}
+
 // This will parse a base 10 int, and change ptr to one char beyond the end of the number.
 int parseNextInt(char **ptr)
 {
@@ -67,7 +96,7 @@ void calcAlnOffsets(uint32_t *cigar,
     bool first = true;
 
     uint32_t k;
-    for (k = 0; k < n_cigar; ++k) 
+    for (k = 0; k < n_cigar; ++k)
     {
         uint32_t opLen = bam_cigar_oplen(cigar[k]);
         char opCode = bam_cigar_opchr(cigar[k]);
@@ -187,6 +216,10 @@ int count_tags(char *sa_tag)
 
 int main(int argc, char **argv)
 {
+	// without these 2 lines, htslib sometimes tries to download a part of the sequence
+	// even though the -f reference was provided.
+	setenv("REF_CACHE", "", 0);
+	setenv("REF_PATH", "fake_value_so_no_download", 0);
     if (argc < 4)
         errx(1,
              "usage\t:%s -f <optional-reference> <bam> <split out> <discord out> (optional #threads)",
@@ -207,130 +240,134 @@ int main(int argc, char **argv)
         threads = atoi(argv[3+optind]);
     }
 
-    samFile *disc = sam_open(disc_file_name, "wb");
-
-    samFile *split = sam_open(split_file_name, "wb");
 
     samFile *in = sam_open(bam_file_name, "rb");
-
-
     if(in == NULL) {
         errx(1, "Unable to open BAM/SAM file.");
     }
-    if (fasta != NULL) {
-        hts_set_fai_filename(in, fasta);
-    }
-
-    // TODO: handle cram.
-    if (threads > 1) {
-        bgzf_mt(in->fp.bgzf, threads, 256);
-    }
-
-    bam_hdr_t *hdr = sam_hdr_read(in);
     // 0x1 | 0x2 | 0x4 | 0x8 | 0x10 | 0x20 | 0x40 | 0x80 | 0x100 | 0x200 | 0x800
     // decode everything but base-qual
     hts_set_opt(in, CRAM_OPT_REQUIRED_FIELDS, 3071);
     hts_set_opt(in, CRAM_OPT_DECODE_MD, 1);
+    if (fasta != NULL) {
+        hts_set_fai_filename(in, fasta);
+    }
+    if (threads > 1) {
+		hts_set_threads(in, threads);
+    }
+
+    bam_hdr_t *hdr = sam_hdr_read(in);
+
+    samFile *disc = sam_open(disc_file_name, "wb1");
+    samFile *split = sam_open(split_file_name, "wb1");
 
     int r = sam_hdr_write(disc, hdr);
     r = sam_hdr_write(split, hdr);
 
     bam1_t *aln = bam_init1();
     int ret;
+	int dropped;
 
     while(ret = sam_read1(in, hdr, aln) >= 0) {
-        if (((aln->core.flag) & 1796) != 0)
+        if (((aln->core.flag) & (BAM_FUNMAP | BAM_FQCFAIL | BAM_FDUP)) != 0)
             continue;
 
-        if (((aln->core.flag) & 1294) == 0)
+		dropped = 0;
+        if (((aln->core.flag) & (BAM_FPROPER_PAIR | BAM_FMUNMAP | BAM_FSUPPLEMENTARY)) == 0) {
+			dropped = 1;
+			aln = drop_seq_qual(aln);
             r = sam_write1(disc, hdr, aln);
+		}
 
         uint8_t *sa = bam_aux_get(aln, "SA");
+		if (sa == 0) {
+			continue;
+		}
 
-        if (sa != 0) {
-            char *sa_tag = strdup(bam_aux2Z(sa));
-            if ( count_tags(sa_tag) == 1) {
-                char *chrm, strand, *cigar;
-                uint32_t pos;
-                split_sa_tag(sa_tag,
-                             &chrm,
-                             &pos,
-                             &strand,
-                             &cigar);
+        char *sa_tag = strdup(bam_aux2Z(sa));
+        if ( count_tags(sa_tag) == 1) {
+            char *chrm, strand, *cigar;
+            uint32_t pos;
+            split_sa_tag(sa_tag,
+                         &chrm,
+                         &pos,
+                         &strand,
+                         &cigar);
 
-                struct line sa, al;
+            struct line sa, al;
 
-                calcOffsets(cigar,
-                            pos,
-                            strand,
-                            &sa);
-                sa.chrm = chrm;
-                sa.strand = strand;
+            calcOffsets(cigar,
+                        pos,
+                        strand,
+                        &sa);
+            sa.chrm = chrm;
+            sa.strand = strand;
 
 
-                calcAlnOffsets(bam_get_cigar(aln),
-                               aln->core.n_cigar,
-                               aln->core.pos,
-                               bam_is_rev(aln) ? '-' : '+',
-                               &al);
-                al.chrm = hdr->target_name[aln->core.tid];
-                al.strand = bam_is_rev(aln) ? '-' : '+';
+            calcAlnOffsets(bam_get_cigar(aln),
+                           aln->core.n_cigar,
+                           aln->core.pos + 1,
+                           bam_is_rev(aln) ? '-' : '+',
+                           &al);
+            al.chrm = hdr->target_name[aln->core.tid];
+            al.strand = bam_is_rev(aln) ? '-' : '+';
 
-                struct line *left = &al, *right = &sa;
+            struct line *left = &al, *right = &sa;
 
-                if (left->SQO > right->SQO) {
-                    left = &sa;
-                    right = &al;
-                }
-
-                int overlap = MAX(1 + MIN(left->EQO, right->EQO) - 
-                        MAX(left->SQO, right->SQO), 0);
-                int alen1 = 1 + left->EQO - left->SQO;
-                int alen2 = 1 + right->EQO - right->SQO;
-                int mno = MIN(alen1-overlap, alen2-overlap);
-                if (mno < MIN_NON_OVERLAP) 
-                    continue;
-
-                if ( (strcmp(left->chrm, right->chrm) == 0) &&
-                     (left->strand == right->strand) ) {
-
-                    int leftDiag, rightDiag, insSize;
-                    if (left->strand == '-') {
-                        leftDiag = left->rapos - left->sclip;
-                        rightDiag = (right->rapos + right->raLen) - 
-                                (right->sclip + right->qaLen);
-                        insSize = rightDiag - leftDiag;
-                    } else {
-                        leftDiag = (left->rapos + left->raLen) - 
-                                (left->sclip + left->qaLen);
-                        rightDiag = right->rapos - right->sclip;
-                        insSize = leftDiag - rightDiag;
-                    }
-                    int desert = right->SQO - left->EQO - 1;
-                    if ((abs(insSize) < MIN_INDEL_SIZE) || 
-                        ((desert > 0) && (
-                            (desert - (int)MAX(0, insSize)) >
-                            MAX_UNMAPPED_BASES)))
-                        continue;
-                }
-
-                char *qname =  bam_get_qname(aln);
-                if ((aln->core.flag & 64) == 64)
-                    qname[0] = 'A'; 
-                else
-                    qname[0] = 'B'; 
-
-                r = sam_write1(split, hdr, aln);
+            if (left->SQO > right->SQO) {
+                left = &sa;
+                right = &al;
             }
-            free(sa_tag);
-        }
-    }
 
+            int overlap = MAX(1 + MIN(left->EQO, right->EQO) -
+                    MAX(left->SQO, right->SQO), 0);
+            int alen1 = 1 + left->EQO - left->SQO;
+            int alen2 = 1 + right->EQO - right->SQO;
+            int mno = MIN(alen1-overlap, alen2-overlap);
+            if (mno < MIN_NON_OVERLAP)
+                continue;
+
+            if ( (strcmp(left->chrm, right->chrm) == 0) &&
+                 (left->strand == right->strand) ) {
+
+                int leftDiag, rightDiag, insSize;
+                if (left->strand == '-') {
+                    leftDiag = left->rapos - left->sclip;
+                    rightDiag = (right->rapos + right->raLen) -
+                            (right->sclip + right->qaLen);
+                    insSize = rightDiag - leftDiag;
+                } else {
+                    leftDiag = (left->rapos + left->raLen) -
+                            (left->sclip + left->qaLen);
+                    rightDiag = right->rapos - right->sclip;
+                    insSize = leftDiag - rightDiag;
+                }
+                int desert = right->SQO - left->EQO - 1;
+                if ((abs(insSize) < MIN_INDEL_SIZE) ||
+                    ((desert > 0) && (
+                        (desert - (int)MAX(0, insSize)) >
+                        MAX_UNMAPPED_BASES)))
+                    continue;
+            }
+
+            char *qname =  bam_get_qname(aln);
+            if ((aln->core.flag & 64) == 64)
+                qname[0] = 'A';
+            else
+                qname[0] = 'B';
+
+			if (dropped == 0) {
+    			aln = drop_seq_qual(aln);
+			}
+            r = sam_write1(split, hdr, aln);
+        }
+        free(sa_tag);
+    }
     bam_destroy1(aln);
-    bam_hdr_destroy(hdr);
-    sam_close(in);
     sam_close(disc);
     sam_close(split);
+    bam_hdr_destroy(hdr);
+    sam_close(in);
     if(ret < -1) {
         errx(1, "lumpy_filter: error reading bam: %s\n", bam_file_name);
     }
