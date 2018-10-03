@@ -28,14 +28,14 @@ struct line {
 
 
 // from Dave Larson's extract_sv_reads
-inline size_t _pre_seq_bytes(bam1_t const* b) {
+static inline size_t _pre_seq_bytes(bam1_t const* b) {
 	return (b->core.n_cigar<<2) + b->core.l_qname;
 }
-inline size_t _seq_qual_bytes(bam1_t const* b) {
+static inline size_t _seq_qual_bytes(bam1_t const* b) {
 	// sequence bytes + quality bytes
 	return (((b->core.l_qseq + 1)>>1) + b->core.l_qseq);
 }
-inline size_t _post_qual_bytes(bam1_t const* b) {
+static inline size_t _post_qual_bytes(bam1_t const* b) {
 	// Total - pre-sequence bytes - sequence bytes - quality bytes
 	return (b->l_data - _pre_seq_bytes(b) - _seq_qual_bytes(b));
 }
