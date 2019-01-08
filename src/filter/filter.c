@@ -227,6 +227,7 @@ int main(int argc, char **argv)
 
 
     int c;
+    int aligned_reads = 0; // track total aligned reads. useful for QC without 2nd pass over full cram.
     char *fasta = NULL;
     while (( c = getopt(argc, argv, "f:")) != -1) {
         fasta = optarg;
@@ -271,6 +272,8 @@ int main(int argc, char **argv)
     while(ret = sam_read1(in, hdr, aln) >= 0) {
         if (((aln->core.flag) & (BAM_FUNMAP | BAM_FQCFAIL | BAM_FDUP)) != 0)
             continue;
+
+        aligned_reads += 1;
 
         dropped = 0;
         if ((((aln->core.flag) & (BAM_FPROPER_PAIR | BAM_FMUNMAP | BAM_FSUPPLEMENTARY)) == 0) && (aln->core.flag & BAM_FPAIRED == 1)) {
@@ -368,6 +371,7 @@ int main(int argc, char **argv)
     sam_close(split);
     bam_hdr_destroy(hdr);
     sam_close(in);
+    fprintf(stderr, "[lumpy_filter] extracted splits and discordants from %d total aligned reads\n", aligned_reads);
     if(ret < -1) {
         errx(1, "lumpy_filter: error reading bam: %s\n", bam_file_name);
     }
