@@ -27,6 +27,10 @@ Genome Biology 15 (6): R84.
 
 ## Quick start
 
+Note that [smoove](https://github.com/brentp/smoove) is the recommended way to run `lumpy` as it collects the
+best-practices of `lumpy` and associated tools and will have a shorter run-time and lower false-positive rate than
+`lumpyexpress` described below. 
+
 Download and install
 ```
 git clone --recursive https://github.com/arq5x/lumpy-sv.git
