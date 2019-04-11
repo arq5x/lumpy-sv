@@ -375,4 +375,5 @@ int main(int argc, char **argv)
     if(ret < -1) {
         errx(1, "lumpy_filter: error reading bam: %s\n", bam_file_name);
     }
+    return 0;
 }
