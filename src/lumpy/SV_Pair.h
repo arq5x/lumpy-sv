@@ -61,6 +61,7 @@ class SV_Pair: public SV_Evidence
 		struct interval read_r;
 		bool read_l_is_split, read_r_is_split;
 		SV_PairReader *reader;
+		std::string read_id;
 
 
 		SV_Pair(const BamAlignment &bam_a,

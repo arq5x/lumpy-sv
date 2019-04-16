@@ -52,6 +52,8 @@ SV_Pair(const BamAlignment &bam_a,
     else
         min_mapping_quality = bam_b.MapQuality;
 
+    read_id = bam_a.Name;
+
     struct interval tmp_a, tmp_b;
     tmp_a.start = bam_a.Position;
     tmp_a.end = bam_a.GetEndPosition(false, false) - 1;
@@ -341,6 +343,7 @@ void
 SV_Pair::
 print_evidence()
 {
+    cout << read_id << "\t";
     print_bedpe(0);
 }
 //}}}
