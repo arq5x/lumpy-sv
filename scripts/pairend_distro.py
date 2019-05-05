@@ -112,22 +112,22 @@ for l in sys.stdin:
 min_elements = 1000
 if len(L) < min_elements:
     sys.stderr.write("Warning: only %s elements in distribution (min: %s)\n" % (len(L), min_elements))
-    mean = "NA"
-    stdev = "NA"
 
-else:
-    # Remove outliers
-    med, umad = unscaled_upper_mad(L)
-    upper_cutoff = med + options.mads * umad
-    L = [v for v in L if v < upper_cutoff]
-    new_len = len(L)
-    removed = c - new_len
-    sys.stderr.write("Removed %d outliers with isize >= %d\n" %
-        (removed, upper_cutoff))
-    c = new_len
+# Remove outliers
+med, umad = unscaled_upper_mad(L)
+upper_cutoff = med + options.mads * umad
+L = [v for v in L if v < upper_cutoff]
+new_len = len(L)
+removed = c - new_len
+sys.stderr.write("Removed %s outliers with isize >= %s\n" %
+    (removed, upper_cutoff))
+c = new_len
 
-    mean, stdev = mean_std(L)
+mean, stdev = mean_std(L)
 
+f = open(options.output_file, 'w')
+
+if not np.isnan(mean) and not np.isnan(stdev):
     start = options.read_length
     end = int(mean + options.X*stdev)
 
@@ -140,13 +140,10 @@ else:
             H[j] = H[ int(x - start) ] + 1
             s += 1
 
-    f = open(options.output_file, 'w')
-
     for i in range(end - start):
         o = str(i) + "\t" + str(float(H[i])/float(s)) + "\n"
         f.write(o)
 
-
-    f.close()
+f.close()
 
 print(('mean:' + str(mean) + '\tstdev:' + str(stdev)))
