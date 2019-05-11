@@ -331,6 +331,8 @@ trap cleanup EXIT
 # If splitter and discordant BAMs not provided, generate them
 # (LUMPY express)
 set +o nounset
+LUMPY_SPL_STRING=()
+LUMPY_DISC_STRING=()
 if [[ -z "${SPL_BAM_LIST}${DISC_BAM_LIST}" ]]
 then
     # initialize split and discordant bam lists
@@ -401,16 +403,16 @@ then
 
 	    # generate discordant pair string for LUMPY
 	    DISC_BAM=$TEMP_DIR/$OUTBASE.sample$(($i+1)).discordants.bam
-	    DISC_SAMPLE=`$SAMT view $EXT_OPT -H $FULL_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	    DISC_SAMPLE=`$SAMT view $EXT_OPT -H $FULL_BAM | grep -m 1 "^@RG" | gawk -F "\t" -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	    RG_STRING=`echo "${LIB_RG_LIST[$j]}" | sed 's/,/,read_group:/g' | sed 's/^/read_group:/g'`
 	    MEAN=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^mean" | sed 's/mean\://g'`
 	    STDEV=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^stdev" | sed 's/stdev\://g'`
-	    LUMPY_DISC_STRING="$LUMPY_DISC_STRING -pe bam_file:${DISC_BAM},histo_file:${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo,mean:${MEAN},stdev:${STDEV},read_length:${READ_LENGTH},min_non_overlap:${READ_LENGTH},discordant_z:5,back_distance:10,weight:1,id:${DISC_SAMPLE},min_mapping_threshold:20,${RG_STRING}"
+	    LUMPY_DISC_STRING+=("-pe" "bam_file:${DISC_BAM},histo_file:${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo,mean:${MEAN},stdev:${STDEV},read_length:${READ_LENGTH},min_non_overlap:${READ_LENGTH},discordant_z:5,back_distance:10,weight:1,id:${DISC_SAMPLE},min_mapping_threshold:20,${RG_STRING}")
 
 	    # generate split-read string for LUMPY
 	    SPL_BAM=$TEMP_DIR/$OUTBASE.sample$(($i+1)).splitters.bam
-	    SPL_SAMPLE=`$SAMT view $EXT_OPT -H $FULL_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
-	    LUMPY_SPL_STRING="$LUMPY_SPL_STRING -sr bam_file:${SPL_BAM},back_distance:10,min_mapping_threshold:20,weight:1,id:${SPL_SAMPLE},min_clip:20,${RG_STRING}"
+	    SPL_SAMPLE=`$SAMT view $EXT_OPT -H $FULL_BAM | grep -m 1 "^@RG" | gawk -F "\t" -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	    LUMPY_SPL_STRING+=("-sr" "bam_file:${SPL_BAM},back_distance:10,min_mapping_threshold:20,weight:1,id:${SPL_SAMPLE},min_clip:20,${RG_STRING}")
 	done
 
 	# merge the splitters and discordants files
@@ -487,22 +489,22 @@ else
 	echo "done"
 
 	# construct LUMPY_SPL_STRING
-	SPL_SAMPLE=`$SAMT view -H $SPL_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
-	LUMPY_SPL_STRING="$LUMPY_SPL_STRING -sr bam_file:${SPL_BAM},back_distance:10,min_mapping_threshold:20,weight:1,id:${SPL_SAMPLE},min_clip:20"
+	SPL_SAMPLE=`$SAMT view -H $SPL_BAM | grep -m 1 "^@RG" | gawk -F "\t" -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	LUMPY_SPL_STRING+=("-sr" "bam_file:${SPL_BAM},back_distance:10,min_mapping_threshold:20,weight:1,id:${SPL_SAMPLE},min_clip:20")
 
 	# construct LUMPY_DISC_STRING
 	for j in $( seq 0 $(( ${#LIB_RG_LIST[@]}-1 )) )
 	do
 	    echo $(( ${#FULL_BAM_LIST[@]}-1 ))
 	    DISC_BAM=${DISC_BAM_LIST[$i]}
-	    DISC_SAMPLE=`$SAMT view -H $DISC_BAM | grep -m 1 "^@RG" | gawk -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
+	    DISC_SAMPLE=`$SAMT view -H $DISC_BAM | grep -m 1 "^@RG" | gawk -F "\t" -v i=$i '{ for (j=1;j<=NF;++j) {if ($j~"^SM:") { gsub("^SM:","",$j); print $j } } }'`
 	    MEAN=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^mean" | sed 's/mean\://g'`
 	    STDEV=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^stdev" | sed 's/stdev\://g'`
 	    RG_STRING=`echo "${LIB_RG_LIST[$j]}" | sed 's/,/,read_group:/g' | sed 's/^/read_group:/g'`
 
 	    if [[ "$MEAN" != "NA" ]] && [[ "$STDEV" != "NA" ]]
 	    then
-		LUMPY_DISC_STRING="$LUMPY_DISC_STRING -pe bam_file:${DISC_BAM},histo_file:${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo,mean:${MEAN},stdev:${STDEV},read_length:${LIB_READ_LENGTH_LIST[$j]},min_non_overlap:${LIB_READ_LENGTH_LIST[$j]},discordant_z:5,back_distance:10,weight:1,id:${DISC_SAMPLE},min_mapping_threshold:20,${RG_STRING}"
+	        LUMPY_DISC_STRING+=("-pe" "bam_file:${DISC_BAM},histo_file:${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo,mean:${MEAN},stdev:${STDEV},read_length:${LIB_READ_LENGTH_LIST[$j]},min_non_overlap:${LIB_READ_LENGTH_LIST[$j]},discordant_z:5,back_distance:10,weight:1,id:${DISC_SAMPLE},min_mapping_threshold:20,${RG_STRING}")
 	    fi
 	done
     done
@@ -534,17 +536,17 @@ $LUMPY ${PROB_CURVE} \\
     -tt $TRIM_THRES \\
     $LUMPY_DEPTH_STRING \\
     $EXCLUDE_BED_FMT \\
-    $LUMPY_DISC_STRING \\
-    $LUMPY_SPL_STRING \\
+    "${LUMPY_DISC_STRING[@]}" \\
+    "${LUMPY_SPL_STRING[@]}" \\
     > $OUTPUT"
 fi
 # call lumpy
 $LUMPY $PROB_CURVE -t ${TEMP_DIR}/${OUTBASE} -msw $MIN_SAMPLE_WEIGHT -tt $TRIM_THRES \
     $LUMPY_DEPTH_STRING \
     $EXCLUDE_BED_FMT \
-    $LUMPY_DISC_STRING \
+    "${LUMPY_DISC_STRING[@]}" \
     $EXCLUDE_BED_FMT \
-    $LUMPY_SPL_STRING \
+    "${LUMPY_SPL_STRING[@]}" \
     > $OUTPUT
 
 # clean up

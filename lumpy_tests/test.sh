@@ -151,3 +151,21 @@ assert_equal 5 $(zgrep -cv ^# trio.vcf)
 assert_equal 5 $(zgrep -cv ^# trio.svtyped.vcf.gz)
 
 cd ..
+
+
+cd lumpyexpress
+
+rm -f ./*.vcf
+run lumpyexpress ../../scripts/lumpyexpress -B NA12878.bam -S NA12878.split.bam -D NA12878.disc.bam -o NA12878.vcf
+assert_exit_code 0
+assert_equal \
+    0 \
+    $(diff <(grep -v '^#' NA12878.vcf.o ) <(grep -v '^#' NA12878.vcf) | wc -l)
+
+run lumpyexpress ../../scripts/lumpyexpress -B NA12878.w_space.bam -S NA12878.w_space.split.bam -D NA12878.w_space.disc.bam -o NA12878.w_space.vcf
+assert_exit_code 0
+assert_equal \
+    0 \
+    $(diff <(grep -v '^#' NA12878.vcf.o ) <(grep -v '^#' NA12878.w_space.vcf) | wc -l)
+
+cd ..
