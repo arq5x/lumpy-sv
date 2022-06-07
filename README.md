@@ -4,7 +4,7 @@ For questions and discussion about LUMPY please visit the forum at:
 
 https://groups.google.com/forum/#!forum/lumpy-discuss
 
-[![Build Status](https://travis-ci.org/arq5x/lumpy-sv.svg?branch=master)](https://travis-ci.org/arq5x/lumpy-sv)
+[![Build Status](https://travis-ci.org/arq5x/lumpy-sv.svg?branch=master)](https://travis-ci.org/arq5x/lumpy-sv) [![Support this project by running your production jobs at BatchX](https://images.batchx.io/gh-badge-logo.svg)](https://platform.batchx.io/layer-lab/tools/lumpy-sv%2Flumpyexpress "Support this project by running your production jobs at BatchX")
 
 LUMPY
 =====
