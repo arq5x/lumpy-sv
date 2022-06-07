@@ -1,0 +1,133 @@
+{
+  "name": "lumpy-sv/lumpyexpress",
+  "title": "Discovers structural variation using the LUMPY Express tool.",
+  "version": "0.0.1",
+  "scm": "https://github.com/arq5x/lumpy-sv",
+  "schema": {
+    "input": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bamBaiFiles": {
+          "type": "object",
+          "required": true,
+          "description": "Coordinate-sorted BAM file(s) in which structural variations are to be detected and corresponding index BAI file(s).",
+          "properties": {
+            "bamFile": {
+              "type": "array", 
+              "required": true,  
+              "uniqueItems": true,  
+              "items": {
+                "type": "string",
+                "format": "file",
+                "description": "A BAM file."
+              },  
+              "description": "Coordinate-sorted BAM file(s) in which structural variations are to be detected."
+            },
+            "baiFile": {
+              "type": "array", 
+              "required": false,  
+              "uniqueItems": true,  
+              "items": {
+                "type": "string",
+                "format": "file",
+                "description": "A BAI file."
+              },  
+              "description": "File(s) containing the index for the BAM file(s) ('bamFile')."
+            }
+          }
+        },
+        "bamExtractFiles": {
+          "type": "object",
+          "required": false,
+          "description": "Coordinate-sorted splitter and discordant BAM files which will bypass SAMBLASTER extraction for faster analysis.",
+          "properties": {
+            "bamSplitReadsFile": {  
+              "type": "array", 
+              "required": true,  
+              "uniqueItems": true,  
+              "items": {
+                "type": "string",
+                "format": "file",
+                "description": "A coordinate-sorted splitter reads BAM file."
+              }, 
+              "description": "Coordinate-sorted splitter reads BAM file(s)."  
+            },
+            "bamDiscReadsFile": {  
+              "type": "array", 
+              "required": true,  
+              "uniqueItems": true,  
+              "items": {
+                "type": "string",
+                "format": "file",
+                "description": "A discordant reads BAM file."
+              },  
+              "description": "Discordant reads BAM file(s)."  
+            }
+          }
+        },
+        "blackListBed": {
+          "type": "string",
+          "format": "file",
+          "required": false,
+          "description": "BED file containing regions to ignore."
+        },
+        "outputProb": { 
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "Boolean value to output probability curves for each variant."
+        },
+        "minSampleWt": { 
+          "type": "integer",
+          "required": false,
+          "default": 4,
+          "description": "Minimum sample weight for a call."
+        },
+        "trimThreshold": { 
+          "type": "number",
+          "required": false,
+          "default": 0,
+          "description": "The trimming threshold. The resolution of the predicted breakpoint regions can be improved by trimming the positions with probabilities in the lower percentile of the distribution (for example, the lowest 0.1%)."
+        },
+        "keepTempFiles": { 
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "Boolean value to output temporary files."
+        },
+        "outputPrefix": {
+          "type": "string",
+          "required": false,
+          "default": "fullBam.bam",
+          "description": "Name for the output file."
+        }
+      }
+    },
+    "output": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "vcfFile": {
+          "type": "string",
+          "format": "file",
+          "required": true,
+          "description": "The output VCF file containing the structural variants detected."
+        },
+        "tempFiles": {
+          "type": "string",
+          "format": "file",
+          "required": false,
+          "description": "The folder containing temporary files if the 'keepTempFiles' parameter is set to 'true'."
+        }
+      }
+    }
+  },
+  "author": "batchx@ryanlayer",
+  "changeLog": "Initial version.", 
+  "runtime": {
+    "minMem": 4000
+  }
+}
