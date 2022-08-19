@@ -183,7 +183,7 @@ do
 	x)
 	    EXCLUDE_BED="$OPTARG"
 	    EXCLUDE_BED_FMT="-x $EXCLUDE_BED"
-	    ;;  
+	    ;;
 	T)
 	    TEMP_DIR="$OPTARG"
 	    ;;
@@ -438,7 +438,7 @@ then
 	    mv ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).discordants.bam ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).discordants.bam
 	    mv ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).splitters.bam ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).splitters.bam
 	fi
-	    
+
 	# update the splitters and discordant BAM lists
 	SPL_BAM_LIST+=(${TEMP_DIR}/$OUTBASE.sample$(($i+1)).splitters.bam)
 	DISC_BAM_LIST+=(${TEMP_DIR}/$OUTBASE.sample$(($i+1)).discordants.bam)
@@ -500,10 +500,7 @@ else
 	    STDEV=`cat ${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).insert.stats | tr '\t' '\n' | grep "^stdev" | sed 's/stdev\://g'`
 	    RG_STRING=`echo "${LIB_RG_LIST[$j]}" | sed 's/,/,read_group:/g' | sed 's/^/read_group:/g'`
 
-	    if [[ "$MEAN" != "NA" ]] && [[ "$STDEV" != "NA" ]]
-	    then
-		LUMPY_DISC_STRING="$LUMPY_DISC_STRING -pe bam_file:${DISC_BAM},histo_file:${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo,mean:${MEAN},stdev:${STDEV},read_length:${LIB_READ_LENGTH_LIST[$j]},min_non_overlap:${LIB_READ_LENGTH_LIST[$j]},discordant_z:5,back_distance:10,weight:1,id:${DISC_SAMPLE},min_mapping_threshold:20,${RG_STRING}"
-	    fi
+	    LUMPY_DISC_STRING="$LUMPY_DISC_STRING -pe bam_file:${DISC_BAM},histo_file:${TEMP_DIR}/$OUTBASE.sample$(($i+1)).lib$(($j+1)).x4.histo,mean:${MEAN},stdev:${STDEV},read_length:${LIB_READ_LENGTH_LIST[$j]},min_non_overlap:${LIB_READ_LENGTH_LIST[$j]},discordant_z:5,back_distance:10,weight:1,id:${DISC_SAMPLE},min_mapping_threshold:20,${RG_STRING}"
 	done
     done
 fi
