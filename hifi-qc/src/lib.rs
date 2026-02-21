@@ -1,3 +1,5 @@
+pub mod bam_reader;
+
 use pyo3::prelude::*;
 
 /// Placeholder: process BAM/CRAM files and return QC metrics.
