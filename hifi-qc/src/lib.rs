@@ -56,7 +56,9 @@ fn build_sample_dict(
     dict.set_item("length_hist_values", len_vals)?;
 
     // Q-score histogram (sorted by key)
-    let (qs_keys, qs_vals) = sorted_hist_u8(&m.qscore_histogram);
+    // Note: convert u8 keys to u16 because PyO3 converts Vec<u8> to Python bytes
+    let (qs_keys_u8, qs_vals) = sorted_hist_u8(&m.qscore_histogram);
+    let qs_keys: Vec<u16> = qs_keys_u8.iter().map(|&k| k as u16).collect();
     dict.set_item("qscore_hist_keys", qs_keys)?;
     dict.set_item("qscore_hist_values", qs_vals)?;
 
@@ -78,12 +80,16 @@ fn build_sample_dict(
     dict.set_item("rq_hist_values", rq_vals)?;
 
     // Mapping quality histogram (sorted by key)
-    let (mapq_keys, mapq_vals) = sorted_hist_u8(&m.mapq_histogram);
+    // Note: convert u8 keys to u16 because PyO3 converts Vec<u8> to Python bytes
+    let (mapq_keys_u8, mapq_vals) = sorted_hist_u8(&m.mapq_histogram);
+    let mapq_keys: Vec<u16> = mapq_keys_u8.iter().map(|&k| k as u16).collect();
     dict.set_item("mapq_hist_keys", mapq_keys)?;
     dict.set_item("mapq_hist_values", mapq_vals)?;
 
     // GC content histogram (sorted by key)
-    let (gc_keys, gc_vals) = sorted_hist_u8(&m.gc_content_histogram);
+    // Note: convert u8 keys to u16 because PyO3 converts Vec<u8> to Python bytes
+    let (gc_keys_u8, gc_vals) = sorted_hist_u8(&m.gc_content_histogram);
+    let gc_keys: Vec<u16> = gc_keys_u8.iter().map(|&k| k as u16).collect();
     dict.set_item("gc_content_keys", gc_keys)?;
     dict.set_item("gc_content_values", gc_vals)?;
 
