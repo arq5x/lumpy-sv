@@ -1,4 +1,5 @@
 pub mod bam_reader;
+pub mod coverage;
 pub mod gc_bias;
 pub mod metrics;
 
