@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hifi-qc Report</title>
+<script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ────────────────────────────────────────────────────── */
+  #sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 220px;
+    height: 100vh;
+    background: #2c3e50;
+    color: #ecf0f1;
+    overflow-y: auto;
+    z-index: 100;
+    padding: 20px 0;
+  }
+
+  #sidebar h1 {
+    font-size: 18px;
+    font-weight: 700;
+    padding: 0 16px 16px;
+    border-bottom: 1px solid #3d566e;
+    margin-bottom: 8px;
+  }
+
+  #sidebar a {
+    display: block;
+    padding: 8px 16px;
+    color: #bdc3c7;
+    text-decoration: none;
+    font-size: 13px;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  #sidebar a:hover,
+  #sidebar a.active {
+    background: #34495e;
+    color: #fff;
+  }
+
+  #sidebar a.active {
+    border-left: 3px solid #3498db;
+    padding-left: 13px;
+  }
+
+  /* ── Main content ───────────────────────────────────────────────── */
+  #main {
+    margin-left: 220px;
+    flex: 1;
+    padding: 24px 32px;
+    max-width: 1400px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .card h2 {
+    font-size: 18px;
+    margin-bottom: 4px;
+    color: #2c3e50;
+  }
+
+  .card .desc {
+    font-size: 13px;
+    color: #7f8c8d;
+    margin-bottom: 16px;
+  }
+
+  .plot-container {
+    width: 100%;
+    min-height: 400px;
+  }
+
+  /* ── Summary table ──────────────────────────────────────────────── */
+  .stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .stats-table thead th {
+    background: #2c3e50;
+    color: #fff;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .stats-table tbody td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #ecf0f1;
+    white-space: nowrap;
+  }
+
+  .stats-table tbody tr:hover {
+    background: #f7f9fb;
+  }
+
+  .color-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .sampled-badge {
+    display: inline-block;
+    font-size: 10px;
+    background: #f39c12;
+    color: #fff;
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  /* ── Responsive ─────────────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    #sidebar { display: none; }
+    #main { margin-left: 0; padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     Sidebar
+     ═══════════════════════════════════════════════════════════════════ -->
+<nav id="sidebar">
+  <h1>hifi-qc</h1>
+  <a href="#general-statistics">General Statistics</a>
+  <a href="#read-length-distribution">Read Length Distribution</a>
+  <a href="#qscore-distribution">Q-Score Distribution</a>
+  <a href="#length-vs-quality">Read Length vs Quality</a>
+  <a href="#hifi-passes">HiFi Passes</a>
+  
+  
+  <a href="#mapping-quality">Mapping Quality</a>
+  <a href="#mismatches-indels">Mismatches &amp; Indels</a>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     Main content
+     ═══════════════════════════════════════════════════════════════════ -->
+<div id="main">
+
+<!-- ── 1. General Statistics ─────────────────────────────────────── -->
+<section class="card" id="general-statistics">
+  <h2>General Statistics</h2>
+  <p class="desc">Summary metrics for each sample.</p>
+  <div style="overflow-x:auto;">
+  <table class="stats-table">
+    <thead>
+      <tr>
+        <th>Sample</th>
+        <th>Total Reads</th>
+        <th>Total Bases (Gb)</th>
+        <th>Mean Length</th>
+        <th>N50</th>
+        <th>Mean Q</th>
+        
+        <th>Mapped %</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td>
+          <span class="color-dot" style="background:#e41a1c;"></span>
+          test
+          <span class="sampled-badge">sampled</span>
+        </td>
+        <td>52</td>
+        <td>0.00</td>
+        <td>3,050</td>
+        <td>3,713</td>
+        <td>35.0</td>
+        
+        <td>100.0%</td>
+      </tr>
+      
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ── 2. Read Length Distribution ────────────────────────────────── -->
+<section class="card" id="read-length-distribution">
+  <h2>Read Length Distribution</h2>
+  <p class="desc">Distribution of read lengths across all samples.</p>
+  <div id="plot-read-length" class="plot-container"></div>
+</section>
+
+<!-- ── 3. Q-Score Distribution ───────────────────────────────────── -->
+<section class="card" id="qscore-distribution">
+  <h2>Q-Score Distribution</h2>
+  <p class="desc">Distribution of mean per-read Phred quality scores.</p>
+  <div id="plot-qscore" class="plot-container"></div>
+</section>
+
+<!-- ── 4. Read Length vs Quality ──────────────────────────────────── -->
+<section class="card" id="length-vs-quality">
+  <h2>Read Length vs Quality</h2>
+  <p class="desc">Scatter plot of read length versus mean quality score (subsampled).</p>
+  <div id="plot-length-quality" class="plot-container"></div>
+</section>
+
+<!-- ── 5. HiFi Passes ────────────────────────────────────────────── -->
+<section class="card" id="hifi-passes">
+  <h2>HiFi Passes</h2>
+  <p class="desc">Distribution of HiFi CCS pass counts (np tag).</p>
+  <div id="plot-passes" class="plot-container"></div>
+</section>
+
+
+
+
+
+<!-- ── 10. Mapping Quality ───────────────────────────────────────── -->
+<section class="card" id="mapping-quality">
+  <h2>Mapping Quality</h2>
+  <p class="desc">Distribution of mapping quality (MAPQ) scores.</p>
+  <div id="plot-mapq" class="plot-container"></div>
+</section>
+
+<!-- ── 11. Mismatches & Indels ───────────────────────────────────── -->
+<section class="card" id="mismatches-indels">
+  <h2>Mismatches &amp; Indels</h2>
+  <p class="desc">Indel size distribution. Insertions are shown on the positive x-axis and deletions on the negative x-axis.</p>
+  <div id="plot-indels" class="plot-container"></div>
+</section>
+
+</div><!-- /#main -->
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     JavaScript: Plotly charts
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+const DATA = [{"sample_name": "test", "total_reads": 52, "mapped_reads": 52, "unmapped_reads": 0, "duplicate_reads": 0, "total_bases": 158576, "mean_read_length": 3049.5384615384614, "median_read_length": 2819, "n50_read_length": 3713, "mean_qscore": 35.0, "is_sampled": true, "length_hist_keys": [1207, 1257, 1294, 1303, 1388, 1470, 1480, 1669, 1765, 1834, 1865, 1924, 1982, 2070, 2163, 2248, 2269, 2344, 2423, 2439, 2635, 2706, 2718, 2736, 2760, 2801, 2837, 3174, 3228, 3313, 3334, 3469, 3647, 3713, 3908, 4048, 4106, 4149, 4222, 4234, 4258, 4294, 4364, 4412, 4433, 4455, 4501, 4622, 4646, 4733, 4843, 4883], "length_hist_values": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "qscore_hist_keys": [35], "qscore_hist_values": [52], "length_quality_lengths": [4364, 4048, 3228, 2736, 3174, 3334, 3908, 1834, 4433, 4455, 2801, 4843, 2163, 4412, 1865, 4646, 4501, 4294, 4733, 4234, 2070, 4149, 2837, 2344, 2760, 2718, 1669, 2439, 2635, 4258, 4222, 1294, 4883, 1257, 1982, 4622, 2248, 3469, 1303, 1924, 2423, 4106, 1470, 2269, 3713, 3313, 3647, 1480, 1765, 2706, 1207, 1388], "length_quality_scores": [35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0], "passes_hist_keys": [4, 5, 7, 8, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 29, 30], "passes_hist_values": [1, 2, 1, 3, 2, 2, 3, 2, 3, 4, 3, 2, 4, 2, 8, 2, 1, 1, 2, 3, 1], "rq_hist_keys": [0.9905, 0.9908, 0.9909, 0.991, 0.9911, 0.9912, 0.9913, 0.9916, 0.9923, 0.9926, 0.9933, 0.9934, 0.9936, 0.9937, 0.9938, 0.994, 0.9941, 0.9943, 0.9944, 0.9945, 0.9946, 0.9947, 0.9948, 0.9953, 0.9954, 0.9955, 0.9957, 0.996, 0.9962, 0.9965, 0.9966, 0.9969, 0.9973, 0.9976, 0.9979, 0.9981, 0.9982, 0.9985, 0.9988, 0.9994, 0.9998], "rq_hist_values": [1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 4, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3], "mapq_hist_keys": [60], "mapq_hist_values": [52], "gc_content_keys": [48, 49, 50, 51, 52, 53], "gc_content_values": [3, 6, 32, 7, 3, 1], "total_mismatches": 0, "total_insertions": 21, "total_insertion_bases": 39, "total_deletions": 37, "total_deletion_bases": 78, "insertion_size_keys": [1, 2, 3], "insertion_size_values": [7, 10, 4], "deletion_size_keys": [1, 2, 3], "deletion_size_values": [10, 13, 14], "color": "#e41a1c"}];
+
+const PLOTLY_CONFIG = {
+  responsive: true,
+  displayModeBar: true,
+  displaylogo: false
+};
+
+function defaultLayout(extra) {
+  const base = {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif', size: 12 },
+    xaxis: { gridcolor: '#e8e8e8', zeroline: false },
+    yaxis: { gridcolor: '#e8e8e8', zeroline: false },
+    legend: { orientation: 'h', y: -0.15, x: 0.5, xanchor: 'center' },
+    margin: { t: 30, r: 20, b: 60, l: 60 }
+  };
+  return Object.assign(base, extra || {});
+}
+
+/* ── 2. Read Length Distribution ─────────────────────────────────── */
+(function() {
+  var traces = [];
+  DATA.forEach(function(s) {
+    traces.push({
+      x: s.length_hist_keys,
+      y: s.length_hist_values,
+      type: 'bar',
+      name: s.sample_name,
+      marker: { color: s.color },
+      opacity: 0.7
+    });
+  });
+  Plotly.newPlot('plot-read-length', traces, defaultLayout({
+    barmode: 'overlay',
+    xaxis: { title: 'Read Length (bp)', gridcolor: '#e8e8e8', zeroline: false },
+    yaxis: { title: 'Count', gridcolor: '#e8e8e8', zeroline: false }
+  }), PLOTLY_CONFIG);
+})();
+
+/* ── 3. Q-Score Distribution ─────────────────────────────────────── */
+(function() {
+  var traces = [];
+  DATA.forEach(function(s) {
+    traces.push({
+      x: s.qscore_hist_keys,
+      y: s.qscore_hist_values,
+      type: 'bar',
+      name: s.sample_name,
+      marker: { color: s.color },
+      opacity: 0.7
+    });
+  });
+  Plotly.newPlot('plot-qscore', traces, defaultLayout({
+    barmode: 'overlay',
+    xaxis: { title: 'Mean Read Quality (Phred)', gridcolor: '#e8e8e8', zeroline: false },
+    yaxis: { title: 'Count', gridcolor: '#e8e8e8', zeroline: false }
+  }), PLOTLY_CONFIG);
+})();
+
+/* ── 4. Read Length vs Quality ────────────────────────────────────── */
+(function() {
+  var traces = [];
+  DATA.forEach(function(s) {
+    traces.push({
+      x: s.length_quality_lengths,
+      y: s.length_quality_scores,
+      type: 'scattergl',
+      mode: 'markers',
+      name: s.sample_name,
+      marker: { color: s.color, size: 3, opacity: 0.3 }
+    });
+  });
+  Plotly.newPlot('plot-length-quality', traces, defaultLayout({
+    xaxis: { title: 'Read Length (bp)', gridcolor: '#e8e8e8', zeroline: false },
+    yaxis: { title: 'Mean Quality (Phred)', gridcolor: '#e8e8e8', zeroline: false }
+  }), PLOTLY_CONFIG);
+})();
+
+/* ── 5. HiFi Passes ──────────────────────────────────────────────── */
+(function() {
+  var traces = [];
+  DATA.forEach(function(s) {
+    traces.push({
+      x: s.passes_hist_keys,
+      y: s.passes_hist_values,
+      type: 'bar',
+      name: s.sample_name,
+      marker: { color: s.color },
+      opacity: 0.7
+    });
+  });
+  Plotly.newPlot('plot-passes', traces, defaultLayout({
+    barmode: 'overlay',
+    xaxis: { title: 'Number of Passes', gridcolor: '#e8e8e8', zeroline: false },
+    yaxis: { title: 'Count', gridcolor: '#e8e8e8', zeroline: false }
+  }), PLOTLY_CONFIG);
+})();
+
+/* ── 6. Genome-wide Coverage ─────────────────────────────────────── */
+(function() {
+  var el = document.getElementById('plot-coverage-hist');
+  if (!el) return;
+  var traces = [];
+  DATA.forEach(function(s) {
+    if (!s.coverage_histogram) return;
+    var x = [];
+    for (var i = 0; i < s.coverage_histogram.length; i++) x.push(i);
+    traces.push({
+      x: x,
+      y: s.coverage_histogram,
+      type: 'bar',
+      name: s.sample_name,
+      marker: { color: s.color },
+      opacity: 0.7
+    });
+  });
+  if (traces.length === 0) return;
+  Plotly.newPlot('plot-coverage-hist', traces, defaultLayout({
+    barmode: 'overlay',
+    xaxis: { title: 'Coverage Depth', range: [0, 100], gridcolor: '#e8e8e8', zeroline: false },
+    yaxis: { title: 'Number of Bases', gridcolor: '#e8e8e8', zeroline: false }
+  }), PLOTLY_CONFIG);
+})();
+
+/* ── 7. Per-Chromosome Coverage ──────────────────────────────────── */
+(function() {
+  var el = document.getElementById('plot-chrom-coverage');
+  if (!el) return;
+  var traces = [];
+  DATA.forEach(function(s) {
+    if (!s.chrom_names) return;
+    traces.push({
+      x: s.chrom_names,
+      y: s.chrom_mean_coverages,
+      type: 'bar',
+      name: s.sample_name,
+      marker: { color: s.color }
+    });
+  });
+  if (traces.length === 0) return;
+  Plotly.newPlot('plot-chrom-coverage', traces, defaultLayout({
+    barmode: 'group',
+    xaxis: { title: 'Chromosome', gridcolor: '#e8e8e8', zeroline: false, tickangle: -45 },
+    yaxis: { title: 'Mean Coverage', gridcolor: '#e8e8e8', zeroline: false }
+  }), PLOTLY_CONFIG);
+})();
+
+/* ── 8. Coverage Uniformity ──────────────────────────────────────── */
+(function() {
+  var el = document.getElementById('plot-cumulative-coverage');
+  if (!el) return;
+  var traces = [];
+  DATA.forEach(function(s) {
+    if (!s.cumulative_coverage) return;
+    var x = [];
+    for (var i = 0; i < s.cumulative_coverage.length; i++) x.push(i);
+    // Convert fractions to percentages
+    var yPct = s.cumulative_coverage.map(function(v) { return v * 100; });
+    traces.push({
+      x: x,
+      y: yPct,
+      type: 'scatter',
+      mode: 'lines',
+      name: s.sample_name,
+      line: { color: s.color, width: 2 }
+    });
+  });
+  if (traces.length === 0) return;
+  Plotly.newPlot('plot-cumulative-coverage', traces, defaultLayout({
+    xaxis: { title: 'Coverage Depth', range: [0, 100], gridcolor: '#e8e8e8', zeroline: false },
+    yaxis: { title: '% Genome at >= Depth', range: [0, 100], gridcolor: '#e8e8e8', zeroline: false }
+  }), PLOTLY_CONFIG);
+})();
+
+/* ── 9. GC Bias ──────────────────────────────────────────────────── */
+(function() {
+  var el = document.getElementById('plot-gc-bias');
+  if (!el) return;
+  var traces = [];
+  DATA.forEach(function(s) {
+    if (!s.gc_bias_coverage_by_gc) return;
+    // Normalize coverage to genome mean
+    var mean = s.genome_mean_coverage || 1;
+    var x = [];
+    var y = [];
+    for (var i = 0; i < s.gc_bias_coverage_by_gc.length; i++) {
+      x.push(i);
+      y.push(mean > 0 ? s.gc_bias_coverage_by_gc[i] / mean : 0);
+    }
+    traces.push({
+      x: x,
+      y: y,
+      type: 'scatter',
+      mode: 'lines',
+      name: s.sample_name,
+      line: { color: s.color, width: 2 }
+    });
+  });
+  if (traces.length === 0) return;
+  // Ideal line at y = 1
+  traces.push({
+    x: [0, 100],
+    y: [1, 1],
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Ideal',
+    line: { color: '#999', width: 1.5, dash: 'dash' },
+    showlegend: true
+  });
+  Plotly.newPlot('plot-gc-bias', traces, defaultLayout({
+    xaxis: { title: 'GC Content (%)', range: [0, 100], gridcolor: '#e8e8e8', zeroline: false },
+    yaxis: { title: 'Normalized Coverage', gridcolor: '#e8e8e8', zeroline: false }
+  }), PLOTLY_CONFIG);
+})();
+
+/* ── 10. Mapping Quality ─────────────────────────────────────────── */
+(function() {
+  var traces = [];
+  DATA.forEach(function(s) {
+    traces.push({
+      x: s.mapq_hist_keys,
+      y: s.mapq_hist_values,
+      type: 'bar',
+      name: s.sample_name,
+      marker: { color: s.color },
+      opacity: 0.7
+    });
+  });
+  Plotly.newPlot('plot-mapq', traces, defaultLayout({
+    barmode: 'overlay',
+    xaxis: { title: 'Mapping Quality', gridcolor: '#e8e8e8', zeroline: false },
+    yaxis: { title: 'Count', gridcolor: '#e8e8e8', zeroline: false }
+  }), PLOTLY_CONFIG);
+})();
+
+/* ── 11. Mismatches & Indels ─────────────────────────────────────── */
+(function() {
+  var traces = [];
+  DATA.forEach(function(s) {
+    // Insertions on positive x-axis
+    if (s.insertion_size_keys && s.insertion_size_keys.length > 0) {
+      traces.push({
+        x: s.insertion_size_keys,
+        y: s.insertion_size_values,
+        type: 'bar',
+        name: s.sample_name + ' (ins)',
+        marker: { color: s.color },
+        opacity: 0.7
+      });
+    }
+    // Deletions on negative x-axis
+    if (s.deletion_size_keys && s.deletion_size_keys.length > 0) {
+      var negKeys = s.deletion_size_keys.map(function(k) { return -k; });
+      traces.push({
+        x: negKeys,
+        y: s.deletion_size_values,
+        type: 'bar',
+        name: s.sample_name + ' (del)',
+        marker: { color: s.color, opacity: 0.5 },
+        opacity: 0.7
+      });
+    }
+  });
+  Plotly.newPlot('plot-indels', traces, defaultLayout({
+    barmode: 'overlay',
+    xaxis: { title: 'Indel Size (bp, negative = deletions)', gridcolor: '#e8e8e8', zeroline: true },
+    yaxis: { title: 'Count', gridcolor: '#e8e8e8', zeroline: false }
+  }), PLOTLY_CONFIG);
+})();
+
+/* ── Sidebar scroll tracking ─────────────────────────────────────── */
+(function() {
+  var links = document.querySelectorAll('#sidebar a');
+  var sections = [];
+  links.forEach(function(a) {
+    var id = a.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if (el) sections.push({ link: a, el: el });
+  });
+
+  function onScroll() {
+    var scrollY = window.scrollY + 80;
+    var current = null;
+    sections.forEach(function(s) {
+      if (s.el.offsetTop <= scrollY) current = s;
+    });
+    links.forEach(function(a) { a.classList.remove('active'); });
+    if (current) current.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+</body>
+</html>

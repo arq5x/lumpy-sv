@@ -1,0 +1,14 @@
+[package]
+name = "hifi-qc"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "hifi_qc"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.25", features = ["extension-module"] }
+noodles = { version = "0.88", features = ["bam", "sam", "cram", "fasta", "core", "bgzf"] }
+rayon = "1.10"
+rand = "0.9"

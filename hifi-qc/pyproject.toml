@@ -1,0 +1,21 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "hifi-qc"
+version = "0.1.0"
+description = "Quality control for PacBio HiFi sequencing data"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.0",
+    "jinja2>=3.0",
+]
+
+[project.scripts]
+hifi-qc = "hifi_qc.cli:main"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+python-source = "python"
+module-name = "hifi_qc._core"
