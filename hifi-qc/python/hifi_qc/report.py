@@ -5,14 +5,18 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
 COLORS = [
-    "#e41a1c",  # red
-    "#377eb8",  # blue
-    "#4daf4a",  # green
-    "#984ea3",  # purple
-    "#ff7f00",  # orange
-    "#a65628",  # brown
-    "#f781bf",  # pink
-    "#999999",  # gray
+    "#1F78B4",  # dark blue
+    "#A6CEE3",  # light blue
+    "#33A02C",  # dark green
+    "#B2DF8A",  # light green
+    "#E31A1C",  # dark red
+    "#FB9A99",  # light red
+    "#FF7F00",  # dark orange
+    "#FDBF6F",  # light orange
+    "#6A3D9A",  # dark purple
+    "#CAB2D6",  # light purple
+    "#B15928",  # dark brown
+    "#FFFF99",  # light yellow
 ]
 
 
