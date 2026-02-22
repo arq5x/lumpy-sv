@@ -1,4 +1,5 @@
 pub mod bam_reader;
+pub mod gc_bias;
 pub mod metrics;
 
 use pyo3::prelude::*;
