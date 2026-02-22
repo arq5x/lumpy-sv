@@ -12,13 +12,20 @@ import click
 def main(bam_files, output, reference, threads, sample_fraction, seed, sample_names):
     """Quality control for PacBio HiFi sequencing data."""
     from hifi_qc._core import process_bam_files
+    from hifi_qc.report import generate_report
 
+    names = sample_names.split(",") if sample_names else None
+
+    click.echo(f"Processing {len(bam_files)} file(s)...")
     results = process_bam_files(
         list(bam_files),
         reference=reference,
         threads=threads,
         sample_fraction=sample_fraction,
         seed=seed,
+        sample_names=names,
     )
-    click.echo(f"Processed {len(bam_files)} file(s). Results: {len(results)} sample(s).")
-    click.echo(f"Report would be written to: {output}")
+
+    click.echo(f"Generating report for {len(results)} sample(s)...")
+    generate_report(results, output)
+    click.echo(f"Report written to: {output}")
