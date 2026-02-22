@@ -136,6 +136,85 @@
     vertical-align: middle;
   }
 
+  /* ── Sample filter (sidebar) ────────────────────────────────────── */
+  .sample-filter {
+    border-top: 1px solid #3d566e;
+    margin-top: 12px;
+    padding: 12px 16px;
+  }
+
+  .sample-filter h3 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #ecf0f1;
+  }
+
+  .sample-filter input {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 12px;
+    border: 1px solid #3d566e;
+    border-radius: 4px;
+    background: #34495e;
+    color: #ecf0f1;
+    margin-bottom: 8px;
+  }
+
+  .sample-filter input::placeholder { color: #7f8c8d; }
+
+  .sample-filter-buttons {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .sample-filter-buttons button {
+    flex: 1;
+    padding: 4px 0;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid #3d566e;
+    border-radius: 3px;
+    background: #34495e;
+    color: #bdc3c7;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .sample-filter-buttons button:hover {
+    background: #3d566e;
+    color: #fff;
+  }
+
+  .sample-checkboxes {
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+
+  .sample-checkboxes label {
+    display: flex;
+    align-items: center;
+    padding: 3px 0;
+    font-size: 12px;
+    color: #bdc3c7;
+    cursor: pointer;
+  }
+
+  .sample-checkboxes label:hover { color: #fff; }
+
+  .sample-checkboxes input[type="checkbox"] {
+    margin-right: 6px;
+    flex-shrink: 0;
+  }
+
+  .sample-checkboxes .color-dot {
+    width: 8px;
+    height: 8px;
+    margin-right: 5px;
+    flex-shrink: 0;
+  }
+
   /* ── Responsive ─────────────────────────────────────────────────── */
   @media (max-width: 900px) {
     #sidebar { display: none; }
@@ -159,6 +238,17 @@
   
   <a href="#mapping-quality">Mapping Quality</a>
   <a href="#mismatches-indels">Mismatches &amp; Indels</a>
+  <div class="sample-filter">
+    <h3>Samples</h3>
+    <input type="text" id="sample-search" placeholder="Wildcard (e.g. HG*)" />
+    <div class="sample-filter-buttons">
+      <button id="btn-select-all">All</button>
+      <button id="btn-select-none">None</button>
+    </div>
+    <div id="sample-checkboxes" class="sample-checkboxes">
+      <!-- populated by JS -->
+    </div>
+  </div>
 </nav>
 
 <!-- ═══════════════════════════════════════════════════════════════════
@@ -186,7 +276,7 @@
     </thead>
     <tbody>
       
-      <tr>
+      <tr data-sample-idx="0">
         <td>
           <span class="color-dot" style="background:#1F78B4;"></span>
           test
@@ -279,10 +369,18 @@ function defaultLayout(extra) {
   return Object.assign(base, extra || {});
 }
 
-/* ── 2. Read Length Distribution ─────────────────────────────────── */
-(function() {
+/* ── Global sample visibility state ──────────────────────────────── */
+var visibleSamples = new Set(DATA.map(function(_, i) { return i; }));
+
+function getVisibleData() {
+  return DATA.filter(function(_, i) { return visibleSamples.has(i); });
+}
+
+/* ── Render functions ────────────────────────────────────────────── */
+
+function renderReadLength() {
   var traces = [];
-  DATA.forEach(function(s) {
+  getVisibleData().forEach(function(s) {
     traces.push({
       x: s.length_hist_keys,
       y: s.length_hist_values,
@@ -292,17 +390,16 @@ function defaultLayout(extra) {
       opacity: 0.7
     });
   });
-  Plotly.newPlot('plot-read-length', traces, defaultLayout({
+  Plotly.react('plot-read-length', traces, defaultLayout({
     barmode: 'overlay',
     xaxis: { title: 'Read Length (bp)', gridcolor: '#e8e8e8', zeroline: false },
     yaxis: { title: 'Count', gridcolor: '#e8e8e8', zeroline: false }
   }), PLOTLY_CONFIG);
-})();
+}
 
-/* ── 3. Q-Score Distribution ─────────────────────────────────────── */
-(function() {
+function renderQScore() {
   var traces = [];
-  DATA.forEach(function(s) {
+  getVisibleData().forEach(function(s) {
     traces.push({
       x: s.qscore_hist_keys,
       y: s.qscore_hist_values,
@@ -312,17 +409,16 @@ function defaultLayout(extra) {
       opacity: 0.7
     });
   });
-  Plotly.newPlot('plot-qscore', traces, defaultLayout({
+  Plotly.react('plot-qscore', traces, defaultLayout({
     barmode: 'overlay',
     xaxis: { title: 'Mean Read Quality (Phred)', gridcolor: '#e8e8e8', zeroline: false },
     yaxis: { title: 'Count', gridcolor: '#e8e8e8', zeroline: false }
   }), PLOTLY_CONFIG);
-})();
+}
 
-/* ── 4. Read Length vs Quality ────────────────────────────────────── */
-(function() {
+function renderLengthQuality() {
   var traces = [];
-  DATA.forEach(function(s) {
+  getVisibleData().forEach(function(s) {
     traces.push({
       x: s.length_quality_lengths,
       y: s.length_quality_scores,
@@ -332,16 +428,15 @@ function defaultLayout(extra) {
       marker: { color: s.color, size: 3, opacity: 0.3 }
     });
   });
-  Plotly.newPlot('plot-length-quality', traces, defaultLayout({
+  Plotly.react('plot-length-quality', traces, defaultLayout({
     xaxis: { title: 'Read Length (bp)', gridcolor: '#e8e8e8', zeroline: false },
     yaxis: { title: 'Mean Quality (Phred)', gridcolor: '#e8e8e8', zeroline: false }
   }), PLOTLY_CONFIG);
-})();
+}
 
-/* ── 5. HiFi Passes ──────────────────────────────────────────────── */
-(function() {
+function renderPasses() {
   var traces = [];
-  DATA.forEach(function(s) {
+  getVisibleData().forEach(function(s) {
     traces.push({
       x: s.passes_hist_keys,
       y: s.passes_hist_values,
@@ -351,19 +446,17 @@ function defaultLayout(extra) {
       opacity: 0.7
     });
   });
-  Plotly.newPlot('plot-passes', traces, defaultLayout({
+  Plotly.react('plot-passes', traces, defaultLayout({
     barmode: 'overlay',
     xaxis: { title: 'Number of Passes', gridcolor: '#e8e8e8', zeroline: false },
     yaxis: { title: 'Count', gridcolor: '#e8e8e8', zeroline: false }
   }), PLOTLY_CONFIG);
-})();
+}
 
-/* ── 6. Genome-wide Coverage ─────────────────────────────────────── */
-(function() {
-  var el = document.getElementById('plot-coverage-hist');
-  if (!el) return;
+function renderCoverageHist() {
+  if (!document.getElementById('plot-coverage-hist')) return;
   var traces = [];
-  DATA.forEach(function(s) {
+  getVisibleData().forEach(function(s) {
     if (!s.coverage_histogram) return;
     var x = [];
     for (var i = 0; i < s.coverage_histogram.length; i++) x.push(i);
@@ -376,20 +469,17 @@ function defaultLayout(extra) {
       opacity: 0.7
     });
   });
-  if (traces.length === 0) return;
-  Plotly.newPlot('plot-coverage-hist', traces, defaultLayout({
+  Plotly.react('plot-coverage-hist', traces, defaultLayout({
     barmode: 'overlay',
     xaxis: { title: 'Coverage Depth', range: [0, 100], gridcolor: '#e8e8e8', zeroline: false },
     yaxis: { title: 'Number of Bases', gridcolor: '#e8e8e8', zeroline: false }
   }), PLOTLY_CONFIG);
-})();
+}
 
-/* ── 7. Per-Chromosome Coverage ──────────────────────────────────── */
-(function() {
-  var el = document.getElementById('plot-chrom-coverage');
-  if (!el) return;
+function renderChromCoverage() {
+  if (!document.getElementById('plot-chrom-coverage')) return;
   var traces = [];
-  DATA.forEach(function(s) {
+  getVisibleData().forEach(function(s) {
     if (!s.chrom_names) return;
     traces.push({
       x: s.chrom_names,
@@ -399,24 +489,96 @@ function defaultLayout(extra) {
       marker: { color: s.color }
     });
   });
-  if (traces.length === 0) return;
-  Plotly.newPlot('plot-chrom-coverage', traces, defaultLayout({
+  Plotly.react('plot-chrom-coverage', traces, defaultLayout({
     barmode: 'group',
     xaxis: { title: 'Chromosome', gridcolor: '#e8e8e8', zeroline: false, tickangle: -45 },
     yaxis: { title: 'Mean Coverage', gridcolor: '#e8e8e8', zeroline: false }
   }), PLOTLY_CONFIG);
-})();
+}
 
-/* ── 8. Coverage Uniformity ──────────────────────────────────────── */
-(function() {
-  var el = document.getElementById('plot-cumulative-coverage');
-  if (!el) return;
+/* Per-chrom distribution: dropdown + hist/cumulative pair */
+var _chromSelectInitialized = false;
+function renderChromDistribution() {
+  var selectEl = document.getElementById('chrom-select');
+  if (!selectEl) return;
+
+  // One-time dropdown population
+  if (!_chromSelectInitialized) {
+    var chromNames = null;
+    for (var i = 0; i < DATA.length; i++) {
+      if (DATA[i].chrom_names && DATA[i].chrom_names.length > 0) {
+        chromNames = DATA[i].chrom_names;
+        break;
+      }
+    }
+    if (!chromNames) return;
+    chromNames.forEach(function(name, idx) {
+      var opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = name;
+      selectEl.appendChild(opt);
+    });
+    selectEl.addEventListener('change', function() { renderChromDistribution(); });
+    _chromSelectInitialized = true;
+  }
+
+  var chromIdx = parseInt(selectEl.value, 10);
+
+  // Histogram traces
+  var histTraces = [];
+  getVisibleData().forEach(function(s) {
+    if (!s.chrom_coverage_histograms || !s.chrom_coverage_histograms[chromIdx]) return;
+    var hist = s.chrom_coverage_histograms[chromIdx];
+    var x = [];
+    for (var i = 0; i < hist.length; i++) x.push(i);
+    histTraces.push({
+      x: x,
+      y: hist,
+      type: 'bar',
+      name: s.sample_name,
+      marker: { color: s.color },
+      opacity: 0.7
+    });
+  });
+  Plotly.react('plot-chrom-hist', histTraces, defaultLayout({
+    barmode: 'overlay',
+    xaxis: { title: 'Coverage Depth', range: [0, 100], gridcolor: '#e8e8e8', zeroline: false },
+    yaxis: { title: 'Number of Bases', gridcolor: '#e8e8e8', zeroline: false }
+  }), PLOTLY_CONFIG);
+
+  // Cumulative traces
+  var cumTraces = [];
+  getVisibleData().forEach(function(s) {
+    if (!s.chrom_cumulative_coverages || !s.chrom_cumulative_coverages[chromIdx]) return;
+    var cum = s.chrom_cumulative_coverages[chromIdx];
+    var x = [];
+    var yPct = [];
+    for (var i = 0; i < cum.length; i++) {
+      x.push(i);
+      yPct.push(cum[i] * 100);
+    }
+    cumTraces.push({
+      x: x,
+      y: yPct,
+      type: 'scatter',
+      mode: 'lines',
+      name: s.sample_name,
+      line: { color: s.color, width: 2 }
+    });
+  });
+  Plotly.react('plot-chrom-cumulative', cumTraces, defaultLayout({
+    xaxis: { title: 'Coverage Depth', range: [0, 100], gridcolor: '#e8e8e8', zeroline: false },
+    yaxis: { title: '% Chromosome at >= Depth', range: [0, 100], gridcolor: '#e8e8e8', zeroline: false }
+  }), PLOTLY_CONFIG);
+}
+
+function renderCumulativeCoverage() {
+  if (!document.getElementById('plot-cumulative-coverage')) return;
   var traces = [];
-  DATA.forEach(function(s) {
+  getVisibleData().forEach(function(s) {
     if (!s.cumulative_coverage) return;
     var x = [];
     for (var i = 0; i < s.cumulative_coverage.length; i++) x.push(i);
-    // Convert fractions to percentages
     var yPct = s.cumulative_coverage.map(function(v) { return v * 100; });
     traces.push({
       x: x,
@@ -427,21 +589,17 @@ function defaultLayout(extra) {
       line: { color: s.color, width: 2 }
     });
   });
-  if (traces.length === 0) return;
-  Plotly.newPlot('plot-cumulative-coverage', traces, defaultLayout({
+  Plotly.react('plot-cumulative-coverage', traces, defaultLayout({
     xaxis: { title: 'Coverage Depth', range: [0, 100], gridcolor: '#e8e8e8', zeroline: false },
     yaxis: { title: '% Genome at >= Depth', range: [0, 100], gridcolor: '#e8e8e8', zeroline: false }
   }), PLOTLY_CONFIG);
-})();
+}
 
-/* ── 9. GC Bias ──────────────────────────────────────────────────── */
-(function() {
-  var el = document.getElementById('plot-gc-bias');
-  if (!el) return;
+function renderGcBias() {
+  if (!document.getElementById('plot-gc-bias')) return;
   var traces = [];
-  DATA.forEach(function(s) {
+  getVisibleData().forEach(function(s) {
     if (!s.gc_bias_coverage_by_gc) return;
-    // Normalize coverage to genome mean
     var mean = s.genome_mean_coverage || 1;
     var x = [];
     var y = [];
@@ -458,7 +616,6 @@ function defaultLayout(extra) {
       line: { color: s.color, width: 2 }
     });
   });
-  if (traces.length === 0) return;
   // Ideal line at y = 1
   traces.push({
     x: [0, 100],
@@ -469,16 +626,15 @@ function defaultLayout(extra) {
     line: { color: '#999', width: 1.5, dash: 'dash' },
     showlegend: true
   });
-  Plotly.newPlot('plot-gc-bias', traces, defaultLayout({
+  Plotly.react('plot-gc-bias', traces, defaultLayout({
     xaxis: { title: 'GC Content (%)', range: [0, 100], gridcolor: '#e8e8e8', zeroline: false },
     yaxis: { title: 'Normalized Coverage', gridcolor: '#e8e8e8', zeroline: false }
   }), PLOTLY_CONFIG);
-})();
+}
 
-/* ── 10. Mapping Quality ─────────────────────────────────────────── */
-(function() {
+function renderMapq() {
   var traces = [];
-  DATA.forEach(function(s) {
+  getVisibleData().forEach(function(s) {
     traces.push({
       x: s.mapq_hist_keys,
       y: s.mapq_hist_values,
@@ -488,18 +644,16 @@ function defaultLayout(extra) {
       opacity: 0.7
     });
   });
-  Plotly.newPlot('plot-mapq', traces, defaultLayout({
+  Plotly.react('plot-mapq', traces, defaultLayout({
     barmode: 'overlay',
     xaxis: { title: 'Mapping Quality', gridcolor: '#e8e8e8', zeroline: false },
     yaxis: { title: 'Count', gridcolor: '#e8e8e8', zeroline: false }
   }), PLOTLY_CONFIG);
-})();
+}
 
-/* ── 11. Mismatches & Indels ─────────────────────────────────────── */
-(function() {
+function renderIndels() {
   var traces = [];
-  DATA.forEach(function(s) {
-    // Insertions on positive x-axis
+  getVisibleData().forEach(function(s) {
     if (s.insertion_size_keys && s.insertion_size_keys.length > 0) {
       traces.push({
         x: s.insertion_size_keys,
@@ -510,7 +664,6 @@ function defaultLayout(extra) {
         opacity: 0.7
       });
     }
-    // Deletions on negative x-axis
     if (s.deletion_size_keys && s.deletion_size_keys.length > 0) {
       var negKeys = s.deletion_size_keys.map(function(k) { return -k; });
       traces.push({
@@ -523,12 +676,112 @@ function defaultLayout(extra) {
       });
     }
   });
-  Plotly.newPlot('plot-indels', traces, defaultLayout({
+  Plotly.react('plot-indels', traces, defaultLayout({
     barmode: 'overlay',
     xaxis: { title: 'Indel Size (bp, negative = deletions)', gridcolor: '#e8e8e8', zeroline: true },
     yaxis: { title: 'Count', gridcolor: '#e8e8e8', zeroline: false }
   }), PLOTLY_CONFIG);
+}
+
+/* ── renderAll — master re-render ────────────────────────────────── */
+function renderAll() {
+  renderReadLength();
+  renderQScore();
+  renderLengthQuality();
+  renderPasses();
+  renderCoverageHist();
+  renderChromCoverage();
+  renderChromDistribution();
+  renderCumulativeCoverage();
+  renderGcBias();
+  renderMapq();
+  renderIndels();
+
+  // Update stats table row visibility
+  var rows = document.querySelectorAll('.stats-table tbody tr[data-sample-idx]');
+  rows.forEach(function(tr) {
+    var idx = parseInt(tr.getAttribute('data-sample-idx'), 10);
+    tr.style.display = visibleSamples.has(idx) ? '' : 'none';
+  });
+}
+
+/* ── Glob-to-regex conversion ────────────────────────────────────── */
+function globToRegex(pattern) {
+  var escaped = pattern.replace(/([.+^${}()|[\]\\])/g, '\\$1');
+  escaped = escaped.replace(/\*/g, '.*');
+  escaped = escaped.replace(/\?/g, '.');
+  return new RegExp('^' + escaped + '$', 'i');
+}
+
+/* ── Sample filter UI initialization ─────────────────────────────── */
+(function() {
+  var container = document.getElementById('sample-checkboxes');
+  if (!container) return;
+
+  // Build checkboxes
+  DATA.forEach(function(s, i) {
+    var label = document.createElement('label');
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.setAttribute('data-idx', i);
+    var dot = document.createElement('span');
+    dot.className = 'color-dot';
+    dot.style.background = s.color;
+    var text = document.createTextNode(s.sample_name);
+    label.appendChild(cb);
+    label.appendChild(dot);
+    label.appendChild(text);
+    container.appendChild(label);
+
+    cb.addEventListener('change', function() {
+      if (this.checked) {
+        visibleSamples.add(i);
+      } else {
+        visibleSamples.delete(i);
+      }
+      renderAll();
+    });
+  });
+
+  // All / None buttons
+  document.getElementById('btn-select-all').addEventListener('click', function() {
+    visibleSamples = new Set(DATA.map(function(_, i) { return i; }));
+    container.querySelectorAll('input[type="checkbox"]').forEach(function(cb) { cb.checked = true; });
+    renderAll();
+  });
+
+  document.getElementById('btn-select-none').addEventListener('click', function() {
+    visibleSamples = new Set();
+    container.querySelectorAll('input[type="checkbox"]').forEach(function(cb) { cb.checked = false; });
+    renderAll();
+  });
+
+  // Wildcard search on Enter
+  document.getElementById('sample-search').addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    var pattern = this.value.trim();
+    if (!pattern) {
+      // Empty → re-check all
+      visibleSamples = new Set(DATA.map(function(_, i) { return i; }));
+      container.querySelectorAll('input[type="checkbox"]').forEach(function(cb) { cb.checked = true; });
+    } else {
+      var re = globToRegex(pattern);
+      visibleSamples = new Set();
+      DATA.forEach(function(s, i) {
+        if (re.test(s.sample_name)) visibleSamples.add(i);
+      });
+      container.querySelectorAll('input[type="checkbox"]').forEach(function(cb) {
+        var idx = parseInt(cb.getAttribute('data-idx'), 10);
+        cb.checked = visibleSamples.has(idx);
+      });
+    }
+    renderAll();
+  });
 })();
+
+/* ── Initial render ──────────────────────────────────────────────── */
+renderAll();
 
 /* ── Sidebar scroll tracking ─────────────────────────────────────── */
 (function() {

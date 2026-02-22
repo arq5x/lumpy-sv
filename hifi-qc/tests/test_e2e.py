@@ -32,6 +32,16 @@ def test_basic_run():
     assert "Mapping Quality" in html
     # Coverage should be present (not sampling)
     assert "Genome" in html or "Coverage" in html
+    # Per-chrom distribution section
+    assert "Per-Chromosome Coverage Distribution" in html
+    assert "chrom-select" in html
+    assert "plot-chrom-hist" in html
+    assert "plot-chrom-cumulative" in html
+    # Sample filter UI
+    assert "sample-search" in html
+    assert "btn-select-all" in html
+    assert "btn-select-none" in html
+    assert "sample-checkboxes" in html
     print("PASS: basic_run")
 
 
