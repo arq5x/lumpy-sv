@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import sys
-import numpy as np
 from operator import itemgetter
 from optparse import OptionParser
 
@@ -49,7 +48,8 @@ if options.genome_file:
 else:
     order = sorted(B.keys())
 
-
+# Keep records for contigs omitted from the supplied genome order.
+order.extend(sorted(set(B) - set(order)))
 
 for c in order:
     if c in B:
